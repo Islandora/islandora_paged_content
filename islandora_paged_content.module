@@ -37,16 +37,16 @@ function islandora_paged_content_get_boxes($fedora_pid, $term, $hocr_dsid = 'ENC
   $lower_term = urldecode($lower_term);
   $terms = explode(' ', $lower_term);
   foreach ($terms as $term) {
-    $matches = $hocr_xml->xpath("//node()[local-name() = 'span'][translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='{$term}']");
+    $matches = $hocr_xml->xpath("//node()[local-name() = 'span'][translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='{$term}']/..");
     foreach ($matches as $match) {
       $bbox = (string) $match['title'];
       dsm($match->asXML());
       $values = explode(' ', $bbox);
       $boxes[] = array(
         'l' => intval($values[1]),
-        't' => intval($values[2]) - 15,
-        'r' => intval($values[3]) + 20,
-        'b' => intval($values[4]) + 15,
+        't' => intval($values[2]),
+        'r' => intval($values[3]),
+        'b' => intval($values[4]),
       );
     }
   }
