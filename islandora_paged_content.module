@@ -16,9 +16,9 @@
  *   The HOCR datastream id.
  * 
  * @return array
- *   $boxes The coordinates of the matches to the term.
+ *   $highlighting_info The coordinates of the matches to the term.
  */
-function islandora_paged_content_get_boxes($fedora_pid, $term, $hocr_dsid = 'ENCODED_OCR') {
+function islandora_paged_content_get_highlighting_info($fedora_pid, $term, $hocr_dsid = 'ENCODED_OCR') {
   $boxes = array();
   $fedora_object = islandora_object_load($fedora_pid);
   
@@ -40,15 +40,24 @@ function islandora_paged_content_get_boxes($fedora_pid, $term, $hocr_dsid = 'ENC
     $matches = $hocr_xml->xpath("//node()[local-name() = 'span'][translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='{$term}']/..");
     foreach ($matches as $match) {
       $bbox = (string) $match['title'];
-      dsm($match->asXML());
       $values = explode(' ', $bbox);
       $boxes[] = array(
-        'l' => intval($values[1]),
-        't' => intval($values[2]),
-        'r' => intval($values[3]),
-        'b' => intval($values[4]),
+        'left' => intval($values[1]),
+        'top' => intval($values[2]),
+        'right' => intval($values[3]),
+        'bottom' => intval($values[4]),
       );
     }
   }
-  return $boxes;
+  $highlighting_info['bounding_boxes'] = $boxes;
+  
+  $page_matches = $hocr_xml->xpath("//node()[local-name() = 'div'][@class='ocr_page']");
+  foreach ($page_matches as $match) {
+    $page_dimensions = (string) $match['title'];
+    $values = explode(' ', $page_dimensions);
+    $highlighting_info['width'] = intval($values[5]);
+    $highlighting_info['height'] = intval($values[6]);
+  }
+
+  return $highlighting_info;
 }
