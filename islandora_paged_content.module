@@ -8,7 +8,7 @@
  * This function will search a Fedora's object datastream's HOCR content for a
  * given term and return coordinate data. It only works on exact term matches.
  * 
- * @param string $fedora_pid
+ * @param IslandoraFedoraObject $fedora_object
  *   The object to apply the search to.
  * @param string $term
  *   The term to search for.
@@ -18,10 +18,8 @@
  * @return array
  *   $highlighting_info The coordinates of the matches to the term.
  */
-function islandora_paged_content_get_highlighting_info($fedora_pid, $term, $hocr_dsid = 'ENCODED_OCR') {
+function islandora_paged_content_get_highlighting_info($fedora_object, $term, $hocr_dsid = 'ENCODED_OCR') {
   $boxes = array();
-  $fedora_object = islandora_object_load($fedora_pid);
-  
   // Return nothing if the DSID is not populated.
   if (!isset($fedora_object[$hocr_dsid])) {
     return array();
