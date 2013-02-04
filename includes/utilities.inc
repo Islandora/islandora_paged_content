@@ -127,3 +127,40 @@ function islandora_paged_content_set_relationship(FedoraRelationships $relations
   $relationships->add($predicate_uri, $predicate, $object, $literal);
 }
 
+/**
+ * Checks if it is possible to update a paged content's thumbnail image.
+ */
+function islandora_paged_content_can_update_paged_content_thumbnail(FedoraObject $object) {
+  $pages = islandora_paged_content_get_pages($object);
+  if (count($pages)) {
+    $page = array_shift($pages);
+    $page = islandora_object_load($page['pid']);
+    return isset($page['TN']);
+  }
+  return FALSE;
+}
+
+/**
+ * Updates the given paged content's thumbnail from the first page in the paged content.
+ *
+ * @param FedoraObject $object
+ *   The paged content object to update.
+ *
+ * @return bool
+ *   TRUE on success, FALSE otherwise.
+ */
+function islandora_paged_content_update_paged_content_thumbnail(FedoraObject $object) {
+  if (!islandora_paged_content_can_update_paged_content_thumbnail($object)) {
+    return FALSE;
+  }
+  $pages = islandora_paged_content_get_pages($object);
+  $page = array_shift($pages);
+  $page = islandora_object_load($page['pid']);
+  $mime_detector = new MimeDetect();
+  $ext = $mime_detector->getExtension($page['TN']->mimeType);
+  $file = drupal_realpath('temporary://{$page->id}_TN.{$ext}');
+  $page['TN']->getContent($file);
+  $ret = islandora_paged_content_update_datastream($object, $file, 'TN', 'Thumbnail');
+  file_unmanaged_delete($file);
+  return $ret;
+}

@@ -4,3 +4,5 @@ dependencies[] = islandora
 package = Islandora
 version = 7.x-dev
 core = 7.x
+files[] = includes/utilities.inc
+files[] = includes/batch.inc

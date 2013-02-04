@@ -110,3 +110,52 @@ function islandora_paged_content_batch_finished($success, $results, $operations)
     drupal_set_message($message, 'error');
   }
 }
+
+/**
+ * Gets the batch definition for deleting the given pages from the given paged content.
+ *
+ * @param FedoraObject $paged_content
+ *   The paged content the pages belong to.
+ * @param array $pages
+ *   All the pages to delete.
+ *
+ * @return array
+ *   The batch definition.
+ */
+function islandora_paged_content_delete_pages_batch(FedoraObject $paged_content, array $pages) {
+  return array(
+    'operations' => array(
+      array('islandora_paged_content_delete_pages_batch_operation', array(
+          $paged_content, $pages)),
+    ),
+    'finished' => 'islandora_paged_content_batch_finished',
+    'title' => t('Deleting page(s) from @label', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to delete page(s) from @label.', array('@label' => $paged_content->label)),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
+    'error_message' => t('An error has occurred.'),
+    'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
+  );
+}
+
+/**
+ * Batch operation for deleting a page object.
+ *
+ * @param FedoraObject $paged_content
+ *   The paged_content the pages belong to.
+ * @param array $pages
+ *   All the pages to delete.
+ * @param array $context
+ *   The context of this batch operation.
+ */
+function islandora_paged_content_delete_pages_batch_operation(FedoraObject $paged_content, array $pages, &$context) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $page = islandora_paged_content_start_batch_operation($pages, $context);
+  if ($page) {
+    $page = islandora_object_load($page);
+    $context['message'] = t('Deleting page "@label" (@pid)', array('@label' => $page->label, '@pid' => $page->id));
+    $context['results']['successful'][] = islandora_delete_object($page);
+    if (islandora_paged_content_end_batch_operation($context, 1, array('Deleted @successful of @total pages.'))) {
+      islandora_paged_content_update_paged_content_thumbnail($paged_content);
+    }
+  }
+}
