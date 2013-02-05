@@ -112,6 +112,57 @@ function islandora_paged_content_batch_finished($success, $results, $operations)
 }
 
 /**
+ * Gets the batch definition for creating OCR and HOCR.
+ *
+ * @param FedoraObject $paged_content
+ *   The paged content the pages belong to.
+ * @param array $pages
+ *   All the pages to process.
+ * @param array $options
+ *   Options to pass into tesseract/gimp.
+ *
+ * @return array
+ *   The batch definition.
+ */
+function islandora_paged_content_create_ocr_batch(FedoraObject $paged_content, array $pages, array $options) {
+  return array(
+    'operations' => array(
+      array('islandora_paged_content_create_ocr_batch_operation', array(
+          $pages, $options)),
+    ),
+    'finished' => 'islandora_paged_content_batch_finished',
+    'title' => t('Performing OCR on @label', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to perform OCR on @label.', array('@label' => $paged_content->label)),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
+    'error_message' => t('An error has occurred.'),
+    'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
+  );
+}
+
+/**
+ * Batch operation for createing the OCR and HOCR.
+ *
+ * @param array $pages
+ *   All the pages to perform OCR on.
+ * @param array $options
+ *   Options to pass into tesseract/gimp.
+ * @param array $context
+ *   The context of this batch operation.
+ */
+function islandora_paged_content_create_ocr_batch_operation(array $pages, array $options, &$context) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $page = islandora_paged_content_start_batch_operation($pages, $context);
+  if ($page) {
+    $page = islandora_object_load($page);
+    $context['results']['successful'][] = islandora_paged_content_page_derive_ocr_datastreams($page, $options);
+    islandora_paged_content_end_batch_operation($context, 1, array('Performed OCR on @successful of @total pages.'));
+    $context['message'] = t('Performing OCR on page @page of @total.', array(
+                            '@page' => $context['sandbox']['progress'],
+                            '@total' => $context['sandbox']['total']));
+  }
+}
+
+/**
  * Gets the batch definition for deleting the given pages from the given paged content.
  *
  * @param FedoraObject $paged_content
