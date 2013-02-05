@@ -163,6 +163,57 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
 }
 
 /**
+ * Gets the batch definition for creating TN, JPG, JP2 datastreams.
+ *
+ * @param FedoraObject $paged_content
+ *   The object the pages belong to.
+ * @param array $pages
+ *   All the pages to process.
+ *
+ * @return array
+ *   The batch definition.
+ */
+function islandora_paged_content_create_images_batch(FedoraObject $paged_content, array $pages) {
+  return array(
+    'operations' => array(
+      array('islandora_paged_content_create_images_batch_operation', array(
+          $paged_content, $pages)),
+    ),
+    'finished' => 'islandora_paged_content_batch_finished',
+    'title' => t('Creating Images for @label', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to create images for @label.', array('@label' => $paged_content->label)),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
+    'error_message' => t('An error has occurred.'),
+    'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
+  );
+}
+
+/**
+ * Batch operation for creating the TN, JPG, JP2 datastreams.
+ *
+ * @param FedoraObject $paged_content
+ *   The book the pages belong to.
+ * @param array $pages
+ *   All the pages to create images for.
+ * @param array $context
+ *   The context of this batch operation.
+ */
+function islandora_paged_content_create_images_batch_operation(FedoraObject $paged_content, array $pages, &$context) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $page = islandora_paged_content_start_batch_operation($pages, $context);
+  if ($page) {
+    $page = islandora_object_load($page);
+    $context['results']['successful'][] = islandora_paged_content_page_derive_image_datastreams($page);
+    if (islandora_paged_content_end_batch_operation($context, 1, array('Created images for @successful of @total pages.'))) {
+      islandora_paged_content_update_paged_content_thumbnail($paged_content);
+    }
+    $context['message'] = t('Creating images for page @page of @total.', array(
+                            '@page' => $context['sandbox']['progress'],
+                            '@total' => $context['sandbox']['total']));
+  }
+}
+
+/**
  * Gets the batch definition for deleting the given pages from the given paged content.
  *
  * @param FedoraObject $paged_content
