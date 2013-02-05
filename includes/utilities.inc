@@ -109,6 +109,30 @@ function islandora_paged_content_update_datastream(AbstractFedoraObject $object,
 }
 
 /**
+ * Gets the given relationship if one is defined.
+ *
+ * Assumes only one relationship matches the given parameters.
+ * Will return the given default if no relationship is found.
+ *
+ * @param FedoraRelationships $relationships
+ *   The Fedora relationships to check, either RELS-EXT or RELS-INT.
+ * @param string $predicate_uri
+ *   The predicate URI.
+ * @param string $predicate
+ *   The predicate.
+ * @param mixed $default
+ *   The default value to return if no relationship was found.
+ *
+ * @return mixed
+ *   The first matching relationships value if found, otherwise the given
+ *   default it returned.
+ */
+function islandora_paged_content_get_relationship(FedoraRelationships $relationships, $predicate_uri, $predicate, $default = NULL) {
+  $results = $relationships->get($predicate_uri, $predicate);
+  return count($results) > 0 ? $results[0]['object']['value'] : $default;
+}
+
+/**
  * Sets a relationship removing any previous relationships.
  *
  * @param FedoraRelationships $relationships
@@ -125,6 +149,223 @@ function islandora_paged_content_update_datastream(AbstractFedoraObject $object,
 function islandora_paged_content_set_relationship(FedoraRelationships $relationships, $predicate_uri, $predicate, $object, $literal = FALSE) {
   $relationships->remove($predicate_uri, $predicate, NULL, $literal);
   $relationships->add($predicate_uri, $predicate, $object, $literal);
+}
+
+/**
+ * Gets only the enabled ingest derivatives.
+ *
+ * As defined by the user in the admin form.
+ *
+ * @param string $namespace
+ *   The solution pack namespace whose admin form we're checking
+ *
+ * @return array
+ *   The enabled ingest derivatives.
+ */
+function islandora_paged_content_get_enabled_ingest_derivatives($namespace) {
+  $default_derivatives = drupal_map_assoc(array('pdf', 'image', 'ocr'));
+  return variable_get("${namespace}_ingest_derivatives", $default_derivatives);
+}
+
+/**
+ * Gets the datastream ID of the intended source for the given derivative.
+ *
+ * @param string $dsid
+ *   The derived datastream ID.
+ *
+ * @return string
+ *   The datastream ID of the source for the given derivative.
+ */
+function islandora_paged_content_get_page_derivative_source_id($dsid) {
+  // @todo Change TIFF to OBJ, when done testing.
+  $source_datastreams = array(
+    'PDF' => 'OBJ',
+    'OCR' => 'OBJ',
+    'HOCR' => 'OBJ',
+    'TN' => 'OBJ',
+    'JPG' => 'OBJ',
+    'JP2' => 'OBJ',
+  );
+  return $source_datastreams[$dsid];
+}
+
+/**
+ * Checks if the given derivative datastream's intended source exists.
+ *
+ * @param AbstractFedoraObject $object
+ *   The object to check.
+ * @param string $dsid
+ *   The derived datastream ID.
+ *
+ * @return bool
+ *   TRUE if the source datastream exists, FALSE otherwise.
+ */
+function islandora_paged_content_page_has_derivative_source(AbstractFedoraObject $object, $dsid) {
+  $source_dsid = islandora_paged_content_get_page_derivative_source_id($dsid);
+  return isset($object[$source_dsid]);
+}
+
+/**
+ * Gets the source file for the given, derivative datastream.
+ *
+ * @param AbstractFedoraObject $object
+ *   The owner of the datastreams.
+ * @param string $dsid
+ *   The derived datastream ID.
+ *
+ * @return string
+ *   The path to the source file.
+ */
+function islandora_paged_content_get_page_derivative_source(AbstractFedoraObject $object, $dsid) {
+  if (!islandora_paged_content_can_derive($object, $dsid)) {
+    return FALSE;
+  }
+  $source_dsid = islandora_paged_content_get_page_derivative_source_id($dsid);
+  $mime_detector = new MimeDetect();
+  $ext = $mime_detector->getExtension($object[$source_dsid]->mimeType);
+  $source_file = drupal_realpath("temporary://{$object->id}_{$source_dsid}.{$ext}");
+  $object[$source_dsid]->getContent($source_file);
+  return $source_file;
+}
+
+/**
+ * Checks if the given object can derive the given datastream.
+ *
+ * @param AbstractFedoraObject $object
+ *   The object to check.
+ * @param string $dsid
+ *   The derived datastream ID.
+ *
+ * @return bool
+ *   TRUE if the datastream can be derived, FALSE otherwise.
+ */
+function islandora_paged_content_can_derive(AbstractFedoraObject $object, $dsid) {
+  $can_derive = FALSE;
+  if (in_array('islandora:pageCModel', $object->models) || 
+      in_array('islandora:bookPageCModel', $object->models) ||
+      in_array('islandora:newspaperPageCModel', $object->models)) {
+    $check_function = array(
+      'PDF' => 'islandora_paged_content_can_create_pdf',
+      'OCR' => 'islandora_paged_content_can_create_ocr',
+      'TN' => 'islandora_paged_content_can_create_images',
+      'JP2' => 'islandora_paged_content_can_create_images',
+      'JPEG' => 'islandora_paged_content_can_create_images',
+    );
+    $can_derive = isset($check_function[$dsid]) ? $check_function[$dsid]() : FALSE;
+    $can_derive &= islandora_paged_content_page_has_derivative_source($object, $dsid);
+  }
+  return $can_derive;
+}
+
+/**
+ * Checks if it is possible to create image files.
+ *
+ * @return bool
+ *   TRUE if it is possible, FALSE otherwise.
+ */
+function islandora_paged_content_can_create_images() {
+  return module_exists('islandora_large_image');
+}
+
+/**
+ * Checks if it is possible to create PDF files with imagemagick.
+ *
+ * @return bool
+ *   TRUE if it is possible, FALSE otherwise.
+ */
+function islandora_paged_content_can_create_pdf() {
+  // @todo Should also check if imagemagick is configured correctly.
+  return module_exists('imagemagick');
+}
+
+/**
+ * Creates a PDF derivative for the given Page object.
+ *
+ * @param FedoraObject $object
+ *   The page object that the derivative will be generated from, and added to.
+ * @param array $options
+ *   The options to be passed to convert.
+ *
+ * @return bool
+ *   TRUE if successful, FALSE otherwise.
+ */
+function islandora_paged_content_page_derive_pdf_datastream(FedoraObject $object, array $options = array('-compress' => 'LZW')) {
+  $pdf_file = islandora_paged_content_page_derive_pdf($object, $options);
+  if (!$pdf_file) {
+    return FALSE;
+  }
+  $ret = islandora_paged_content_update_datastream($object, $pdf_file, 'PDF');
+  file_unmanaged_delete($pdf_file);
+  return $ret;
+}
+
+/**
+ * Creates a PDF derivative from the given Page object and convert options.
+ *
+ * @param FedoraObject $object
+ *   The page object that the derivative will be generated from.
+ * @param array $options
+ *   The options to be passed to convert.
+ *
+ * @return string
+ *   The absolute path to the derived file if successful, FALSE otherwise.
+ */
+function islandora_paged_content_page_derive_pdf(FedoraObject $object, array $options = array('-compress' => 'LZW')) {
+  if (!islandora_paged_content_can_derive($object, 'PDF')) {
+    return FALSE;
+  }
+  $source_file = islandora_paged_content_get_page_derivative_source($object, 'PDF');
+  $pdf_file = islandora_paged_content_convert_to_pdf($source_file, $options);
+  file_unmanaged_delete($source_file);
+  return $pdf_file;
+}
+
+/**
+ * Converts the given image to a PDF file, using the given options.
+ *
+ * @param string $image_file
+ *   The absolute path to the image file.
+ * @param array $options
+ *   The options to be passed to convert.
+ *
+ * @return string
+ *   The absolute path to the generated PDF if successful, FALSE otherwise.
+ */
+function islandora_paged_content_convert_to_pdf($image_file, array $options) {
+  // Convert options into a string.
+  $to_string = function(&$o, $k) {
+    $o = "$k $o";
+  };
+  array_walk($options, $to_string);
+  $options = implode(' ', $options);
+  $pdf_file = "$image_file.pdf";
+  $command_args = "{$options} {$image_file} {$pdf_file}";
+  $output = array(); $ret = 0;
+  if (_imagemagick_convert_exec($command_args, $output, $ret) !== TRUE) {
+    $message = 'imagemagick convert failed to create pdf<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
+    $variables = array(
+      '@ret' => $ret,
+      '@command' => "convert $command_args",
+      '!output' => implode('<br/>', $output),
+    );
+    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    return FALSE;
+  }
+  return $pdf_file;
+}
+
+/**
+ * Creates and adds all the image derivatives for the given Page object.
+ *
+ * @param FedoraObject $object
+ *   The page object that the derivative will be generated for.
+ *
+ * @return bool
+ *   TRUE if successful, FALSE otherwise.
+ */
+function islandora_paged_content_page_derive_image_datastreams(FedoraObject $object) {
+  module_load_include('inc', 'islandora_large_image', 'includes/islandora_large_image.process');
+  return islandora_large_image_create_all_derivatives($object);
 }
 
 /**
@@ -164,3 +405,264 @@ function islandora_paged_content_update_paged_content_thumbnail(FedoraObject $ob
   file_unmanaged_delete($file);
   return $ret;
 }
+
+/*
+ * OCR STUFF
+ * TO BE MOVED INTO ITS OWN MODULE VERY SOON
+ */
+
+// Constants
+define('TESSERACT_REQUIRED_VERSION', '3.02');
+
+/**
+ * Check if preprocessing images for OCR is possible on this computer.
+ *
+ * @return bool
+ *   TRUE if preprocessing images is possible, FALSE otherwise.
+ */
+function islandora_paged_content_can_preprocess_ocr() {
+  $gimp = variable_get('islandora_book_gimp', '/usr/bin/gimp');
+  return is_executable($gimp);
+}
+
+/**
+ * Checks if it is possible to create files with tesseract.
+ *
+ * @return bool
+ *   TRUE if it is possible, FALSE otherwise.
+ */
+function islandora_paged_content_can_create_ocr() {
+  $version = islandora_paged_content_get_tesseract_version();
+  return version_compare($version, TESSERACT_REQUIRED_VERSION) >= 0;
+}
+
+/**
+ * Gets the versions of the given tesseract executable.
+ *
+ * @param string $tesseract
+ *   The absolute path to $tesseract executable, if not provided the variable
+ *   "islandora_book_tesseract" will be used instead.
+ *
+ * @return string
+ *   The version of the tesseract executable if successful, FALSE otherwise.
+ */
+function islandora_paged_content_get_tesseract_version($tesseract = NULL) {
+  $tesseract = $tesseract ? $tesseract : variable_get('islandora_book_tesseract', '/usr/bin/tesseract');
+  if (is_executable($tesseract)) {
+    $ret = -1;
+    $output = array();
+    $command = "$tesseract -v 2>&1";
+    exec($command, $output, $ret);
+    if (!$ret && isset($output[0])) {
+      return str_replace(array('tesseract', ' '), '', $output[0]);
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Gets the available languages that tesseract supports.
+ *
+ * @return array
+ *   The supported languages where the key is the value tesseract recognizes and
+ *   the value is a human readable version of the language.
+ */
+function islandora_paged_content_get_tesseract_languages() {
+  // @todo Generate these values by looking at the tesseract install location.
+  return array(
+    'eng' => t('English'),
+    'fra' => t('French'),
+    'deu-frak' => t('German'),
+    'por' => t('Portugese'),
+    'spa' => t('Spanish'),
+    'hin' => t('Hindi'),
+    'jpn' => t('Japanese'),
+    'ita' => t('Italian'),
+  );
+}
+
+/**
+ * Gets only the enabled languages as defined by the user in the admin form.
+ *
+ * @return array
+ *   The enabled languages where the key is the value tesseract recognizes and
+ *   the value is a human readable version of the language.
+ */
+function islandora_paged_content_get_enabled_tesseract_languages() {
+  $tesseract_languages = islandora_paged_content_get_tesseract_languages();
+  $enabled_languages = array_filter(variable_get('islandora_book_tesseract_enabled_languages', $tesseract_languages));
+  return array_intersect_key($tesseract_languages, $enabled_languages);
+}
+
+/**
+ * Creates and adds the OCR, HOCR datastreams.
+ *
+ * @param FedoraObject $object
+ *   The page object that the derivatives will be generated for.
+ * @param array $options
+ *   The options for tesseract/gimp.
+ *
+ * @return bool
+ *   TRUE on success, FALSE otherwise.
+ */
+function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $object, array $options = NULL) {
+  $rels_ext = $object->relationships;
+  $options = isset($options) ? $options : array(
+    'language' => islandora_paged_content_get_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', 'eng'),
+    'preprocess' => islandora_paged_content_get_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'preprocess', 'false') == 'true',
+  );
+  $source_file = islandora_paged_content_get_page_derivative_source($object, 'OCR');
+  $source_file = $options['preprocess'] ? islandora_paged_content_ocr_preprocess_image($source_file) : $source_file;
+  $ocr_file = islandora_paged_content_convert_to_ocr($source_file, $options);
+  $hocr_file = islandora_paged_content_convert_to_hocr($source_file, $options);
+  $ret = $ocr_file && islandora_paged_content_update_datastream($object, $ocr_file, 'OCR');
+  $ret &= $hocr_file && islandora_paged_content_update_datastream($object, $hocr_file, 'HOCR');
+  $language = $options['language'];
+  $preprocess = $options['preprocess'] ? 'true' : 'false';
+  $rels_ext = $object->relationships;
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $language, TRUE);
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'preprocess', $preprocess, TRUE);
+  $files = array_filter(array($source_file, $ocr_file, $hocr_file));
+  array_map('file_unmanaged_delete', $files);
+  return $ret;
+}
+
+/**
+ * Gets the source file for OCR and preprocesses the source file.
+ *
+ * @param string $source_file
+ *   The absolute path to the source image file.
+ *
+ * @return string
+ *   A absolute path to the preprocessed file if successful, if unsuccessful the
+ *   unpreprocessed file is returned.
+ */
+function islandora_paged_content_ocr_preprocess_image($source_file) {
+  $executable = variable_get('islandora_book_gimp', '/usr/bin/gimp');
+  $dest_file = "$source_file.png";
+  $command = "{$executable} -d -i -b '(munge-typeset-ocr {$source_file} {$dest_file} 5.0 10.0 0.0 200.0 5.0)' -b '(gimp-quit 0)'";
+  $output = array(); $ret = 0;
+  exec($command, $output, $ret);
+  // Sometimes Gimp fails but returns success anyways so we check for the
+  // destination files existance.
+  if ($ret != '0' || !file_exists($dest_file)) {
+    $message = 'gimp failed to preproces image<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
+    $variables = array(
+      '@ret' => $ret,
+      '@command' => $command,
+      '!output' => implode('<br/>', $output),
+    );
+    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    return $source_file;
+  }
+  return $dest_file;
+}
+
+/**
+ * Converts the given image to a plain text OCR file, using the given options.
+ *
+ * @param string $image_file
+ *   The absolute path to the image file.
+ * @param array $options
+ *   The options to be passed to tesseract.
+ *
+ * @return string
+ *   The absolute path to the generated OCR if successful, FALSE otherwise.
+ */
+function islandora_paged_content_convert_to_ocr($image_file, array $options) {
+  $out_file = "$image_file.txt";
+  $executable = variable_get('islandora_book_tesseract', '/usr/bin/tesseract');
+  $output = array(); $ret = 0;
+  $command = "{$executable} {$image_file} {$image_file} -l {$options['language']} 2>&1";
+  exec($command, $output, $ret);
+  if ($ret != '0') {
+    $message = 'tesseract failed to create ocr<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
+    $variables = array(
+      '@ret' => $ret,
+      '@command' => $command,
+      '!output' => implode('<br/>', $output),
+    );
+    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    return FALSE;
+  }
+  return $out_file;
+}
+
+/**
+ * Converts the given image to a html HOCR file, using the given options.
+ *
+ * @param string $image_file
+ *   The absolute path to the image file.
+ * @param array $options
+ *   The options to be passed to tesseract.
+ *
+ * @return string
+ *   The absolute path to the generated HOCR if successful, FALSE otherwise.
+ */
+function islandora_paged_content_convert_to_hocr($image_file, array $options) {
+  $out_file = "$image_file.html";
+  $executable = variable_get('islandora_book_tesseract', '/usr/bin/tesseract');
+  $output = array(); $ret = 0;
+  $command = "{$executable} {$image_file} {$image_file} -l {$options['language']} hocr 2>&1";
+  exec($command, $output, $ret);
+  if ($ret != '0' || !file_exists($out_file)) {
+    $message = 'tesseract failed to create hocr<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
+    $variables = array(
+      '@ret' => $ret,
+      '@command' => $command,
+      '!output' => implode('<br/>', $output),
+    );
+    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    return FALSE;
+  }
+  if (!islandora_paged_content_hocr_valid($out_file)) {
+    $message = 'tesseract failed to create valid hocr make sure to check your running a supported version of tesseract 3.2 or later.';
+    $message .= '<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
+    $variables = array(
+      '@ret' => $ret,
+      '@command' => $command,
+      '!output' => implode('<br/>', $output),
+    );
+    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    return FALSE;
+  }
+  return $out_file;
+}
+
+/**
+ * Checks if the given HOCR file is valid.
+ *
+ * At the moment this only checks if the version is supported but may do more
+ * in the future.
+ *
+ * @param string $file
+ *   The absolute path to the HOCR file.
+ *
+ * @return bool
+ *   TRUE if the HOCR file is valid, FALSE otherwise.
+ */
+function islandora_paged_content_hocr_valid($file) {
+  $version = islandora_paged_content_hocr_version($file);
+  return version_compare($version, TESSERACT_REQUIRED_VERSION) >= 0;
+}
+
+/**
+ * Gets the version of the give HOCR file.
+ *
+ * Parses the meta tags in the given file to determine the version. Older
+ * versions of tesseract don't include the version information.
+ *
+ * @param string $file
+ *   The absolute path to the HOCR file.
+ *
+ * @return string
+ *   The version if successful, FALSE otherwise.
+ */
+function islandora_paged_content_hocr_version($file) {
+  @$doc = simplexml_load_file($file);
+  $doc->registerXPathNamespace('ns', 'http://www.w3.org/1999/xhtml');
+  $version = (string) array_pop($doc->xpath('/ns:html/ns:head/ns:meta[@name="ocr-system"]/@content'));
+  $version = str_replace(array('tesseract', ' '), '', $version);
+  return empty($version) ? FALSE : $version;
+}
+
