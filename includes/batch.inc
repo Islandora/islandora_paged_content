@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * This file contains all the batch operations for paged content.
+ */
+
+/**
  * Sets up a batch operation.
  *
  * @param array $operands
@@ -12,14 +17,14 @@
  *   displayed when the batch is finished. Placeholders include, but are not
  *   limited to: @successful, @failed, @total.
  *
- *  @code
- *    array(
- *      ...
- *      array('Processed @successful of @total. Created @pages pages.', array(
- *            '@pages' => $pages), 'status')
- *      ...
- *    )
- *  @endcode
+ * @code
+ *   array(
+ *     ...
+ *     array('Processed @successful of @total. Created @pages pages.', array(
+ *           '@pages' => $pages), 'status')
+ *     ...
+ *   )
+ * @endcode
  *
  * @return mixed
  *   The current operand the operation will process.
@@ -272,7 +277,8 @@ function islandora_paged_content_sequence_pages_batch_operation(FedoraObject $pa
 }
 
 /**
- * Gets the batch definition for deleting the given pages from the given paged content.
+ * Gets the batch definition for deleting the given pages from the given paged
+ * content.
  *
  * @param FedoraObject $paged_content
  *   The paged content the pages belong to.
