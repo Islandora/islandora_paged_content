@@ -59,3 +59,29 @@ function islandora_paged_content_get_highlighting_info($fedora_object, $term, $h
 
   return $highlighting_info;
 }
+
+/**
+ * Determine whether or not to show this modules manage tab.
+ *
+ * @param FedoraObject $object
+ *   The object being managed.
+ *
+ * @return bool
+ *   TRUE if it should be shown, and FALSE if it should not be shown.
+ */
+function islandora_paged_content_manage_page_access_callback($object = NULL) {
+  if (!isset($object)) {
+    return FALSE;
+  }
+  $manage_actions = array(
+    FEDORA_ADD_DS,
+  );
+  $can_access = function($perm) use($object) {
+    return  islandora_object_access_callback($perm, $object);
+  };
+  $can_manage = count(array_filter($manage_actions, $can_access));
+  $is_page = in_array('islandora:pageCModel', $object->models);
+  $is_page |= in_array('islandora:newspaperPageCModel', $object->models);
+  $is_page |= in_array('islandora:bookPageCModel', $object->models);
+  return $is_page && $can_manage;
+}

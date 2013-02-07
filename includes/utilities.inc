@@ -30,13 +30,11 @@
  * @endcode
  */
 function islandora_paged_content_get_pages(FedoraObject $object) {
-  $query = 'select $object $page $label from <#ri> ';
-  $query .= 'where $object <fedora-rels-ext:isMemberOf> '
-  $query .= '<info:fedora/' . $object->id . '> ';
-  $query .= 'and $object <fedora-model:label> $label';
-  $query .= 'and $object ';
-  $query .= '<http://islandora.ca/ontology/relsext#isSequenceNumber> $page';
-  $query .= 'order by $page';
+  $query = 'select $object $page $label from <#ri>
+            where $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $object->id . '>
+            and $object <fedora-model:label> $label
+            and $object <http://islandora.ca/ontology/relsext#isSequenceNumber> $page
+            order by $page';
 
   $results = $object->repository->ri->query($query);
   $map = function($o) {
@@ -261,7 +259,9 @@ function islandora_paged_content_get_page_derivative_source(AbstractFedoraObject
  */
 function islandora_paged_content_can_derive(AbstractFedoraObject $object, $dsid) {
   $can_derive = FALSE;
-  if (in_array('islandora:pageCModel', $object->models) ||
+  if (in_array('islandora:newspaperCModel', $object->models) ||
+      in_array('islandora:bookCModel', $object->models) ||
+      in_array('islandora:pageCModel', $object->models) ||
       in_array('islandora:bookPageCModel', $object->models) ||
       in_array('islandora:newspaperPageCModel', $object->models)) {
     $check_function = array(
@@ -274,7 +274,7 @@ function islandora_paged_content_can_derive(AbstractFedoraObject $object, $dsid)
     );
 
     if (isset($check_function[$dsid])) {
-      $can_derive = $check_function[$dsid]()
+      $can_derive = $check_function[$dsid]();
     }
     $can_derive &=
       islandora_paged_content_page_has_derivative_source($object, $dsid);
