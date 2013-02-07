@@ -274,6 +274,9 @@ function islandora_paged_content_can_derive(AbstractFedoraObject $object, $dsid)
     );
 
     if (isset($check_function[$dsid])) {
+      if ($dsid == "OCR") {
+        module_load_include('inc', 'islandora_ocr', 'includes/utilities');
+      }
       $can_derive = $check_function[$dsid]();
     }
     $can_derive &=
