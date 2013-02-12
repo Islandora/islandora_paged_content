@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for this module.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * @see islandora_paged_content_islandora_required_objects()
+ */
+function islandora_paged_content_install() {
+  variable_set('islandora_paged_content_gs', '/usr/bin/gs');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_paged_content_uninstall() {
+  $variables = array(
+    'islandora_paged_content_gs'
+  );
+  array_walk($variables, 'variable_del');
+}
