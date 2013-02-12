@@ -457,7 +457,7 @@ function islandora_paged_content_convert_to_pdf($image_file, array $options) {
 function islandora_paged_content_page_derive_image_datastreams(FedoraObject $object) {
   module_load_include('inc',
     'islandora_large_image',
-    'includes/islandora_large_image.process');
+    'includes/derivatives');
   return islandora_large_image_create_all_derivatives($object);
 }
 
