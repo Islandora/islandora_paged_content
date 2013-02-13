@@ -4,17 +4,33 @@
  * This is the main file for a module supporting paged content for Islandora.
  */
 
+function islandora_paged_content_menu() {
+  $out = array(
+    'admin/islandora/paged_content' => array(
+      'title' => 'Paged Content Module',
+      'description' => 'Configuration for the Paged Content solution pack.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_paged_content_admin_settings_form'),
+      'access arguments' => array('administer site configuration'),
+      'file' => 'includes/admin.form.inc',
+      'type' => MENU_NORMAL_ITEM,
+    ),
+  );
+
+  return $out;
+}
+
 /**
  * This function will search a Fedora's object datastream's HOCR content for a
  * given term and return coordinate data. It only works on exact term matches.
- * 
+ *
  * @param IslandoraFedoraObject $fedora_object
  *   The object to apply the search to.
  * @param string $term
  *   The term to search for.
  * @param string $hocr_dsid
  *   The HOCR datastream id.
- * 
+ *
  * @return array
  *   $highlighting_info The coordinates of the matches to the term.
  */
