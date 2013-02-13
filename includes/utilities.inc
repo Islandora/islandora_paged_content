@@ -70,7 +70,7 @@ function islandora_paged_content_get_pages(FedoraObject $object) {
  *   The paged content object to fetch the page progression from.
  *
  * @return string
- *   The page progression of the paged content object:  either left to right 
+ *   The page progression of the paged content object:  either left to right
  *   'lr' or right to left 'rl'.
  */
 function islandora_paged_content_get_page_progression(FedoraObject $object) {
@@ -279,8 +279,8 @@ function islandora_paged_content_can_derive(AbstractFedoraObject $object, $dsid)
       }
       $can_derive = $check_function[$dsid]();
     }
-    $can_derive &=
-      islandora_paged_content_page_has_derivative_source($object, $dsid);
+
+    $can_derive = $can_derive && islandora_paged_content_page_has_derivative_source($object, $dsid);
   }
   return $can_derive;
 }
@@ -535,11 +535,9 @@ function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $objec
   $ocr_file = islandora_ocr_create_ocr($source_file, $options);
   $hocr_file = islandora_ocr_create_hocr($source_file, $options);
   $ret = $ocr_file;
-  $ret &= islandora_paged_content_update_datastream($object, $ocr_file, 'OCR');
-  $ret &= $hocr_file;
-  $ret &= islandora_paged_content_update_datastream($object,
-    $hocr_file,
-    'HOCR');
+  $ret = $ret && islandora_paged_content_update_datastream($object, $ocr_file, 'OCR');
+  $ret = $ret && $hocr_file;
+  $ret = $ret && islandora_paged_content_update_datastream($object, $hocr_file, 'HOCR');
   $language = $options['language'];
   $preprocess = $options['preprocess'] ? 'true' : 'false';
   $rels_ext = $object->relationships;
