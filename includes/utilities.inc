@@ -259,11 +259,14 @@ function islandora_paged_content_get_page_derivative_source(AbstractFedoraObject
  */
 function islandora_paged_content_can_derive(AbstractFedoraObject $object, $dsid) {
   $can_derive = FALSE;
-  if (in_array('islandora:newspaperCModel', $object->models) ||
-      in_array('islandora:bookCModel', $object->models) ||
-      in_array('islandora:pageCModel', $object->models) ||
-      in_array('islandora:bookPageCModel', $object->models) ||
-      in_array('islandora:newspaperPageCModel', $object->models)) {
+  $to_derive = array(
+    'islandora:newspaperCModel',
+    'islandora:bookCModel',
+    'islandora:pageCModel',
+    'islandora:bookPageCModel',
+    'islandora:newspaperPageCModel',
+  );
+  if (array_intersect($to_derive, $object->models)) {
     $check_function = array(
       'PDF' => 'islandora_paged_content_can_create_pdf',
       'OCR' => 'islandora_ocr_can_derive_ocr',
@@ -274,10 +277,11 @@ function islandora_paged_content_can_derive(AbstractFedoraObject $object, $dsid)
     );
 
     if (isset($check_function[$dsid])) {
-      if ($dsid == "OCR") {
+      if ($dsid == "OCR" || $dsid == 'HOCR') {
         module_load_include('inc', 'islandora_ocr', 'includes/utilities');
       }
-      $can_derive = $check_function[$dsid]();
+
+      $can_derive = function_exists($check_function[$dsid]) && $check_function[$dsid]();
     }
 
     $can_derive = $can_derive && islandora_paged_content_page_has_derivative_source($object, $dsid);
