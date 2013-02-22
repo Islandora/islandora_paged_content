@@ -34,7 +34,7 @@ function islandora_paged_content_menu() {
  * @return array
  *   $highlighting_info The coordinates of the matches to the term.
  */
-function islandora_paged_content_get_highlighting_info($fedora_object, $term, $hocr_dsid = 'ENCODED_OCR') {
+function islandora_paged_content_get_highlighting_info($fedora_object, $term, $hocr_dsid = 'HOCR') {
   $boxes = array();
   // Return nothing if the DSID is not populated.
   if (!isset($fedora_object[$hocr_dsid])) {
