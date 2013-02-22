@@ -34,7 +34,7 @@ function islandora_paged_content_menu() {
  * @return array
  *   $highlighting_info The coordinates of the matches to the term.
  */
-function islandora_paged_content_get_highlighting_info($fedora_object, $term, $hocr_dsid = 'ENCODED_OCR') {
+function islandora_paged_content_get_highlighting_info($fedora_object, $term, $hocr_dsid = 'HOCR') {
   $boxes = array();
   // Return nothing if the DSID is not populated.
   if (!isset($fedora_object[$hocr_dsid])) {
@@ -51,7 +51,7 @@ function islandora_paged_content_get_highlighting_info($fedora_object, $term, $h
   $lower_term = urldecode($lower_term);
   $terms = explode(' ', $lower_term);
   foreach ($terms as $term) {
-    $matches = $hocr_xml->xpath("//node()[local-name() = 'span'][translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='{$term}']/..");
+    $matches = $hocr_xml->xpath("//node()[local-name() = 'span'][translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='{$term}']");
     foreach ($matches as $match) {
       $bbox = (string) $match['title'];
       $values = explode(' ', $bbox);
