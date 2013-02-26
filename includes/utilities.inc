@@ -30,26 +30,49 @@
  * @endcode
  */
 function islandora_paged_content_get_pages(FedoraObject $object) {
-  $query = 'select $object $page $label from <#ri>
-            where $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $object->id . '>
-            and $object <fedora-model:label> $label
-            and $object <http://islandora.ca/ontology/relsext#isSequenceNumber> $page
-            order by $page';
+  $query = <<<EOQ
+PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
+SELECT ?pid ?page ?label ?width ?height
+FROM <#ri>
+WHERE {
+  ?pid <fedora-rels-ext:isMemberOf> <info:fedora/{$object->id}> ;
+       <fedora-model:label> ?label ;
+       islandora-rels-ext:isSequenceNumber ?page .
+  OPTIONAL {
+    ?pid <fedora-view:disseminates> ?dss .
+    ?dss <fedora-view:disseminationType> <info:fedora/*/JP2> ;
+         islandora-rels-ext:width ?width ;
+         islandora-rels-ext:height ?height .
+ }
+}
+ORDER BY ?page
+EOQ;
 
-  $results = $object->repository->ri->query($query);
+  $results = $object->repository->ri->sparqlQuery($query);
+
+  // Get rid of the "extra" info...
   $map = function($o) {
-    return array(
-      'label' => $o['label']['value'],
-      'page' => $o['page']['value'],
-      'pid' => $o['object']['value'],
-    );
+    foreach ($o as $key => &$info) {
+      $info = $info['value'];
+    }
+
+    $o = array_filter($o);
+
+    return $o;
   };
   $pages = array_map($map, $results);
+
+  // Grab the PIDs...
   $get_pid = function($o) {
     return $o['pid'];
   };
   $pids = array_map($get_pid, $pages);
+
+  // If we have some pages, combine our remapped results to produce an array
+  // mapping pids to the values for that pid.
   $pages = count($pids) ? array_combine($pids, $pages) : array();
+
+  // Sort the pages into their proper order.
   $sort = function($a, $b) {
     $a = (is_array($a) && isset($a['page'])) ? $a['page'] : 0;
     $b = (is_array($b) && isset($b['page'])) ? $b['page'] : 0;
@@ -59,6 +82,7 @@ function islandora_paged_content_get_pages(FedoraObject $object) {
     return ($a < $b) ? -1 : 1;
   };
   uasort($pages, $sort);
+
   return $pages;
 }
 
