@@ -483,10 +483,27 @@ function islandora_paged_content_convert_to_pdf($image_file, array $options) {
  *   TRUE if successful, FALSE otherwise.
  */
 function islandora_paged_content_page_derive_image_datastreams(FedoraObject $object) {
-  module_load_include('inc',
-    'islandora_large_image',
-    'includes/derivatives');
-  return islandora_large_image_create_all_derivatives($object);
+  module_load_include('inc', 'islandora_large_image', 'includes/derivatives');
+  $ret = islandora_large_image_create_all_derivatives($object);
+  if ($ret) {
+    // Add dimensions for the JP2...
+    // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're more
+    // widely supported...
+    $temp_file = drupal_tempnam('temporary://', 'dimensions');
+    $object['OBJ']->getContent($temp_file);
+    list($width, $height) = getimagesize($temp_file);
+
+    $rels = $object['JP2']->relationships;
+    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+      'width', $width, 1
+    );
+    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+      'height', $height, 1
+    );
+
+    drupal_unlink($temp_file);
+  }
+  return $ret;
 }
 
 /**
