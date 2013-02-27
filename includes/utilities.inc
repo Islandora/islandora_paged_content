@@ -486,7 +486,20 @@ function islandora_paged_content_page_derive_image_datastreams(FedoraObject $obj
   module_load_include('inc', 'islandora_large_image', 'includes/derivatives');
   $ret = islandora_large_image_create_all_derivatives($object);
   if ($ret) {
-    // Add dimensions for the JP2...
+    // Add dimensions for the JP2.
+    islandora_paged_content_add_dimensions_relationships($object);
+  }
+  return $ret;
+}
+
+/**
+ * Add the dimensions to the RELS-INT for the JP2.
+ *
+ * This makes the dimensions accessible when we query for the pages.
+ *
+ * @param AbstractFedoraObject $object
+ */
+function islandora_paged_content_add_dimensions_relationships(AbstractFedoraObject $object) {
     // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're more
     // widely supported...
     $temp_file = drupal_tempnam('temporary://', 'dimensions');
@@ -502,8 +515,6 @@ function islandora_paged_content_page_derive_image_datastreams(FedoraObject $obj
     );
 
     drupal_unlink($temp_file);
-  }
-  return $ret;
 }
 
 /**
