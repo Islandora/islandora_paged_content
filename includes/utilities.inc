@@ -264,10 +264,15 @@ function islandora_paged_content_get_page_derivative_source(AbstractFedoraObject
   $source_dsid = islandora_paged_content_get_page_derivative_source_id($dsid);
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($object[$source_dsid]->mimeType);
-  $source_file
-    = drupal_realpath("temporary://{$object->id}_{$source_dsid}.{$ext}");
+
+  $base_name = "{$object->id}_{$source_dsid}.{$ext}";
+
+  // Colons mess with some programs...
+  $base_name = str_replace(':', '-', $base_name);
+
+  $source_file = file_create_filename($base_name, 'temporary://');
   $object[$source_dsid]->getContent($source_file);
-  return $source_file;
+  return drupal_realpath($source_file);
 }
 
 /**
@@ -588,6 +593,31 @@ function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $objec
   if ($options['preprocess']) {
     $source_file = islandora_paged_content_ocr_preprocess_image($source_file);
   }
+
+  // Check the depth of the image, to see if it can be processed with Tesseract...
+  // If it can not, reduce the depth and grayscale it...
+  if (module_exists('islandora_large_image')) {
+    module_load_include('inc', 'islandora_large_image', 'includes/derivatives');
+
+    $identify = islandora_large_image_get_identify();
+
+    $file = drupal_realpath($source_file);
+
+    $depth = intval(exec(escapeshellcmd("$identify -format \"%z\" $file")));
+
+    if ($depth > 8) {
+      $c_dest = file_create_filename(drupal_basename($source_file) . ".tif", 'temporary://');
+
+      $c_args = array(
+        '-colorspace gray',
+        '-depth 8',
+      );
+      $old_source = $source_file;
+      $source_file = islandora_large_image_imagemagick_convert($source_file, $c_dest, $c_args);
+      drupal_unlink($old_source);
+    }
+  }
+
   $ocr_file = islandora_ocr_create_ocr($source_file, $options);
   $hocr_file = islandora_ocr_create_hocr($source_file, $options);
   $ret = $ocr_file;
