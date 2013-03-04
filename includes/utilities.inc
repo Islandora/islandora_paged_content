@@ -30,26 +30,49 @@
  * @endcode
  */
 function islandora_paged_content_get_pages(FedoraObject $object) {
-  $query = 'select $object $page $label from <#ri>
-            where $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $object->id . '>
-            and $object <fedora-model:label> $label
-            and $object <http://islandora.ca/ontology/relsext#isSequenceNumber> $page
-            order by $page';
+  $query = <<<EOQ
+PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
+SELECT ?pid ?page ?label ?width ?height
+FROM <#ri>
+WHERE {
+  ?pid <fedora-rels-ext:isMemberOf> <info:fedora/{$object->id}> ;
+       <fedora-model:label> ?label ;
+       islandora-rels-ext:isSequenceNumber ?page .
+  OPTIONAL {
+    ?pid <fedora-view:disseminates> ?dss .
+    ?dss <fedora-view:disseminationType> <info:fedora/*/JP2> ;
+         islandora-rels-ext:width ?width ;
+         islandora-rels-ext:height ?height .
+ }
+}
+ORDER BY ?page
+EOQ;
 
-  $results = $object->repository->ri->query($query);
+  $results = $object->repository->ri->sparqlQuery($query);
+
+  // Get rid of the "extra" info...
   $map = function($o) {
-    return array(
-      'label' => $o['label']['value'],
-      'page' => $o['page']['value'],
-      'pid' => $o['object']['value'],
-    );
+    foreach ($o as $key => &$info) {
+      $info = $info['value'];
+    }
+
+    $o = array_filter($o);
+
+    return $o;
   };
   $pages = array_map($map, $results);
+
+  // Grab the PIDs...
   $get_pid = function($o) {
     return $o['pid'];
   };
   $pids = array_map($get_pid, $pages);
+
+  // If we have some pages, combine our remapped results to produce an array
+  // mapping pids to the values for that pid.
   $pages = count($pids) ? array_combine($pids, $pages) : array();
+
+  // Sort the pages into their proper order.
   $sort = function($a, $b) {
     $a = (is_array($a) && isset($a['page'])) ? $a['page'] : 0;
     $b = (is_array($b) && isset($b['page'])) ? $b['page'] : 0;
@@ -59,6 +82,7 @@ function islandora_paged_content_get_pages(FedoraObject $object) {
     return ($a < $b) ? -1 : 1;
   };
   uasort($pages, $sort);
+
   return $pages;
 }
 
@@ -240,10 +264,15 @@ function islandora_paged_content_get_page_derivative_source(AbstractFedoraObject
   $source_dsid = islandora_paged_content_get_page_derivative_source_id($dsid);
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($object[$source_dsid]->mimeType);
-  $source_file
-    = drupal_realpath("temporary://{$object->id}_{$source_dsid}.{$ext}");
+
+  $base_name = "{$object->id}_{$source_dsid}.{$ext}";
+
+  // Colons mess with some programs...
+  $base_name = str_replace(':', '-', $base_name);
+
+  $source_file = file_create_filename($base_name, 'temporary://');
   $object[$source_dsid]->getContent($source_file);
-  return $source_file;
+  return drupal_realpath($source_file);
 }
 
 /**
@@ -459,10 +488,38 @@ function islandora_paged_content_convert_to_pdf($image_file, array $options) {
  *   TRUE if successful, FALSE otherwise.
  */
 function islandora_paged_content_page_derive_image_datastreams(FedoraObject $object) {
-  module_load_include('inc',
-    'islandora_large_image',
-    'includes/derivatives');
-  return islandora_large_image_create_all_derivatives($object);
+  module_load_include('inc', 'islandora_large_image', 'includes/derivatives');
+  $ret = islandora_large_image_create_all_derivatives($object);
+  if ($ret) {
+    // Add dimensions for the JP2.
+    islandora_paged_content_add_dimensions_relationships($object);
+  }
+  return $ret;
+}
+
+/**
+ * Add the dimensions to the RELS-INT for the JP2.
+ *
+ * This makes the dimensions accessible when we query for the pages.
+ *
+ * @param AbstractFedoraObject $object
+ */
+function islandora_paged_content_add_dimensions_relationships(AbstractFedoraObject $object) {
+    // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're more
+    // widely supported...
+    $temp_file = drupal_tempnam('temporary://', 'dimensions');
+    $object['OBJ']->getContent($temp_file);
+    list($width, $height) = getimagesize($temp_file);
+
+    $rels = $object['JP2']->relationships;
+    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+      'width', $width, 1
+    );
+    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+      'height', $height, 1
+    );
+
+    drupal_unlink($temp_file);
 }
 
 /**
@@ -536,6 +593,31 @@ function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $objec
   if ($options['preprocess']) {
     $source_file = islandora_paged_content_ocr_preprocess_image($source_file);
   }
+
+  // Check the depth of the image, to see if it can be processed with Tesseract...
+  // If it can not, reduce the depth and grayscale it...
+  if (module_exists('islandora_large_image')) {
+    module_load_include('inc', 'islandora_large_image', 'includes/derivatives');
+
+    $identify = islandora_large_image_get_identify();
+
+    $file = drupal_realpath($source_file);
+
+    $depth = intval(exec(escapeshellcmd("$identify -format \"%z\" $file")));
+
+    if ($depth > 8) {
+      $c_dest = file_create_filename(drupal_basename($source_file) . ".tif", 'temporary://');
+
+      $c_args = array(
+        '-colorspace gray',
+        '-depth 8',
+      );
+      $old_source = $source_file;
+      $source_file = islandora_large_image_imagemagick_convert($source_file, $c_dest, $c_args);
+      drupal_unlink($old_source);
+    }
+  }
+
   $ocr_file = islandora_ocr_create_ocr($source_file, $options);
   $hocr_file = islandora_ocr_create_hocr($source_file, $options);
   $ret = $ocr_file;
