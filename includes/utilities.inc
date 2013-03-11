@@ -365,7 +365,7 @@ function islandora_paged_content_pdf_append($file, array $files) {
   $temp_file = "$file.temp.pdf";
   copy($file, $temp_file);
   array_unshift($files, $temp_file);
-  $ret = islandora_paged_content_combined_pdf($files, $file);
+  $ret = islandora_paged_content_pdf_combine($files, $file);
   file_unmanaged_delete($temp_file);
   return $ret;
 }
