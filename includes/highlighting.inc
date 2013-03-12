@@ -1,18 +1,32 @@
 <?php
 
-function islandora_paged_content_perform_solr_query($query, $params = array()) {
-  $params = array_merge_recursive($params, array(
+/**
+ * Performs a Solr query, adding in some defaults we need for highlighting.
+ *
+ * @param string $query
+ *   A Solr query string.
+ * @param array $params
+ *   An array of Solr parameters. Probably want to throw in at least an fq, to
+ *   restrict the results to those you are interested in.
+ *
+ * @return array
+ *   An array as per islandora_paged_content_parse_solr_highlighting().
+ */
+function islandora_paged_content_perform_solr_highlighting_query($query, $params = array()) {
+  $params = array(
     'fl' => array(
-      'PID'
+      'PID',
+      variable_get('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms'),
     ),
     'hl' => 'true',
     'qt' => variable_get('islandora_solr_request_handler', 'standard'),
     'hl.fl' => variable_get('islandora_paged_content_hocr_highlighting_field', 'text_nodes_HOCR_hlt'),
     'hl.useFastVectorHighlighter' => 'true',
     "hl.fragsize" => "18",
-    "hl.snippets" => "1000",
+    "hl.snippets" => "200",
     "hl.fragmenter" => "gap",
-  ));
+  ) + $params;
+
   $params['fl'] = implode(',', $params['fl']);
 
   $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
@@ -21,7 +35,7 @@ function islandora_paged_content_perform_solr_query($query, $params = array()) {
 
   // Query is executed.
   try {
-    $results = $solr->search($query, 0, 1, $params);
+    $results = $solr->search($query, 0, variable_get('islandora_paged_content_solr_result_count', '32'), $params);
     $results = json_decode($results->getRawResponse(), TRUE);
     return islandora_paged_content_parse_solr_highlighting($results);
   }
@@ -30,19 +44,39 @@ function islandora_paged_content_perform_solr_query($query, $params = array()) {
   }
 }
 
+/**
+ * Parse the Solr highlighting section in a manner we can reuse.
+ *
+ * @param array $solr_results
+ *   The Solr results; deserialized JSON.
+ *
+ * @return array
+ *   An associative array mapping PIDs to snippets to an array containing
+ *   the parameters for the bounding box of the given object.
+ */
 function islandora_paged_content_parse_solr_highlighting($solr_results) {
   $results = array();
 
-  $hl_pre = isset($solr_results['hl.tag.pre']) ? $solr_result['hl.tag.pre'] : '<em>';
-  $hl_post = isset($solr_results['hl.tag.post']) ? $solr_result['hl.tag.post'] : '</em>';
+  $params = $solr_results['responseHeader']['params'];
+  $hl_pre = isset($params['hl.tag.pre']) ? $params['hl.tag.pre'] : '<em>';
+  $hl_post = isset($params['hl.tag.post']) ? $params['hl.tag.post'] : '</em>';
   $d = '/';
   $snippet_content_pattern = $d . preg_quote($hl_pre, $d) . '([\w\s]+)' . preg_quote($hl_post, $d) . $d;
-
   $temp_name = drupal_realpath(drupal_tempnam('temporary://', 'hocrfile'));
   $dom = new DOMDocument();
 
-  foreach ($solr_results['highlighting'] as $id => $fields) {
-    $results[$id] = array();
+  $page_field_name = variable_get('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms');
+
+  foreach ($solr_results['response']['docs'] as $doc) {
+    $id = $doc['PID'];
+    $fields = $solr_results['highlighting'][$id];
+
+    $pages = (array)$doc[$page_field_name];
+    $results[$id] = array(
+      'page' => array(
+        'sequence_number' => reset($pages),
+      ),
+    );
 
     $obj = islandora_object_load($id);
     if (isset($obj['HOCR'])) {
@@ -50,6 +84,23 @@ function islandora_paged_content_parse_solr_highlighting($solr_results) {
       $hocr = new SimpleXMLElement($temp_name, 0, TRUE);
       $hocr->registerXPathNamespace('x', 'http://www.w3.org/1999/xhtml');
       $words = $hocr->xpath('//x:span[@class="ocrx_word" and @title]');
+
+      // Put the width and height in...
+      // XXX: Would end up taking only the last page, if there were multiple.
+      $page_matches = $hocr->xpath("//x:div[@class='ocr_page' and @title]");
+      if ($page_matches) {
+        foreach ($page_matches as $match) {
+          $page_dimensions = (string)$match['title'];
+          $values = explode(' ', $page_dimensions);
+          $results[$id]['page']['width'] = intval($values[5]);
+          $results[$id]['page']['height'] = intval($values[6]);
+        }
+      }
+      else {
+        // We need dimensions from somewhere...
+        module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+        $results[$id]['page'] += islandora_paged_content_get_page_dimensions($obj);
+      }
 
       foreach ($fields as $field => $snippets) {
         foreach ($snippets as $snippet) {
@@ -61,10 +112,9 @@ function islandora_paged_content_parse_solr_highlighting($solr_results) {
             foreach ($matches[1] as $match) {
               // Split up into separate tokens.
               $tokens = preg_split('/\s+/', $match);
-
               // For each match, produce a structure containing the bounding
               //   boxes.
-              $spans = islandora_paged_content_get_tokens_from_hocr($words, $tokens);
+              $spans = islandora_paged_content_get_phrase_from_hocr($words, $tokens);
               foreach ($spans as $span) {
                 $box = islandora_paged_content_get_bounding_box((string)$span['title']);
                 $results[$id]['snippets'][$snippet][] = $box;
@@ -81,21 +131,38 @@ function islandora_paged_content_parse_solr_highlighting($solr_results) {
   return $results;
 }
 
-function islandora_paged_content_get_tokens_from_hocr($words, $tokens) {
+/**
+ * Get the <span>s corresponding the the series of phrase.
+ *
+ * XPath can't really do sequences... Instead, we have all the spans holding
+ * words given to us.
+ *
+ * @param array $words
+ *   An array of SimpleXMLElements representing the <span>s.
+ * @param array $phrase
+ *   AN array of strings, representing a phrase to look for in the words.
+ */
+function islandora_paged_content_get_phrase_from_hocr($words, $phrase) {
   $spans = array();
 
-  // XPath can't really do sequences... Instead, we have all the spans holding
-  // words given to us.
-  $relevant_indicies = array_keys($words, $tokens[0]);
+  // Find where the phrase might start.
+  $relevant_indicies = array_keys($words, $phrase[0]);
+  // Get the number of terms in the phrase.
+  $number_of_phrase_terms = count($phrase);
+
+  // For each index where the phrase might start...
   foreach($relevant_indicies as $index) {
-    $count = count($tokens);
     $match = TRUE;
-    for ($i = 1; $i < $count && $match; $i++) {
-      $match = ((string)$words[$index + $i]) == $tokens[$i];
+
+    // Try to match all the terms in the phrase against those following the our
+    // previously indicated index.
+    for ($i = 1; $i < $number_of_phrase_terms && $match; $i++) {
+      $match = ((string)$words[$index + $i]) == $phrase[$i];
     }
 
+    // If we've a complete match, get the relevant elements to return.
     if ($match) {
-      $spans = array_merge($spans, array_slice($words, $index, $count));
+      $spans = array_merge($spans, array_slice($words, $index, $number_of_phrase_terms));
     }
   }
 
@@ -160,12 +227,10 @@ function islandora_paged_content_exact_term_match($object, $hocr_sxml, $terms) {
  *
  * @return array
  *   An associative array as follows:
- *   - id: The id of the given element.
- *   - class: The class of the given element, 'ocrx_word', 'ocr_line', etc.
- *   - l: The left most point of the element in pixels.
- *   - t: The top most point of the element in pixels.
- *   - r: The right most point of the element in pixels.
- *   - b: The bottom most point of the element in pixels.
+ *   - left: The left most point of the element in pixels.
+ *   - top: The top most point of the element in pixels.
+ *   - right: The right most point of the element in pixels.
+ *   - bottom: The bottom most point of the element in pixels.
  *  If the given element doesn't have a bounding box FALSE is returned.
  */
 function islandora_paged_content_get_bounding_box($title_attribute) {
