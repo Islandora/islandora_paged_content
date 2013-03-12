@@ -583,62 +583,19 @@ function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $objec
       ISLANDORA_RELS_EXT_URI,
       'hasLanguage',
       'eng'),
-    'preprocess' => islandora_paged_content_get_relationship($rels_ext,
-      ISLANDORA_RELS_EXT_URI,
-      'preprocess',
-      'false') == 'true',
   );
-  $source_file = islandora_paged_content_get_page_derivative_source($object,
-    'OCR');
-  if ($options['preprocess']) {
-    $source_file = islandora_paged_content_ocr_preprocess_image($source_file);
-  }
+
+  module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
+  $ret = islandora_ocr_derive_datastreams($object['OBJ'], $options);
 
   // Check the depth of the image, to see if it can be processed with Tesseract...
   // If it can not, reduce the depth and grayscale it...
-  if (module_exists('islandora_large_image')) {
-    module_load_include('inc', 'islandora_large_image', 'includes/derivatives');
-
-    $identify = islandora_large_image_get_identify();
-
-    $file = drupal_realpath($source_file);
-
-    $depth = intval(exec(escapeshellcmd("$identify -format \"%z\" $file")));
-
-    if ($depth > 8) {
-      $c_dest = file_create_filename(drupal_basename($source_file) . ".tif", 'temporary://');
-
-      $c_args = array(
-        '-colorspace gray',
-        '-depth 8',
-      );
-      $old_source = $source_file;
-      $source_file = islandora_large_image_imagemagick_convert($source_file, $c_dest, $c_args);
-      drupal_unlink($old_source);
-    }
-  }
-
-  $ocr_file = islandora_ocr_create_ocr($source_file, $options);
-  $hocr_file = islandora_ocr_create_hocr($source_file, $options);
-  $ret = $ocr_file;
-  $ret = $ret && islandora_paged_content_update_datastream($object, $ocr_file, 'OCR');
-  $ret = $ret && $hocr_file;
-  $ret = $ret && islandora_paged_content_update_datastream($object, $hocr_file, 'HOCR');
   $language = $options['language'];
-  $preprocess = $options['preprocess'] ? 'true' : 'false';
-  $rels_ext = $object->relationships;
   islandora_paged_content_set_relationship($rels_ext,
     ISLANDORA_RELS_EXT_URI,
     'hasLanguage',
     $language,
     TRUE);
-  islandora_paged_content_set_relationship($rels_ext,
-    ISLANDORA_RELS_EXT_URI,
-    'preprocess',
-    $preprocess,
-    TRUE);
-  $files = array_filter(array($source_file, $ocr_file, $hocr_file));
-  array_map('file_unmanaged_delete', $files);
   return $ret;
 }
 
