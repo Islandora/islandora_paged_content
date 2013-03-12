@@ -1,11 +1,15 @@
 <?php
+
 /**
  * @file
- * This is the main file for a module supporting paged content for Islandora.
+ * Defines management/helper/display functions for page like content.
  */
 
+/**
+ * Implements hook_menu().
+ */
 function islandora_paged_content_menu() {
-  $out = array(
+  return array(
     'admin/islandora/paged_content' => array(
       'title' => 'Paged Content Module',
       'description' => 'Configuration for the Paged Content solution pack.',
@@ -16,32 +20,38 @@ function islandora_paged_content_menu() {
       'type' => MENU_NORMAL_ITEM,
     ),
   );
+}
 
-  return $out;
+/**
+ * Implements hook_theme().
+ */
+function islandora_paged_content_theme() {
+  return array(
+    'islandora_paged_content_manage_pages_sequences_form' => array(
+      'render element' => 'form',
+      'file' => 'theme/theme.inc',
+    ),
+  );
 }
 
 /**
  * Determine whether or not to show this modules manage tab.
  *
- * @param FedoraObject $object
- *   The object being managed.
+ * @return bool
+ *   TRUE if they can access, FALSE otherwise.
+ */
+function islandora_paged_content_manage_page_access_callback($object, array $content_models) {
+  $permissions = array(FEDORA_ADD_DS, FEDORA_METADATA_EDIT, FEDORA_PURGE);
+  return islandora_user_access($object, $permissions, $content_models);
+}
+
+/**
+ * Checks whether the user can access the "manage pages" page.
  *
  * @return bool
- *   TRUE if it should be shown, and FALSE if it should not be shown.
+ *   TRUE if they can access, FALSE otherwise.
  */
-function islandora_paged_content_manage_page_access_callback($object = NULL) {
-  if (!isset($object)) {
-    return FALSE;
-  }
-  $manage_actions = array(
-    FEDORA_ADD_DS,
-  );
-  $can_access = function($perm) use($object) {
-    return  islandora_object_access_callback($perm, $object);
-  };
-  $can_manage = count(array_filter($manage_actions, $can_access));
-  $is_page = in_array('islandora:pageCModel', $object->models);
-  $is_page |= in_array('islandora:newspaperPageCModel', $object->models);
-  $is_page |= in_array('islandora:bookPageCModel', $object->models);
-  return $is_page && $can_manage;
+function islandora_paged_content_manage_pages_access_callback($object, array $content_models) {
+  $permissions = array(FEDORA_ADD_DS, FEDORA_METADATA_EDIT, FEDORA_PURGE, FEDORA_INGEST);
+  return islandora_user_access($object, $permissions, $content_models);
 }
