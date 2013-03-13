@@ -22,9 +22,14 @@ function islandora_paged_content_perform_solr_highlighting_query($query, $params
     'qt' => variable_get('islandora_solr_request_handler', 'standard'),
     'hl.fl' => variable_get('islandora_paged_content_hocr_highlighting_field', 'text_nodes_HOCR_hlt'),
     'hl.useFastVectorHighlighter' => 'true',
-    "hl.fragsize" => "18",
-    "hl.snippets" => "200",
-    "hl.fragmenter" => "gap",
+    // XXX: Could end up with a large fragment size with fielded
+    // searches... Don't really see it as a major issue, though.
+    // XXX: We add a bit to the fragsize, so we should get any characters
+    // surrounding the fragment--on either side--to be able to account for the
+    // fragment Solr selects vs what the first token may start with or the last
+    // may end with in the HOCR.
+    "hl.fragsize" => (int)(drupal_strlen($query) * 1.10),
+    "hl.snippets" => "8",
   ) + $params;
 
   $params['fl'] = implode(',', $params['fl']);
@@ -58,25 +63,37 @@ function islandora_paged_content_parse_solr_highlighting($solr_results) {
   $results = array();
 
   $params = $solr_results['responseHeader']['params'];
-  $hl_pre = isset($params['hl.tag.pre']) ? $params['hl.tag.pre'] : '<em>';
-  $hl_post = isset($params['hl.tag.post']) ? $params['hl.tag.post'] : '</em>';
+  if (isset($params['hl.useFastVectorHighlighter']) && $params['hl.useFastVectorHighlighter'] == 'true') {
+    $hl_pre = isset($params['hl.tag.pre']) ? $params['hl.tag.pre'] : '<em>';
+    $hl_post = isset($params['hl.tag.post']) ? $params['hl.tag.post'] : '</em>';
+  }
+  else {
+    $hl_pre = isset($params['hl.simple.pre']) ? $params['hl.simple.pre'] : '<em>';
+    $hl_post = isset($params['hl.simple.post']) ? $params['hl.simple.post'] : '</em>';
+  }
+
   $d = '/';
-  $snippet_content_pattern = $d . preg_quote($hl_pre, $d) . '([\w\s]+)' . preg_quote($hl_post, $d) . $d;
+  $not_whitespace = '([^\s]*)';
+  $snippet_content_pattern = $d . '(' . $not_whitespace .
+    preg_quote($hl_pre, $d) . '(.+)' . preg_quote($hl_post, $d) .
+    $not_whitespace . ')' . $d;
   $temp_name = drupal_realpath(drupal_tempnam('temporary://', 'hocrfile'));
   $dom = new DOMDocument();
 
   $page_field_name = variable_get('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms');
-
   foreach ($solr_results['response']['docs'] as $doc) {
     $id = $doc['PID'];
     $fields = $solr_results['highlighting'][$id];
 
-    $pages = (array)$doc[$page_field_name];
     $results[$id] = array(
-      'page' => array(
-        'sequence_number' => reset($pages),
-      ),
+      'page' => array(),
+      'snippets' => array(),
     );
+
+    if (isset($doc[$page_field_name])) {
+      $pages = (array)$doc[$page_field_name];
+      $results[$id]['page']['sequence_number'] = reset($pages);
+    }
 
     $obj = islandora_object_load($id);
     if (isset($obj['HOCR'])) {
@@ -109,9 +126,19 @@ function islandora_paged_content_parse_solr_highlighting($solr_results) {
           if(preg_match_all($snippet_content_pattern, $snippet, $matches)) {
             // For each match, finds all occurences of the given tokens in the
             // given order...
-            foreach ($matches[1] as $match) {
+            foreach ($matches[1] as $index => $match) {
               // Split up into separate tokens.
-              $tokens = preg_split('/\s+/', $match);
+              // XXX: Because Solr can ignore some characters included inside
+              // of the hOCR at the start or end of selected fragment, in is
+              // necessary to grab non-whitespace characters to either side of
+              // the fragment returned, so we can match against the actual
+              // HOCR.
+              $tokens = preg_split('/\s+/', format_string('!before_pre!solr_selected_fragment!after_post', array(
+                '!before_pre' => $matches[2][$index],
+                '!solr_selected_fragment' => $matches[3][$index],
+                '!after_post' => $matches[4][$index],
+              )));
+
               // For each match, produce a structure containing the bounding
               //   boxes.
               $spans = islandora_paged_content_get_phrase_from_hocr($words, $tokens);
@@ -147,6 +174,7 @@ function islandora_paged_content_get_phrase_from_hocr($words, $phrase) {
 
   // Find where the phrase might start.
   $relevant_indicies = array_keys($words, $phrase[0]);
+
   // Get the number of terms in the phrase.
   $number_of_phrase_terms = count($phrase);
 
