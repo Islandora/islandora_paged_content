@@ -66,7 +66,7 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
       '#type' => 'textfield',
       '#title' => t('A field that holds the page sequence numbers'),
       '#description' => t('This field should contain the page or sequence number of each page/image.'),
-      '#default_value' => $get_default_value('islandora_paged_content_sequence_number', 'RELS_EXT_isSequenceNumber_literal_ms'),
+      '#default_value' => $get_default_value('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms'),
     ),
     'islandora_paged_content_hocr_highlighting_field' => array(
       '#access' => $solr_enabled,
