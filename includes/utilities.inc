@@ -106,7 +106,7 @@ function islandora_paged_content_get_page_progression(FedoraObject $object) {
   if (count($results) > 0) {
     return $results[0]['page_progression']['value'];
   }
-  return 'lr';
+  return 'rl';
 }
 
 /**
