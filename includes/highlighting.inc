@@ -28,7 +28,7 @@ function islandora_paged_content_perform_solr_highlighting_query($query, $params
     // surrounding the fragment--on either side--to be able to account for the
     // fragment Solr selects vs what the first token may start with or the last
     // may end with in the HOCR.
-    "hl.fragsize" => (int)(drupal_strlen($query) * 1.10),
+    "hl.fragsize" => max((int)(drupal_strlen($query) * 1.10), 18),
     "hl.snippets" => "8",
   ) + $params;
 
