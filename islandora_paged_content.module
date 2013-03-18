@@ -21,50 +21,6 @@ function islandora_paged_content_menu() {
 }
 
 /**
- * This function will search a Fedora's object datastream's HOCR content for a
- * given term and return coordinate data. It only works on exact term matches.
- *
- * @param IslandoraFedoraObject $fedora_object
- *   The object to apply the search to.
- * @param string $term
- *   The term to search for.
- * @param string $hocr_dsid
- *   The HOCR datastream id.
- *
- * @return array
- *   $highlighting_info The coordinates of the matches to the term.
- */
-function islandora_paged_content_get_highlighting_info($fedora_object, $info, $hocr_dsid = 'HOCR') {
-  // Return nothing if the DSID is not populated.
-  if (!isset($fedora_object[$hocr_dsid])) {
-    return array();
-  }
-
-  // Return nothing if the XML is not populated.
-  $hocr_xml = @simplexml_load_string($fedora_object[$hocr_dsid]->content);
-  if (!$hocr_xml) {
-    return array();
-  }
-
-  $boxes = islandora_paged_content_solr_highlighting_match($fedora_object, $hocr_xml, $info);
-  if (!$boxes) {
-    $boxes = islandora_paged_content_exact_term_match($fedora_object, $hocr_xml, $info);
-  }
-
-  $highlighting_info['bounding_boxes'] = $boxes;
-
-  $page_matches = $hocr_xml->xpath("//node()[local-name() = 'div'][@class='ocr_page']");
-  foreach ($page_matches as $match) {
-    $page_dimensions = (string) $match['title'];
-    $values = explode(' ', $page_dimensions);
-    $highlighting_info['width'] = intval($values[5]);
-    $highlighting_info['height'] = intval($values[6]);
-  }
-
-  return $highlighting_info;
-}
-
-/**
  * Determine whether or not to show this modules manage tab.
  *
  * @param FedoraObject $object

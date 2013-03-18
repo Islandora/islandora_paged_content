@@ -68,25 +68,6 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
       '#description' => t('This field should contain the page or sequence number of each page/image.'),
       '#default_value' => $get_default_value('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms'),
     ),
-    'islandora_paged_content_hocr_highlighting_field' => array(
-      '#access' => $solr_enabled,
-      '#type' => 'textfield',
-      '#title' => t('A field that hold a field contain the OCR'),
-      '#description' => t('This field gets used for !fl_link, and so has to be analysed in a certain way.', array(
-        '!fl_link' => l(t('Fast Vector Highlighting'), 'http://wiki.apache.org/solr/HighlightingParameters', array(
-          'fragment' => 'hl.useFastVectorHighlighter',
-        )),
-      )),
-      '#default_value' => $get_default_value('islandora_paged_content_hocr_highlighting_field', 'text_nodes_HOCR_hlt'),
-    ),
-    'islandora_paged_content_solr_result_count' => array(
-      '#access' => $solr_enabled,
-      '#type' => 'textfield',
-      '#title' => t('The maximum number of results to return in a solr query'),
-      '#description' => t('The maximum number of pages that will be returned by a full text search.'),
-      '#element_validate' => array('element_validate_number'),
-      '#default_value' => $get_default_value('islandora_paged_content_solr_result_count', '32'),
-    ),
   );
   return system_settings_form($form);
 }
