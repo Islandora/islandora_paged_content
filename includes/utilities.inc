@@ -644,7 +644,7 @@ function islandora_paged_content_get_technical_metadata(FedoraObject $object) {
   $metadata = FALSE;
   $file = file_create_filename("{object->id}_{$dsid}.xml", 'temporary://');
   $file = drupal_realpath($file);
-  if (strpos($obj[$dsid]->mimetype, 'xml') !== FALSE && $object[$dsid]->getContent($file)) {
+  if (strpos($object[$dsid]->mimetype, 'xml') !== FALSE && $object[$dsid]->getContent($file)) {
     $doc = simplexml_load_file($file);
     $doc->registerXPathNamespace('ns', 'http://hul.harvard.edu/ois/xml/ns/fits/fits_output');
     $width = (int) array_pop($doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageWidth'));
