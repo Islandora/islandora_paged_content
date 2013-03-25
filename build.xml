@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="islandora_oai" default="build">
+<project name="islandora_paged_content" default="build">
   <target name="build" depends="clean,prepare,lint,phploc,code_sniff,phpcpd,pdepend,doxygen,phpcb" />
 
   <target name="clean" description="Cleanup build artifacts">
@@ -31,33 +31,24 @@
         <include name="**/*.test" />
         <modified />
       </fileset>
-
-      <fileset dir="${basedir}/includes">
-        <include name="**/*.php" />
-        <include name="**/*.inc" />
-        <include name="**/*.module" />
-        <include name="**/*.install" />
-        <include name="**/*.test" />
-        <modified />
-      </fileset>
     </apply>
   </target>
 
   <target name="phploc" description="Measure project size using PHPLOC">
     <exec executable="phploc">
-        <arg line="--log-csv ${basedir}/build/logs/phploc.csv --exclude build --exclude transforms --names *.php,*.module,*.inc,*.test ${basedir} ${basedir}/includes" />
+        <arg line="--log-csv ${basedir}/build/logs/phploc.csv --exclude build --names *.php,*.module,*.inc,*.test,*.install ${basedir}" />
     </exec>
   </target>
 
   <target name="code_sniff" description="Checks the code for Drupal coding standard violations" >
     <exec executable="phpcs">
-        <arg line="--standard=Drupal --report=checkstyle --report-file=${basedir}/build/logs/checkstyle.xml --extensions=php,inc,test,module,install --ignore=build/,transforms/ ${basedir} ${basedir}/includes" />
+        <arg line="--standard=Drupal --report=checkstyle --report-file=${basedir}/build/logs/checkstyle.xml --extensions=php,inc,test,module,install --ignore=build/ ${basedir}" />
     </exec>
   </target>
 
   <target name="phpcpd" description="Copy/Paste code detection">
     <exec executable="phpcpd">
-        <arg line="--log-pmd ${basedir}/build/logs/pmd-cpd.xml --exclude build --exclude transforms --names *.php,*.module,*.inc,*.test ${basedir} ${basedir}/includes" />
+        <arg line="--log-pmd ${basedir}/build/logs/pmd-cpd.xml --exclude build --names *.php,*.module,*.inc,*.test,*.install ${basedir}" />
     </exec>
   </target>
 
@@ -87,7 +78,7 @@
 
   <target name="test">
     <exec executable="drush">
-      <arg line="test-run --xml=${basedir}/build/test 'Islandora OAI'" />
+      <arg line="test-run --xml=${basedir}/build/test 'Islandora Paged Content'" />
     </exec>
   </target>
 
