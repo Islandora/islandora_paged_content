@@ -583,61 +583,117 @@ function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $objec
       ISLANDORA_RELS_EXT_URI,
       'hasLanguage',
       'eng'),
-    'preprocess' => islandora_paged_content_get_relationship($rels_ext,
-      ISLANDORA_RELS_EXT_URI,
-      'preprocess',
-      'false') == 'true',
   );
-  $source_file = islandora_paged_content_get_page_derivative_source($object,
-    'OCR');
-  if ($options['preprocess']) {
-    $source_file = islandora_paged_content_ocr_preprocess_image($source_file);
-  }
+
+  module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
+  $ret = islandora_ocr_derive_datastreams($object['OBJ'], $options);
 
   // Check the depth of the image, to see if it can be processed with Tesseract...
   // If it can not, reduce the depth and grayscale it...
-  if (module_exists('islandora_large_image')) {
-    module_load_include('inc', 'islandora_large_image', 'includes/derivatives');
-
-    $identify = islandora_large_image_get_identify();
-
-    $file = drupal_realpath($source_file);
-
-    $depth = intval(exec(escapeshellcmd("$identify -format \"%z\" $file")));
-
-    if ($depth > 8) {
-      $c_dest = file_create_filename(drupal_basename($source_file) . ".tif", 'temporary://');
-
-      $c_args = array(
-        '-colorspace gray',
-        '-depth 8',
-      );
-      $old_source = $source_file;
-      $source_file = islandora_large_image_imagemagick_convert($source_file, $c_dest, $c_args);
-      drupal_unlink($old_source);
-    }
-  }
-
-  $ocr_file = islandora_ocr_create_ocr($source_file, $options);
-  $hocr_file = islandora_ocr_create_hocr($source_file, $options);
-  $ret = $ocr_file;
-  $ret = $ret && islandora_paged_content_update_datastream($object, $ocr_file, 'OCR');
-  $ret = $ret && $hocr_file;
-  $ret = $ret && islandora_paged_content_update_datastream($object, $hocr_file, 'HOCR');
   $language = $options['language'];
-  $preprocess = $options['preprocess'] ? 'true' : 'false';
-  $rels_ext = $object->relationships;
   islandora_paged_content_set_relationship($rels_ext,
     ISLANDORA_RELS_EXT_URI,
     'hasLanguage',
     $language,
     TRUE);
-  islandora_paged_content_set_relationship($rels_ext,
-    ISLANDORA_RELS_EXT_URI,
-    'preprocess',
-    $preprocess,
-    TRUE);
-  $files = array_filter(array($source_file, $ocr_file, $hocr_file));
-  array_map('file_unmanaged_delete', $files);
   return $ret;
+}
+
+/**
+ * Fetches the given page's dimensions.
+ *
+ * Firsts attempts to get it from the FITS metadata datastream, if that fails
+ * it will use Djatoka.
+ *
+ * @param FedoraObject $object
+ *   The page object.
+ *
+ * @return array
+ *   An associative array containing the following fields.
+ *   - width: The width of the image in pixels.
+ *   - height: The width of the image in pixels.
+ *   If this function should fail for some reason all the fields will be 0.
+ */
+function islandora_paged_content_get_page_dimensions(FedoraObject $object) {
+  $dimensions = array('width' => 0, 'height' => 0);
+  $metadata = islandora_paged_content_get_technical_metadata($object);
+  $metadata = $metadata ? $metadata : islandora_paged_content_get_page_metadata_from_djatoka($object->id);
+  return $metadata ? array_intersect_key($metadata, $dimensions) : $dimensions;
+}
+
+/**
+ * Fetches the given page's technical metadata.
+ *
+ * The technical metadata is pull from the techincal metadata datastream created
+ * by islandora_fits.
+ *
+ * @param FedoraObject $object
+ *   The page object.
+ *
+ * @return array
+ *   An associative array containing the following fields.
+ *   - width: The width of the image in pixels.
+ *   - height: The width of the image in pixels.
+ *   If this function fails FALSE is returned.
+ */
+function islandora_paged_content_get_technical_metadata(FedoraObject $object) {
+  $dsid = variable_get('islandora_fits_techmd_dsid', 'TECHMD');
+  if (empty($object[$dsid])) {
+    return FALSE;
+  }
+  $metadata = FALSE;
+  $file = file_create_filename("{object->id}_{$dsid}.xml", 'temporary://');
+  $file = drupal_realpath($file);
+  if (strpos($object[$dsid]->mimetype, 'xml') !== FALSE && $object[$dsid]->getContent($file)) {
+    $doc = simplexml_load_file($file);
+    $doc->registerXPathNamespace('ns', 'http://hul.harvard.edu/ois/xml/ns/fits/fits_output');
+    $width = (int) array_pop($doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageWidth'));
+    $height = (int) array_pop($doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageHeight'));
+    $metadata = array('width' => $width, 'height' => $height);
+  }
+  file_unmanaged_delete($file);
+  return $metadata;
+}
+
+/**
+ * Fetches the given page's metadata via Djatoka.
+ *
+ * @param string $object_id
+ *   The PID of the page to fetch the metadata from.
+ *
+ * @return array
+ *   An associative array contatining the following string fields:
+ *   - identifier: The URL to the resource.
+ *   - imagefile: The path to the temp file being served.
+ *   - width: The width of the image in pixels.
+ *   - height: The width of the image in pixels.
+ *   - dwtLevels: ???
+ *   - levels: ???
+ *   - compositingLayerCount: ???
+ *   If the request to Djatoka fails then FALSE is returned.
+ */
+function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
+  module_load_include('inc', 'islandora', 'includes/authtokens');
+  $datastream_url = url("islandora/object/{$object_id}/datastream/JP2/view", array(
+    'absolute' => TRUE,
+    'query' => array(
+      'token' => islandora_get_object_token($object_id, 'JP2'),
+    ),
+  ));
+
+  $djatoka_url = variable_get('islandora_paged_content_djatoka_url', 'http://localhost:8080/adore-djatoka');
+  $djatoka_url .= (substr($djatoka_url, -1) == '/') ? '' : '/';
+  $djatoka_url = url($djatoka_url . "resolver", array(
+    'query' => array(
+      'url_ver' => 'Z39.88-2004',
+      'rft_id' => $datastream_url,
+      'svc_id' => 'info:lanl-repo/svc/getMetadata',
+    ),
+    'external' => TRUE,
+  ));
+  $request = drupal_http_request($djatoka_url);
+  if ($request->code == '200') {
+    return drupal_json_decode($request->data);
+  }
+  return FALSE;
 }
