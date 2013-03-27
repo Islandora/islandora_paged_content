@@ -31,6 +31,12 @@ function islandora_paged_content_theme() {
       'render element' => 'form',
       'file' => 'theme/theme.inc',
     ),
+    'islandora_paged_content_page_navigator' => array(
+      'file' => 'theme/theme.inc',
+      'variables' => array(
+        'object' => NULL,
+      ),
+    ),
   );
 }
 
@@ -52,6 +58,11 @@ function islandora_paged_content_manage_page_access_callback($object, array $con
  *   TRUE if they can access, FALSE otherwise.
  */
 function islandora_paged_content_manage_pages_access_callback($object, array $content_models) {
-  $permissions = array(FEDORA_ADD_DS, FEDORA_METADATA_EDIT, FEDORA_PURGE, FEDORA_INGEST);
+  $permissions = array(
+    FEDORA_ADD_DS,
+    FEDORA_METADATA_EDIT,
+    FEDORA_PURGE,
+    FEDORA_INGEST,
+  );
   return islandora_user_access($object, $permissions, $content_models);
 }
