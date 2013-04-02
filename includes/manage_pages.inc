@@ -97,7 +97,7 @@ function islandora_paged_content_manage_pages_pdf_form(array $form, array &$form
   return array(
     'description' => array(
       '#type' => 'item',
-      '#description' => t('You must have the <b>ImageMagick</b> and <b>GhostScript</b> installed to create/combine PDF files.<br/> This will also update the PDF datastreams for each Page object.'),
+      '#description' => t('You must have both <b>ImageMagick</b> and <b>GhostScript</b> installed to create/combine PDF files.<br/> This will also update the PDF datastreams for each Page object.'),
     ),
     'dpi' => array(
       '#type' => 'select',
@@ -160,13 +160,13 @@ function islandora_paged_content_manage_pages_ocr_form(array $form, array &$form
   return array(
     'description' => array(
       '#type' => 'item',
-      '#description' => t('You must have the <b>Tesseract</b> installed to perform OCR.<br/> This will update the OCR and HOCR datastreams for each Page object.'),
+      '#description' => t('You must have <b>Tesseract</b> installed to perform OCR.<br/> This will update the OCR and HOCR datastreams for each Page object.'),
     ),
     'language' => array(
       '#access' => $can_derive,
       '#title' => t('Language'),
       '#type' => 'select',
-      '#description' => t('Please select the language that the page is written in.'),
+      '#description' => t('Please select the language the pages are written in.'),
       '#options' => $languages,
     ),
     'submit' => array(
@@ -214,7 +214,7 @@ function islandora_paged_content_manage_pages_thumbnail_form(array $form, array 
   return array(
     'description' => array(
       '#type' => 'item',
-      '#description' => t("Update the thumbnail image. Must have pages and the first page must have a TN datastream."),
+      '#description' => t("Update the thumbnail image. The book must have pages, and the first page must have a TN datastream."),
     ),
     'submit' => array(
       '#disabled' => !islandora_paged_content_can_update_paged_content_thumbnail($object),
@@ -260,7 +260,7 @@ function islandora_paged_content_manage_pages_images_form(array $form, array &$f
   return array(
     'description' => array(
       '#type' => 'item',
-      '#description' => t('You must have the <b>Large Image Solution Pack</b> installed to perform create images.<br/> This will update the TN, JPG, and JP2 datastreams for each Page object.'),
+      '#description' => t('You must have the <b>Large Image Solution Pack</b> installed to create image derivatives.<br/> This will update the TN, JPG and JP2 datastreams for each page object.'),
     ),
     'submit' => array(
       '#disabled' => !$can_derive,

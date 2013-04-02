@@ -140,8 +140,8 @@ function islandora_paged_content_create_pdf_batch(FedoraObject $paged_content, a
           $paged_content)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
-    'title' => t('Creating PDF from @label', array('@label' => $paged_content->label)),
-    'init_message' => t('Preparing to create PDF from @label.', array('@label' => $paged_content->label)),
+    'title' => t('Creating PDF from @label ...', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to create PDF from @label ...', array('@label' => $paged_content->label)),
     'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
@@ -168,7 +168,7 @@ function islandora_paged_content_create_pdf_page_batch_operation(array $pages, a
     $context['results']['pages'][] = $pdf_file;
     $context['results']['successful'][] = islandora_paged_content_update_datastream($page, $pdf_file, 'PDF');
     islandora_paged_content_end_batch_operation($context);
-    $context['message'] = t('Converting page @page of @total into a PDF', array(
+    $context['message'] = t('Converting page @page of @total into a PDF ...', array(
                             '@page' => $context['sandbox']['progress'],
                             '@total' => $context['sandbox']['total']));
   }
@@ -198,7 +198,7 @@ function islandora_paged_content_create_pdf_paged_content_batch_operation(Fedora
     islandora_paged_content_update_datastream($paged_content, $pdf_file, 'PDF');
     $context['results']['files'][] = $pdf_file;
   }
-  $context['message'] = t('Adding page @page of @total to the PDF', array(
+  $context['message'] = t('Adding page @page of @total to the PDF ...', array(
                           '@page' => $context['sandbox']['progress'],
                           '@total' => $context['sandbox']['total']));
 }
@@ -223,8 +223,8 @@ function islandora_paged_content_create_ocr_batch(FedoraObject $paged_content, a
           $pages, $options)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
-    'title' => t('Performing OCR on @label', array('@label' => $paged_content->label)),
-    'init_message' => t('Preparing to perform OCR on @label.', array('@label' => $paged_content->label)),
+    'title' => t('Performing OCR on @label ...', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to perform OCR on @label ...', array('@label' => $paged_content->label)),
     'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
@@ -248,7 +248,7 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
     $page = islandora_object_load($page);
     $context['results']['successful'][] = islandora_paged_content_page_derive_ocr_datastreams($page, $options);
     islandora_paged_content_end_batch_operation($context, 1, array('Performed OCR on @successful of @total pages.'));
-    $context['message'] = t('Performing OCR on page @page of @total.', array(
+    $context['message'] = t('Performing OCR on page @page of @total ...', array(
                             '@page' => $context['sandbox']['progress'],
                             '@total' => $context['sandbox']['total']));
   }
@@ -272,8 +272,8 @@ function islandora_paged_content_create_images_batch(FedoraObject $paged_content
           $paged_content, $pages)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
-    'title' => t('Creating Images for @label', array('@label' => $paged_content->label)),
-    'init_message' => t('Preparing to create images for @label.', array('@label' => $paged_content->label)),
+    'title' => t('Creating Images for @label ...', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to create images for @label ...', array('@label' => $paged_content->label)),
     'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
@@ -299,7 +299,7 @@ function islandora_paged_content_create_images_batch_operation(FedoraObject $pag
     if (islandora_paged_content_end_batch_operation($context, 1, array('Created images for @successful of @total pages.'))) {
       islandora_paged_content_update_paged_content_thumbnail($paged_content);
     }
-    $context['message'] = t('Creating images for page @page of @total.', array(
+    $context['message'] = t('Creating images for page @page of @total ...', array(
                             '@page' => $context['sandbox']['progress'],
                             '@total' => $context['sandbox']['total']));
   }
@@ -326,8 +326,8 @@ function islandora_paged_content_sequence_pages_batch(FedoraObject $paged_conten
           $paged_content, $pages)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
-    'title' => t("Sequencing @label's pages", array('@label' => $paged_content->label)),
-    'init_message' => t("Preparing to sequence @label's pages.", array('@label' => $paged_content->label)),
+    'title' => t("Sequencing @label's pages ...", array('@label' => $paged_content->label)),
+    'init_message' => t("Preparing to sequence @label's pages ...", array('@label' => $paged_content->label)),
     'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
@@ -381,8 +381,8 @@ function islandora_paged_content_delete_pages_batch(FedoraObject $paged_content,
           $paged_content, $pages)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
-    'title' => t('Deleting page(s) from @label', array('@label' => $paged_content->label)),
-    'init_message' => t('Preparing to delete page(s) from @label.', array('@label' => $paged_content->label)),
+    'title' => t('Deleting page(s) from @label ...', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to delete page(s) from @label ...', array('@label' => $paged_content->label)),
     'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
@@ -404,7 +404,7 @@ function islandora_paged_content_delete_pages_batch_operation(FedoraObject $page
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
     $page = islandora_object_load($page);
-    $context['message'] = t('Deleting page "@label" (@pid)', array('@label' => $page->label, '@pid' => $page->id));
+    $context['message'] = t('Deleting page "@label" (@pid) ...', array('@label' => $page->label, '@pid' => $page->id));
     $context['results']['successful'][] = islandora_delete_object($page);
     if (islandora_paged_content_end_batch_operation($context, 1, array('Deleted @successful of @total pages.'))) {
       islandora_paged_content_update_paged_content_thumbnail($paged_content);

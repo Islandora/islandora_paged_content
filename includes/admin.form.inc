@@ -33,8 +33,8 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
       '#title' => t('PDF Derivative Settings'),
       'islandora_paged_content_gs' => array(
         '#type' => 'textfield',
-        '#title' => t('GS (GhostScript)'),
-        '#description' => t('GhostScript is used to combine PDF files and generate a PDF representation of a book or newspaper.<br/>!msg',
+        '#title' => t('gs (GhostScript)'),
+        '#description' => t('GhostScript is used to combine PDF files into a representation of a book or newspaper.<br/>!msg',
                         array('!msg' => islandora_paged_content_admin_settings_form_executable_available_message($gs))),
         '#default_value' => $gs,
         '#prefix' => '<div id="gs-wrapper">',
@@ -51,8 +51,8 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
       '#type' => 'textfield',
       '#prefix' => '<div id="djatoka-path-wrapper">',
       '#suffix' => '</div>',
-      '#title' => t('Djatoka URL'),
-      '#description' => t('URL to Djatoka instance.<br/>!msg', array('!msg' => $djatoka_availible_message)),
+      '#title' => t('djatoka URL'),
+      '#description' => t('URL to the djatoka instance.<br/>!msg', array('!msg' => $djatoka_availible_message)),
       '#default_value' => $djatoka_url,
       '#ajax' => array(
         'callback' => 'islandora_paged_content_admin_settings_form_djatoka_ajax_callback',
@@ -64,8 +64,8 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
     'islandora_paged_content_sequence_number_field' => array(
       '#access' => $solr_enabled,
       '#type' => 'textfield',
-      '#title' => t('A field that holds the page sequence numbers'),
-      '#description' => t('This field should contain the page or sequence number of each page/image.'),
+      '#title' => t('Solr page sequence number field'),
+      '#description' => t('The page or sequence number of each page or image.'),
       '#default_value' => $get_default_value('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms'),
     ),
   );
@@ -135,7 +135,7 @@ function islandora_paged_content_admin_settings_form_djatoka_availible_message($
   $djatoka_availible = strstr($file_headers[0], '200') !== FALSE;
   if ($djatoka_availible) {
     $image = theme_image(array('path' => 'misc/watchdog-ok.png', 'attributes' => array()));
-    $message = t('Djatoka url is valid.');
+    $message = t('djatoka url is valid.');
   }
   else {
     $image = theme_image(array('path' => 'misc/watchdog-error.png', 'attributes' => array()));
