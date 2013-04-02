@@ -388,7 +388,7 @@ function islandora_paged_content_pdf_combine(array $files, $out) {
   $output = array(); $ret = 0;
   exec($command, $output, $ret);
   if ($ret != 0) {
-    $message = 'gs failed to combined PDF<br/>Error: @ret<br/>Command: @command <br/>Output !output';
+    $message = 'GhostScript failed to combine PDFs.<br/>Error: @ret<br/>Command: @command <br/>Output !output';
     $variables = array(
       '@ret' => $ret,
       '@command' => $command,
@@ -465,7 +465,7 @@ function islandora_paged_content_convert_to_pdf($image_file, array $options) {
   $command_args = "{$options} {$image_file} {$pdf_file}";
   $output = array(); $ret = 0;
   if (_imagemagick_convert_exec($command_args, $output, $ret) !== TRUE) {
-    $message = 'imagemagick convert failed to create pdf<br/>Error: ';
+    $message = 'ImageMagick failed to create a PDF.<br/>Error: ';
     $message .= '@ret<br/>Command: @command<br/>Output: !output';
     $variables = array(
       '@ret' => $ret,
