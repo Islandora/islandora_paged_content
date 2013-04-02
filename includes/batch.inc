@@ -364,8 +364,7 @@ function islandora_paged_content_sequence_pages_batch_operation(FedoraObject $pa
 }
 
 /**
- * Gets the batch definition for deleting the given pages from the given paged
- * content.
+ * Gets the batch definition for deleting the given pages.
  *
  * @param FedoraObject $paged_content
  *   The paged content the pages belong to.
