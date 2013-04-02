@@ -17,10 +17,16 @@
  *   The Drupal form definition.
  */
 function islandora_paged_content_admin_settings_form(array $form, array &$form_state) {
+  form_load_include($form_state, 'inc', 'islandora_paged_content', 'includes/admin.form');
   $get_default_value = function($name, $default) use(&$form_state) {
     return isset($form_state['values'][$name]) ? $form_state['values'][$name] : variable_get($name, $default);
   };
   $gs = $get_default_value('islandora_paged_content_gs', '/usr/bin/gs');
+
+  $djatoka_url = $get_default_value('islandora_paged_content_djatoka_url', 'http://localhost:8080/adore-djatoka/');
+  $djatoka_availible_message = islandora_paged_content_admin_settings_form_djatoka_availible_message($djatoka_url);
+  $solr_enabled = module_exists('islandora_solr');
+
   $form = array(
     'pdf_derivative_settings' => array(
       '#type' => 'fieldset',
@@ -40,6 +46,27 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
           'event' => 'change',
         ),
       ),
+    ),
+    'islandora_paged_content_djatoka_url' => array(
+      '#type' => 'textfield',
+      '#prefix' => '<div id="djatoka-path-wrapper">',
+      '#suffix' => '</div>',
+      '#title' => t('Djatoka URL'),
+      '#description' => t('URL to Djatoka instance.<br/>!msg', array('!msg' => $djatoka_availible_message)),
+      '#default_value' => $djatoka_url,
+      '#ajax' => array(
+        'callback' => 'islandora_paged_content_admin_settings_form_djatoka_ajax_callback',
+        'wrapper' => 'djatoka-path-wrapper',
+        'effect' => 'fade',
+        'event' => 'change',
+      ),
+    ),
+    'islandora_paged_content_sequence_number_field' => array(
+      '#access' => $solr_enabled,
+      '#type' => 'textfield',
+      '#title' => t('A field that holds the page sequence numbers'),
+      '#description' => t('This field should contain the page or sequence number of each page/image.'),
+      '#default_value' => $get_default_value('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms'),
     ),
   );
   return system_settings_form($form);
@@ -91,4 +118,43 @@ function islandora_paged_content_admin_settings_form_executable_available_messag
  */
 function islandora_paged_content_admin_settings_form_gs_ajax_callback(array $form, array $form_state) {
   return $form['local_derivative_settings']['pdf_derivative_settings']['islandora_book_gs'];
+}
+
+/**
+ * Gets a message to display if the djatoka is accessible or not.
+ *
+ * @param string $djatoka_url
+ *   The url to an djatoka instance typically
+ *   http://localhost:8080/adore-djatoka.
+ *
+ * @return string
+ *   A message in html detailing if the djatoka is accessible.
+ */
+function islandora_paged_content_admin_settings_form_djatoka_availible_message($djatoka_url) {
+  $file_headers = @get_headers($djatoka_url);
+  $djatoka_availible = strstr($file_headers[0], '200') !== FALSE;
+  if ($djatoka_availible) {
+    $image = theme_image(array('path' => 'misc/watchdog-ok.png', 'attributes' => array()));
+    $message = t('Djatoka url is valid.');
+  }
+  else {
+    $image = theme_image(array('path' => 'misc/watchdog-error.png', 'attributes' => array()));
+    $message = t('Unable to locate djatoka installation at @path', array('@path' => $djatoka_url));
+  }
+  return $image . $message;
+}
+
+/**
+ * Ajax callback for the djatoka url textfield.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ *
+ * @return array
+ *   The element to render as part the ajax callback.
+ */
+function islandora_paged_content_admin_settings_form_djatoka_ajax_callback(array $form, array &$form_state) {
+  return $form['islandora_paged_content_djatoka_url'];
 }

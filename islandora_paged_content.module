@@ -1,11 +1,15 @@
 <?php
+
 /**
  * @file
- * This is the main file for a module supporting paged content for Islandora.
+ * Defines management/helper/display functions for page like content.
  */
 
+/**
+ * Implements hook_menu().
+ */
 function islandora_paged_content_menu() {
-  $out = array(
+  return array(
     'admin/islandora/paged_content' => array(
       'title' => 'Paged Content Module',
       'description' => 'Configuration for the Paged Content solution pack.',
@@ -16,88 +20,49 @@ function islandora_paged_content_menu() {
       'type' => MENU_NORMAL_ITEM,
     ),
   );
-
-  return $out;
 }
 
 /**
- * This function will search a Fedora's object datastream's HOCR content for a
- * given term and return coordinate data. It only works on exact term matches.
- *
- * @param IslandoraFedoraObject $fedora_object
- *   The object to apply the search to.
- * @param string $term
- *   The term to search for.
- * @param string $hocr_dsid
- *   The HOCR datastream id.
- *
- * @return array
- *   $highlighting_info The coordinates of the matches to the term.
+ * Implements hook_theme().
  */
-function islandora_paged_content_get_highlighting_info($fedora_object, $term, $hocr_dsid = 'HOCR') {
-  $boxes = array();
-  // Return nothing if the DSID is not populated.
-  if (!isset($fedora_object[$hocr_dsid])) {
-    return array();
-  }
-
-  // Return nothing if the XML is not populated.
-  $hocr_xml = @simplexml_load_string($fedora_object[$hocr_dsid]->content);
-  if (!$hocr_xml) {
-    return array();
-  }
-
-  $lower_term = strtolower($term);
-  $lower_term = urldecode($lower_term);
-  $terms = explode(' ', $lower_term);
-  foreach ($terms as $term) {
-    $matches = $hocr_xml->xpath("//node()[local-name() = 'span'][translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='{$term}']");
-    foreach ($matches as $match) {
-      $bbox = (string) $match['title'];
-      $values = explode(' ', $bbox);
-      $boxes[] = array(
-        'left' => intval($values[1]),
-        'top' => intval($values[2]),
-        'right' => intval($values[3]),
-        'bottom' => intval($values[4]),
-      );
-    }
-  }
-  $highlighting_info['bounding_boxes'] = $boxes;
-
-  $page_matches = $hocr_xml->xpath("//node()[local-name() = 'div'][@class='ocr_page']");
-  foreach ($page_matches as $match) {
-    $page_dimensions = (string) $match['title'];
-    $values = explode(' ', $page_dimensions);
-    $highlighting_info['width'] = intval($values[5]);
-    $highlighting_info['height'] = intval($values[6]);
-  }
-
-  return $highlighting_info;
+function islandora_paged_content_theme() {
+  return array(
+    'islandora_paged_content_manage_pages_sequences_form' => array(
+      'render element' => 'form',
+      'file' => 'theme/theme.inc',
+    ),
+    'islandora_paged_content_page_navigator' => array(
+      'file' => 'theme/theme.inc',
+      'variables' => array(
+        'object' => NULL,
+      ),
+    ),
+  );
 }
 
 /**
  * Determine whether or not to show this modules manage tab.
  *
- * @param FedoraObject $object
- *   The object being managed.
+ * @return bool
+ *   TRUE if they can access, FALSE otherwise.
+ */
+function islandora_paged_content_manage_page_access_callback($object, array $content_models) {
+  $permissions = array(FEDORA_ADD_DS, FEDORA_METADATA_EDIT, FEDORA_PURGE);
+  return islandora_user_access($object, $permissions, $content_models);
+}
+
+/**
+ * Checks whether the user can access the "manage pages" page.
  *
  * @return bool
- *   TRUE if it should be shown, and FALSE if it should not be shown.
+ *   TRUE if they can access, FALSE otherwise.
  */
-function islandora_paged_content_manage_page_access_callback($object = NULL) {
-  if (!isset($object)) {
-    return FALSE;
-  }
-  $manage_actions = array(
+function islandora_paged_content_manage_pages_access_callback($object, array $content_models) {
+  $permissions = array(
     FEDORA_ADD_DS,
+    FEDORA_METADATA_EDIT,
+    FEDORA_PURGE,
+    FEDORA_INGEST,
   );
-  $can_access = function($perm) use($object) {
-    return  islandora_object_access_callback($perm, $object);
-  };
-  $can_manage = count(array_filter($manage_actions, $can_access));
-  $is_page = in_array('islandora:pageCModel', $object->models);
-  $is_page |= in_array('islandora:newspaperPageCModel', $object->models);
-  $is_page |= in_array('islandora:bookPageCModel', $object->models);
-  return $is_page && $can_manage;
+  return islandora_user_access($object, $permissions, $content_models);
 }
