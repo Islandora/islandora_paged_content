@@ -26,7 +26,7 @@ function islandora_paged_content_upload_page_form(array $form, array &$form_stat
     'file' => array(
       '#title' => t('Page'),
       '#type' => 'managed_file',
-      '#description' => t('Select page image to upload.<br/>Files must be less than <b>@size MB.</b><br/>Allowed file types: <b>@ext.</b>', array('@size' => $upload_size, '@ext' => $extensions[0])),
+      '#description' => t('Select an image to upload.<br/>Files must be less than <b>@size MB.</b><br/>Allowed file types: <b>@ext.</b>', array('@size' => $upload_size, '@ext' => $extensions[0])),
       '#default_value' => $get_default_value('files', NULL),
       '#upload_location' => 'temporary://',
       '#required' => TRUE,
@@ -39,7 +39,7 @@ function islandora_paged_content_upload_page_form(array $form, array &$form_stat
       '#access' => module_exists('islandora_ocr'),
       '#title' => t('Language'),
       '#type' => 'select',
-      '#description' => t('Please select the language that the page is written in.'),
+      '#description' => t('Please select the language the page is written in.'),
       '#options' => $languages,
       '#default_value' => $get_default_value('language', NULL),
     ),
