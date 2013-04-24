@@ -27,6 +27,8 @@ require_once dirname(__FILE__) . '/batch.inc';
  *   book objects.
  */
 function islandora_paged_content_manage_pages_menu(FedoraObject $object) {
+  module_load_include('inc', 'islandora', 'includes/breadcrumb');
+  drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
   drupal_set_title($object->label);
   return array(
     'manage_pages' => array(
