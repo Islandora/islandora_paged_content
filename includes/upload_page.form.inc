@@ -13,7 +13,7 @@
  * @param array $form_state
  *   The Drupal form state.
  */
-function islandora_paged_content_upload_page_form(array $form, array &$form_state, FedoraObject $parent) {
+function islandora_paged_content_upload_page_form(array $form, array &$form_state, AbstractObject $parent) {
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $get_default_value = function($name, $default) use(&$form_state) {
     return isset($form_state['values'][$name]) ? $form_state['values'][$name] : $default;
