@@ -19,6 +19,7 @@
  * @return array
  *   All the pages in the given paged content object.
  *
+ * // @codingStandardsIgnoreStart
  * @code
  *   array(
  *     'islandora:100' => array(
@@ -28,6 +29,7 @@
  *      )
  *   );
  * @endcode
+ * // @codingStandardsIgnoreEnd
  */
 function islandora_paged_content_get_pages(FedoraObject $object) {
   $query = <<<EOQ
@@ -87,8 +89,7 @@ EOQ;
 }
 
 /**
- * Gets the page progression to be used in a viewer from the given paged content
- * object.
+ * Gets the page progression to be used in a viewer from the given paged content object.
  *
  * @param FedoraObject $object
  *   The paged content object to fetch the page progression from.
@@ -394,7 +395,7 @@ function islandora_paged_content_pdf_combine(array $files, $out) {
       '@command' => $command,
       '!output' => implode('<br/>', $output),
     );
-    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    watchdog('islandora_paged_content', "@message", array("@message" => $message), $variables, WATCHDOG_ERROR);
     return FALSE;
   }
   return TRUE;
@@ -472,7 +473,7 @@ function islandora_paged_content_convert_to_pdf($image_file, array $options) {
       '@command' => "convert $command_args",
       '!output' => implode('<br/>', $output),
     );
-    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    watchdog('islandora_paged_content', "@message", array("@message" => $message), $variables, WATCHDOG_ERROR);
     return FALSE;
   }
   return $pdf_file;
@@ -505,21 +506,21 @@ function islandora_paged_content_page_derive_image_datastreams(FedoraObject $obj
  * @param AbstractFedoraObject $object
  */
 function islandora_paged_content_add_dimensions_relationships(AbstractFedoraObject $object) {
-    // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're more
-    // widely supported...
-    $temp_file = drupal_tempnam('temporary://', 'dimensions');
-    $object['OBJ']->getContent($temp_file);
-    list($width, $height) = getimagesize($temp_file);
+  // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're
+  // more widely supported...
+  $temp_file = drupal_tempnam('temporary://', 'dimensions');
+  $object['OBJ']->getContent($temp_file);
+  list($width, $height) = getimagesize($temp_file);
 
-    $rels = $object['JP2']->relationships;
-    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
-      'width', $width, 1
-    );
-    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
-      'height', $height, 1
-    );
+  $rels = $object['JP2']->relationships;
+  islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+    'width', $width, 1
+  );
+  islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+    'height', $height, 1
+  );
 
-    drupal_unlink($temp_file);
+  drupal_unlink($temp_file);
 }
 
 /**
@@ -536,8 +537,7 @@ function islandora_paged_content_can_update_paged_content_thumbnail(FedoraObject
 }
 
 /**
- * Updates the given paged content's thumbnail from the first page in the paged
- * content.
+ * Updates the given paged content's thumbnail from the first page in the paged content.
  *
  * @param FedoraObject $object
  *   The paged content object to update.
@@ -588,7 +588,7 @@ function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $objec
   module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
   $ret = islandora_ocr_derive_datastreams($object['OBJ'], $options);
 
-  // Check the depth of the image, to see if it can be processed with Tesseract...
+  // Check the depth of the image, to see if it can be processed with Tesseract
   // If it can not, reduce the depth and grayscale it...
   $language = $options['language'];
   islandora_paged_content_set_relationship($rels_ext,
