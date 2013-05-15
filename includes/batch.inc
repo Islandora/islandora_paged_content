@@ -121,7 +121,7 @@ function islandora_paged_content_batch_finished($success, $results, $operations)
  *
  * This also updates each page object with a corresponding pdf.
  *
- * @param FedoraObject $paged_content
+ * @param AbstractObject $paged_content
  *   The paged_content the pages belong to.
  * @param array $pages
  *   All the pages to include in the PDF.
@@ -131,7 +131,7 @@ function islandora_paged_content_batch_finished($success, $results, $operations)
  * @return array
  *   The batch definition.
  */
-function islandora_paged_content_create_pdf_batch(FedoraObject $paged_content, array $pages, array $options) {
+function islandora_paged_content_create_pdf_batch(AbstractObject $paged_content, array $pages, array $options) {
   return array(
     'operations' => array(
       array('islandora_paged_content_create_pdf_page_batch_operation', array(
@@ -177,12 +177,12 @@ function islandora_paged_content_create_pdf_page_batch_operation(array $pages, a
 /**
  * Batch operation for combining PDF files.
  *
- * @param FedoraObject $paged_content
+ * @param AbstractObject $paged_content
  *   The paged content to store the PDF file.
  * @param array $context
  *   The context of this batch operation.
  */
-function islandora_paged_content_create_pdf_paged_content_batch_operation(FedoraObject $paged_content, &$context) {
+function islandora_paged_content_create_pdf_paged_content_batch_operation(AbstractObject $paged_content, &$context) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   if (empty($context['results']['pages'])) {
     return;
@@ -206,7 +206,7 @@ function islandora_paged_content_create_pdf_paged_content_batch_operation(Fedora
 /**
  * Gets the batch definition for creating OCR and HOCR.
  *
- * @param FedoraObject $paged_content
+ * @param AbstractObject $paged_content
  *   The paged content the pages belong to.
  * @param array $pages
  *   All the pages to process.
@@ -216,7 +216,7 @@ function islandora_paged_content_create_pdf_paged_content_batch_operation(Fedora
  * @return array
  *   The batch definition.
  */
-function islandora_paged_content_create_ocr_batch(FedoraObject $paged_content, array $pages, array $options) {
+function islandora_paged_content_create_ocr_batch(AbstractObject $paged_content, array $pages, array $options) {
   return array(
     'operations' => array(
       array('islandora_paged_content_create_ocr_batch_operation', array(
@@ -257,7 +257,7 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
 /**
  * Gets the batch definition for creating TN, JPG, JP2 datastreams.
  *
- * @param FedoraObject $paged_content
+ * @param AbstractObject $paged_content
  *   The object the pages belong to.
  * @param array $pages
  *   All the pages to process.
@@ -265,7 +265,7 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
  * @return array
  *   The batch definition.
  */
-function islandora_paged_content_create_images_batch(FedoraObject $paged_content, array $pages) {
+function islandora_paged_content_create_images_batch(AbstractObject $paged_content, array $pages) {
   return array(
     'operations' => array(
       array('islandora_paged_content_create_images_batch_operation', array(
@@ -283,14 +283,14 @@ function islandora_paged_content_create_images_batch(FedoraObject $paged_content
 /**
  * Batch operation for creating the TN, JPG, JP2 datastreams.
  *
- * @param FedoraObject $paged_content
+ * @param AbstractObject $paged_content
  *   The book the pages belong to.
  * @param array $pages
  *   All the pages to create images for.
  * @param array $context
  *   The context of this batch operation.
  */
-function islandora_paged_content_create_images_batch_operation(FedoraObject $paged_content, array $pages, &$context) {
+function islandora_paged_content_create_images_batch_operation(AbstractObject $paged_content, array $pages, &$context) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
@@ -311,7 +311,7 @@ function islandora_paged_content_create_images_batch_operation(FedoraObject $pag
  * This will order the pages from 1-#pages, the pages will be assigned a
  * sequence number in the order in which they appear.
  *
- * @param FedoraObject $paged_content
+ * @param AbstractObject $paged_content
  *   The paged_content the pages belong to.
  * @param array $pages
  *   All the pages to sequence.
@@ -319,7 +319,7 @@ function islandora_paged_content_create_images_batch_operation(FedoraObject $pag
  * @return array
  *   The batch definition.
  */
-function islandora_paged_content_sequence_pages_batch(FedoraObject $paged_content, array $pages) {
+function islandora_paged_content_sequence_pages_batch(AbstractObject $paged_content, array $pages) {
   return array(
     'operations' => array(
       array('islandora_paged_content_sequence_pages_batch_operation', array(
@@ -337,14 +337,14 @@ function islandora_paged_content_sequence_pages_batch(FedoraObject $paged_conten
 /**
  * Changes the ordering of the pages.
  *
- * @param FedoraObject $paged_content
+ * @param AbstractObject $paged_content
  *   The paged_content the pages belong to.
  * @param array $pages
  *   All the pages in the order they should be in.
  * @param array $context
  *   The context of this batch operation.
  */
-function islandora_paged_content_sequence_pages_batch_operation(FedoraObject $paged_content, array $pages, &$context) {
+function islandora_paged_content_sequence_pages_batch_operation(AbstractObject $paged_content, array $pages, &$context) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
@@ -366,7 +366,7 @@ function islandora_paged_content_sequence_pages_batch_operation(FedoraObject $pa
 /**
  * Gets the batch definition for deleting the given pages.
  *
- * @param FedoraObject $paged_content
+ * @param AbstractObject $paged_content
  *   The paged content the pages belong to.
  * @param array $pages
  *   All the pages to delete.
@@ -374,7 +374,7 @@ function islandora_paged_content_sequence_pages_batch_operation(FedoraObject $pa
  * @return array
  *   The batch definition.
  */
-function islandora_paged_content_delete_pages_batch(FedoraObject $paged_content, array $pages) {
+function islandora_paged_content_delete_pages_batch(AbstractObject $paged_content, array $pages) {
   return array(
     'operations' => array(
       array('islandora_paged_content_delete_pages_batch_operation', array(
@@ -392,14 +392,14 @@ function islandora_paged_content_delete_pages_batch(FedoraObject $paged_content,
 /**
  * Batch operation for deleting a page object.
  *
- * @param FedoraObject $paged_content
+ * @param AbstractObject $paged_content
  *   The paged_content the pages belong to.
  * @param array $pages
  *   All the pages to delete.
  * @param array $context
  *   The context of this batch operation.
  */
-function islandora_paged_content_delete_pages_batch_operation(FedoraObject $paged_content, array $pages, &$context) {
+function islandora_paged_content_delete_pages_batch_operation(AbstractObject $paged_content, array $pages, &$context) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {

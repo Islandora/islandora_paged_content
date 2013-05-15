@@ -8,14 +8,14 @@
 /**
  * Displays all the page management forms in a set of vertical tabs.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object to manage.
  *
  * @return array
  *   A renderable array containing all the management forms related to
  *   page objects.
  */
-function islandora_paged_content_manage_page_menu(FedoraObject $object) {
+function islandora_paged_content_manage_page_menu(AbstractObject $object) {
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
   drupal_set_title($object->label);
@@ -57,13 +57,13 @@ function islandora_paged_content_manage_page_menu(FedoraObject $object) {
  *   The Drupal form definition.
  * @param array $form_state
  *   The Drupal form state.
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object to be updated.
  *
  * @return array
  *   The Drupal form definition.
  */
-function islandora_paged_content_manage_page_ocr_form(array $form, array &$form_state, FedoraObject $object) {
+function islandora_paged_content_manage_page_ocr_form(array $form, array &$form_state, AbstractObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $form_state['object'] = $object;
@@ -114,13 +114,13 @@ function islandora_paged_content_manage_page_ocr_form_submit(array $form, array 
  *   The Drupal form definition.
  * @param array $form_state
  *   The Drupal form state.
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object to be updated.
  *
  * @return array
  *   The Drupal form definition.
  */
-function islandora_paged_content_manage_page_images_form(array $form, array &$form_state, FedoraObject $object) {
+function islandora_paged_content_manage_page_images_form(array $form, array &$form_state, AbstractObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $form_state['object'] = $object;
   $can_derive = islandora_paged_content_can_derive($object, 'JP2');
@@ -163,13 +163,13 @@ function islandora_paged_content_manage_page_images_form_submit(array $form, arr
  *   The Drupal form definition.
  * @param array $form_state
  *   The Drupal form state.
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object to be updated.
  *
  * @return array
  *   The Drupal form definition.
  */
-function islandora_paged_content_manage_page_pdf_form(array $form, array &$form_state, FedoraObject $object) {
+function islandora_paged_content_manage_page_pdf_form(array $form, array &$form_state, AbstractObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $form_state['object'] = $object;
   $can_derive = islandora_paged_content_can_derive($object, 'PDF');
