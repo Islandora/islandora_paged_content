@@ -136,8 +136,7 @@ function islandora_paged_content_create_pdf_batch(AbstractObject $paged_content,
     'operations' => array(
       array('islandora_paged_content_create_pdf_page_batch_operation', array(
           $pages, $options)),
-      array('islandora_paged_content_create_pdf_paged_content_batch_operation', array(
-          $paged_content)),
+      array('islandora_paged_content_create_pdf_paged_content_batch_operation', array($paged_content)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Creating PDF from @label ...', array('@label' => $paged_content->label)),

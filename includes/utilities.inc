@@ -87,8 +87,7 @@ EOQ;
 }
 
 /**
- * Gets the page progression to be used in a viewer from the given paged content
- * object.
+ * Gets the page progression to be used in a viewer paged content object.
  *
  * @param AbstractObject $object
  *   The paged content object to fetch the page progression from.
@@ -503,23 +502,23 @@ function islandora_paged_content_page_derive_image_datastreams(AbstractObject $o
  * This makes the dimensions accessible when we query for the pages.
  *
  * @param AbstractObject $object
+ *   Page Object
  */
 function islandora_paged_content_add_dimensions_relationships(AbstractObject $object) {
-    // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're more
-    // widely supported...
-    $temp_file = drupal_tempnam('temporary://', 'dimensions');
-    $object['OBJ']->getContent($temp_file);
-    list($width, $height) = getimagesize($temp_file);
-
-    $rels = $object['JP2']->relationships;
-    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+  // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're
+  // more widely supported...
+  $temp_file = drupal_tempnam('temporary://', 'dimensions');
+  $object['OBJ']->getContent($temp_file);
+  list($width, $height) = getimagesize($temp_file);
+  $rels = $object['JP2']->relationships;
+  islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
       'width', $width, 1
     );
-    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+  islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
       'height', $height, 1
     );
 
-    drupal_unlink($temp_file);
+  drupal_unlink($temp_file);
 }
 
 /**
@@ -536,8 +535,7 @@ function islandora_paged_content_can_update_paged_content_thumbnail(AbstractObje
 }
 
 /**
- * Updates the given paged content's thumbnail from the first page in the paged
- * content.
+ * Updates the thumbnail from the first page in the paged content.
  *
  * @param AbstractObject $object
  *   The paged content object to update.
@@ -588,7 +586,7 @@ function islandora_paged_content_page_derive_ocr_datastreams(AbstractObject $obj
   module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
   $ret = islandora_ocr_derive_datastreams($object['OBJ'], $options);
 
-  // Check the depth of the image, to see if it can be processed with Tesseract...
+  // Check the depth of the image, to see if it can be processed with Tesseract.
   // If it can not, reduce the depth and grayscale it...
   $language = $options['language'];
   islandora_paged_content_set_relationship($rels_ext,
