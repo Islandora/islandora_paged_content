@@ -8,16 +8,14 @@
 /**
  * Displays all the page management forms in a set of vertical tabs.
  *
- * @param AbstractObject $object
+ * @param FedoraObject $object
  *   The page object to manage.
  *
  * @return array
  *   A renderable array containing all the management forms related to
  *   page objects.
  */
-function islandora_paged_content_manage_page_menu(AbstractObject $object) {
-  module_load_include('inc', 'islandora', 'includes/breadcrumb');
-  drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
+function islandora_paged_content_manage_page_menu(FedoraObject $object) {
   drupal_set_title($object->label);
   return array(
     'manage_page' => array(
@@ -46,6 +44,14 @@ function islandora_paged_content_manage_page_menu(AbstractObject $object) {
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       ),
+      'edit_ocr' => array(
+        '#access' => user_access(ISLANDORA_EDIT_OCR) && $object['OCR'],
+        '#title' => t('Edit OCR'),
+        '#type' => 'fieldset',
+        'form' => drupal_get_form('islandora_paged_content_manage_page_edit_ocr_form', $object),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      ),
     ),
   );
 }
@@ -57,13 +63,13 @@ function islandora_paged_content_manage_page_menu(AbstractObject $object) {
  *   The Drupal form definition.
  * @param array $form_state
  *   The Drupal form state.
- * @param AbstractObject $object
+ * @param FedoraObject $object
  *   The page object to be updated.
  *
  * @return array
  *   The Drupal form definition.
  */
-function islandora_paged_content_manage_page_ocr_form(array $form, array &$form_state, AbstractObject $object) {
+function islandora_paged_content_manage_page_ocr_form(array $form, array &$form_state, FedoraObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $form_state['object'] = $object;
@@ -114,13 +120,13 @@ function islandora_paged_content_manage_page_ocr_form_submit(array $form, array 
  *   The Drupal form definition.
  * @param array $form_state
  *   The Drupal form state.
- * @param AbstractObject $object
+ * @param FedoraObject $object
  *   The page object to be updated.
  *
  * @return array
  *   The Drupal form definition.
  */
-function islandora_paged_content_manage_page_images_form(array $form, array &$form_state, AbstractObject $object) {
+function islandora_paged_content_manage_page_images_form(array $form, array &$form_state, FedoraObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $form_state['object'] = $object;
   $can_derive = islandora_paged_content_can_derive($object, 'JP2');
@@ -163,13 +169,13 @@ function islandora_paged_content_manage_page_images_form_submit(array $form, arr
  *   The Drupal form definition.
  * @param array $form_state
  *   The Drupal form state.
- * @param AbstractObject $object
+ * @param FedoraObject $object
  *   The page object to be updated.
  *
  * @return array
  *   The Drupal form definition.
  */
-function islandora_paged_content_manage_page_pdf_form(array $form, array &$form_state, AbstractObject $object) {
+function islandora_paged_content_manage_page_pdf_form(array $form, array &$form_state, FedoraObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $form_state['object'] = $object;
   $can_derive = islandora_paged_content_can_derive($object, 'PDF');
@@ -213,4 +219,71 @@ function islandora_paged_content_manage_page_pdf_form_submit(array $form, array 
   else {
     drupal_set_message(t('Failed to created PDF.'), 'error');
   }
+}
+
+/**
+ * Updates this objects OCR datastreams.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ * @param FedoraObject $object
+ *   The page object to be updated.
+ *
+ * @return array
+ *   The Drupal form definition.
+ */
+function islandora_paged_content_manage_page_edit_ocr_form(array $form, array &$form_state, FedoraObject $object) {
+  module_load_include('inc', 'islandora_image_annotation', 'includes/build_streams');
+  global $base_root;
+  $pid = $object->id;
+  drupal_add_library('system', 'ui.dialog');
+  $path = drupal_get_path('module', 'islandora_paged_content');
+  $dimensions = islandora_image_annotation_get_height_and_width($pid);
+  drupal_add_js(array('pid' => $pid, 'width' => $dimensions['width']), 'setting');
+  drupal_add_js("$path/js/islandora_page_ocr_edit.js");
+  drupal_add_css("$path/css/islandora_paged_content.css");
+
+  $form_state['object'] = $object;
+  $form = array();
+  $href = "$base_root/islandora/object/$pid/datastream/JPG/view";
+  $label = $object->label;
+  $prompt = t('Show reference image');
+  $form['image'] = array(
+    '#title' => t('Reference Image'),
+    '#type' => 'markup',
+    '#markup' => "<div id ='ref_image' title='$prompt'><a class='preview' href='#'>$prompt</a> <div class='ref_image' title = '$label'><img id = 'source_image' src='$href' alt='$label'/></div>",
+    '#attributes' => array('class' => array('ocr_image')),
+  );
+
+  $form['ocr'] = array(
+    '#title' => t('Current OCR'),
+    '#type' => 'textarea',
+    '#default_value' => $object['OCR']->content,
+    '#rows' => 40,
+    '#cols' => 20,
+    '#attributes' => array('class' => array('ocr_window')),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Update OCR'),
+  );
+
+  return $form;
+}
+
+/**
+ * Submit handler for the edit form.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ */
+function islandora_paged_content_manage_page_edit_ocr_form_submit(array $form, array &$form_state) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $object = $form_state['object'];
+  $object["OCR"]->content = $form_state['values']['ocr'];
 }
