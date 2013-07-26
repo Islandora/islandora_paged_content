@@ -237,12 +237,11 @@ function islandora_paged_content_manage_page_pdf_form_submit(array $form, array 
  *   The Drupal form definition.
  */
 function islandora_paged_content_manage_page_edit_ocr_form(array $form, array &$form_state, AbstractObject $object) {
-  module_load_include('inc', 'islandora_image_annotation', 'includes/build_streams');
   global $base_root;
   $pid = $object->id;
   drupal_add_library('system', 'ui.dialog');
   $path = drupal_get_path('module', 'islandora_paged_content');
-  $dimensions = islandora_image_annotation_get_height_and_width($pid);
+  $dimensions = islandora_paged_content_get_page_dimensions($object);
   drupal_add_js(array('pid' => $pid, 'width' => $dimensions['width']), 'setting');
   drupal_add_js("$path/js/islandora_page_ocr_edit.js");
   drupal_add_css("$path/css/islandora_paged_content.css");
