@@ -74,7 +74,6 @@ function islandora_paged_content_manage_page_menu(AbstractObject $object) {
 function islandora_paged_content_manage_page_ocr_form(array $form, array &$form_state, AbstractObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
-  $form_state['object'] = $object;
   $can_derive = islandora_paged_content_can_derive($object, 'OCR');
   $languages = islandora_ocr_get_enabled_tesseract_languages();
   return array(
@@ -89,6 +88,10 @@ function islandora_paged_content_manage_page_ocr_form(array $form, array &$form_
       '#type' => 'submit',
       '#value' => t('Perform OCR'),
     ),
+    'pid' => array(
+      '#type' => 'hidden',
+      '#value' => $object->id,
+    ),
   );
 }
 
@@ -102,7 +105,7 @@ function islandora_paged_content_manage_page_ocr_form(array $form, array &$form_
  */
 function islandora_paged_content_manage_page_ocr_form_submit(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-  $object = $form_state['object'];
+  $object = islandora_object_load($form_state['values']['pid']);
   $options = array(
     'language' => $form_state['values']['language'],
     'preprocess' => FALSE,
@@ -130,7 +133,6 @@ function islandora_paged_content_manage_page_ocr_form_submit(array $form, array 
  */
 function islandora_paged_content_manage_page_images_form(array $form, array &$form_state, AbstractObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-  $form_state['object'] = $object;
   $can_derive = islandora_paged_content_can_derive($object, 'JP2');
   return array(
     'description' => array(
@@ -141,6 +143,10 @@ function islandora_paged_content_manage_page_images_form(array $form, array &$fo
       '#disabled' => !$can_derive,
       '#type' => 'submit',
       '#value' => t('Create Images'),
+    ),
+    'pid' => array(
+      '#type' => 'hidden',
+      '#value' => $object->id,
     ),
   );
 }
@@ -155,7 +161,7 @@ function islandora_paged_content_manage_page_images_form(array $form, array &$fo
  */
 function islandora_paged_content_manage_page_images_form_submit(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-  $object = $form_state['object'];
+  $object = islandora_object_load($form_state['values']['pid']);
   if (islandora_paged_content_page_derive_image_datastreams($object)) {
     drupal_set_message(t('Successfully created images.'), 'status');
   }
@@ -196,6 +202,10 @@ function islandora_paged_content_manage_page_pdf_form(array $form, array &$form_
       '#disabled' => !$can_derive,
       '#type' => 'submit',
       '#value' => t('Create PDF'),
+      'pid' => array(
+        '#type' => 'hidden',
+        '#value' => $object->id,
+      ),
     ),
   );
 }
@@ -210,7 +220,7 @@ function islandora_paged_content_manage_page_pdf_form(array $form, array &$form_
  */
 function islandora_paged_content_manage_page_pdf_form_submit(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-  $object = $form_state['object'];
+  $object = islandora_object_load($form_state['values']['pid']);
   $options = array(
     '-density' => $form_state['values']['dpi'],
     '-compress' => 'LZW',
@@ -272,6 +282,11 @@ function islandora_paged_content_manage_page_edit_ocr_form(array $form, array &$
     '#value' => t('Update OCR'),
   );
 
+  $form['pid'] = array(
+    '#type' => 'hidden',
+    '#value' => $object->id,
+  );
+
   return $form;
 }
 
@@ -285,7 +300,7 @@ function islandora_paged_content_manage_page_edit_ocr_form(array $form, array &$
  */
 function islandora_paged_content_manage_page_edit_ocr_form_submit(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-  $object = $form_state['object'];
+  $object = islandora_object_load($form_state['values']['pid']);
   $success = TRUE;
   try {
     $object["OCR"]->content = $form_state['values']['ocr'];
