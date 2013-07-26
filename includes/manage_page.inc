@@ -287,5 +287,15 @@ function islandora_paged_content_manage_page_edit_ocr_form(array $form, array &$
 function islandora_paged_content_manage_page_edit_ocr_form_submit(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $object = $form_state['object'];
-  $object["OCR"]->content = $form_state['values']['ocr'];
+  $success = TRUE;
+  try {
+    $object["OCR"]->content = $form_state['values']['ocr'];
+  }
+  catch (Exception $e) {
+    $success = FALSE;
+    drupal_set_message(t("OCR update failed."));
+  }
+  if ($success) {
+    drupal_set_message(t("OCR successfully updated."));
+  }
 }
