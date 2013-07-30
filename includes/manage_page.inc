@@ -250,6 +250,8 @@ function islandora_paged_content_manage_page_edit_ocr_form(array $form, array &$
   $pid = $object->id;
   $jpg_ds = $object['JPG'];
   $dimensions = $jpg_ds->relationships->get();
+  // Safety value if rels-int doesn't exist.  This should never be necessary.
+  $width = 500;
   if (is_array($dimensions)) {
     foreach ($dimensions as $dimension) {
       if ($dimension['predicate']['value'] == 'width') {
@@ -257,12 +259,6 @@ function islandora_paged_content_manage_page_edit_ocr_form(array $form, array &$
       }
     }
   }
-  else {
-    // Default value if rels-int doesn't exist; shouldn't ever be necessary.
-    $width = 400;
-  }
-
-
   drupal_add_library('system', 'ui.dialog');
   $path = drupal_get_path('module', 'islandora_paged_content');
   drupal_add_js(array('pid' => $pid, 'width' => $width), 'setting');
