@@ -5,6 +5,8 @@
  * Defines management/helper/display functions for page like content.
  */
 
+define('ISLANDORA_EDIT_OCR', 'Edit existing OCR stream');
+
 /**
  * Implements hook_menu().
  */
@@ -65,4 +67,16 @@ function islandora_paged_content_manage_pages_access_callback($object, array $co
     FEDORA_INGEST,
   );
   return islandora_user_access($object, $permissions, $content_models);
+}
+
+/**
+ * Implements hook_permission().
+ */
+function islandora_paged_content_permission() {
+  return array(
+    ISLANDORA_EDIT_OCR => array(
+      'title' => t('Edit OCR stream'),
+      'description' => t('Allows users to edit existing OCR stream. Note: Fedora XACML security policies may override this permission.'),
+    ),
+  );
 }
