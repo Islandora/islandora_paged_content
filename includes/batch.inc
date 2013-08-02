@@ -4,7 +4,7 @@
  * @file
  * This file contains all the batch operations for paged content.
  */
-
+// @codingStandardsIgnoreStart
 /**
  * Sets up a batch operation.
  *
@@ -17,7 +17,6 @@
  *   displayed when the batch is finished. Placeholders include, but are not
  *   limited to: @successful, @failed, @total.
  *
- * @codingStandardsIgnoreStart
  * @code
  *   array(
  *     ...
@@ -26,11 +25,11 @@
  *     ...
  *   )
  * @endcode
- * @codingStandardsIgnoreEnd
  *
  * @return mixed
  *   The current operand the operation will process.
  */
+// @codingStandardsIgnoreEnd
 function islandora_paged_content_start_batch_operation(array $operands, &$context, array $message = array()) {
   if (!isset($context['sandbox']['progress'])) {
     $results =& $context['results'];
