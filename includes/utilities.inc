@@ -89,7 +89,10 @@ EOQ;
 }
 
 /**
- * Gets the page progression to be used in a viewer from the given paged content object.
+ * Function get_page_progression.
+ * 
+ * Gets the page progression to be used in a viewer from the given paged 
+ * content object.
  *
  * @param FedoraObject $object
  *   The paged content object to fetch the page progression from.
@@ -504,6 +507,7 @@ function islandora_paged_content_page_derive_image_datastreams(FedoraObject $obj
  * This makes the dimensions accessible when we query for the pages.
  *
  * @param AbstractFedoraObject $object
+ *   An abstract object
  */
 function islandora_paged_content_add_dimensions_relationships(AbstractFedoraObject $object) {
   // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're
@@ -537,7 +541,10 @@ function islandora_paged_content_can_update_paged_content_thumbnail(FedoraObject
 }
 
 /**
- * Updates the given paged content's thumbnail from the first page in the paged content.
+ * Function update_paged_content_thumbnail.
+ * 
+ * Updates the given paged content's thumbnail from the first page in the
+ * paged content.
  *
  * @param FedoraObject $object
  *   The paged content object to update.

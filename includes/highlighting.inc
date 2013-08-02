@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * This file contains the solr highlighting query.
+ */
 
 /**
  * Performs a Solr query, adding in some defaults we need for highlighting.
