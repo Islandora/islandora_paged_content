@@ -18,18 +18,6 @@
  *
  * @return array
  *   All the pages in the given paged content object.
- *
- * @codingStandardsIgnoreStart
- * @code
- *   array(
- *     'islandora:100' => array(
- *        'label' => 'Page 100',
- *        'page' => '100',
- *        'pid' => 'islandora:100',
- *      )
- *   )
- * @endcode
- * @codingStandardsIgnoreEnd
  */
 function islandora_paged_content_get_pages(FedoraObject $object) {
   $query = <<<EOQ

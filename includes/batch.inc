@@ -17,16 +17,6 @@
  *   displayed when the batch is finished. Placeholders include, but are not
  *   limited to: @successful, @failed, @total.
  *
- * @codingStandardsIgnoreStart
- * @code
- *   array(
- *     ...
- *     array('Processed @successful of @total. Created @pages pages.', array(
- *           '@pages' => $pages), 'status')
- *     ...
- *   )
- * @endcode
- * @codingStandardsIgnoreEnd
  * @return mixed
  *   The current operand the operation will process.
  */
