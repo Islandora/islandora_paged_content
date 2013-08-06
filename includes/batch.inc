@@ -136,7 +136,7 @@ function islandora_paged_content_create_pdf_batch(AbstractObject $paged_content,
     'operations' => array(
       array('islandora_paged_content_create_pdf_page_batch_operation', array(
           $pages, $options)),
-      array('islandora_paged_content_create_pdf_paged_content_batch_operation', array($paged_content)),
+      array('islandora_paged_content_create_pdf_paged_content_batch_operation', array($paged_content->id)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Creating PDF from @label ...', array('@label' => $paged_content->label)),
@@ -176,13 +176,14 @@ function islandora_paged_content_create_pdf_page_batch_operation(array $pages, a
 /**
  * Batch operation for combining PDF files.
  *
- * @param AbstractObject $paged_content
- *   The paged content to store the PDF file.
+ * @param string $paged_content_id
+ *   The paged content identifier to store the PDF file.
  * @param array $context
  *   The context of this batch operation.
  */
-function islandora_paged_content_create_pdf_paged_content_batch_operation(AbstractObject $paged_content, &$context) {
+function islandora_paged_content_create_pdf_paged_content_batch_operation($paged_content_id, &$context) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $paged_content = islandora_object_load($paged_content_id);
   if (empty($context['results']['pages'])) {
     return;
   }
