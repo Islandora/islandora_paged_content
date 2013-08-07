@@ -19,14 +19,14 @@ require_once dirname(__FILE__) . '/batch.inc';
 /**
  * Displays all the book management forms in a set of vertical tabs.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The book object to manage.
  *
  * @return array
  *   A renderable array containing all the management forms related to
  *   book objects.
  */
-function islandora_paged_content_manage_pages_menu(FedoraObject $object) {
+function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
   drupal_set_title($object->label);
@@ -87,13 +87,13 @@ function islandora_paged_content_manage_pages_menu(FedoraObject $object) {
  *   The Drupal form.
  * @param array $form_state
  *   The Drupal form state.
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The object to fetch the pages from.
  *
  * @return array
  *   The Drupal form.
  */
-function islandora_paged_content_manage_pages_pdf_form(array $form, array &$form_state, FedoraObject $object) {
+function islandora_paged_content_manage_pages_pdf_form(array $form, array &$form_state, AbstractObject $object) {
   $form_state['object'] = $object;
   $can_derive = islandora_paged_content_can_create_pdf() && islandora_paged_content_can_combine_pdf();
   return array(
@@ -144,13 +144,13 @@ function islandora_paged_content_manage_pages_pdf_form_submit(array $form, array
  *   The Drupal form.
  * @param array $form_state
  *   The Drupal form state.
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The object to fetch the pages from.
  *
  * @return array
  *   The Drupal form.
  */
-function islandora_paged_content_manage_pages_ocr_form(array $form, array &$form_state, FedoraObject $object) {
+function islandora_paged_content_manage_pages_ocr_form(array $form, array &$form_state, AbstractObject $object) {
   $form_state['object'] = $object;
   $can_derive = FALSE;
   $languages = array();
@@ -205,13 +205,13 @@ function islandora_paged_content_manage_pages_ocr_form_submit(array $form, array
  *   The Drupal form.
  * @param array $form_state
  *   The Drupal form state.
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The object to update.
  *
  * @return array
  *   The Drupal form.
  */
-function islandora_paged_content_manage_pages_thumbnail_form(array $form, array &$form_state, FedoraObject $object) {
+function islandora_paged_content_manage_pages_thumbnail_form(array $form, array &$form_state, AbstractObject $object) {
   $form_state['object'] = $object;
   return array(
     'description' => array(
@@ -250,13 +250,13 @@ function islandora_paged_content_manage_pages_thumbnail_form_submit(array $form,
  *   The Drupal form.
  * @param array $form_state
  *   The Drupal form state.
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The object to fetch the pages from.
  *
  * @return array
  *   The Drupal form.
  */
-function islandora_paged_content_manage_pages_images_form(array $form, array &$form_state, FedoraObject $object) {
+function islandora_paged_content_manage_pages_images_form(array $form, array &$form_state, AbstractObject $object) {
   $form_state['object'] = $object;
   $can_derive = islandora_paged_content_can_create_images();
   return array(
@@ -294,13 +294,13 @@ function islandora_paged_content_manage_pages_images_form_submit(array $form, ar
  *   The Drupal form.
  * @param array $form_state
  *   The Drupal form state.
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The book object to fetch the pages from.
  *
  * @return array
  *   The Drupal form.
  */
-function islandora_paged_content_manage_pages_sequences_form(array $form, array &$form_state, FedoraObject $object) {
+function islandora_paged_content_manage_pages_sequences_form(array $form, array &$form_state, AbstractObject $object) {
   $form_state['object'] = $object;
   $pages = islandora_paged_content_get_pages($object);
   $delta = count($pages);
@@ -360,13 +360,13 @@ function islandora_paged_content_manage_pages_sequences_form_submit(array $form,
  *   The Drupal form.
  * @param array $form_state
  *   The Drupal form state.
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The object to fetch the pages from.
  *
  * @return array
  *   The Drupal form.
  */
-function islandora_paged_content_manage_pages_delete_form(array $form, array &$form_state, FedoraObject $object) {
+function islandora_paged_content_manage_pages_delete_form(array $form, array &$form_state, AbstractObject $object) {
   $form_state['object'] = $object;
   $pages = islandora_paged_content_get_pages($object);
   return array(
