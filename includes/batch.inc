@@ -93,7 +93,7 @@ function islandora_paged_content_batch_finished($success, $results, $operations)
     foreach ($messages as $message) {
       $vars = isset($message[1]) ? array_merge($message[1], $place_holders) : $place_holders;
       $status = isset($message[2]) ? $message[2] : 'status';
-      $message = t("@message", array("@message" => $message[0]), $vars);
+      $message = t($message[0], $vars);
       drupal_set_message(check_plain($message), $status);
     }
   }
