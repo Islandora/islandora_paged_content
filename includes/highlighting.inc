@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Solr Highlighting.
+ * This file contains the solr highlighting query.
  */
 
 /**

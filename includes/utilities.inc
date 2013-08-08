@@ -18,16 +18,6 @@
  *
  * @return array
  *   All the pages in the given paged content object.
- *
- * @code
- *   array(
- *     'islandora:100' => array(
- *        'label' => 'Page 100',
- *        'page' => '100',
- *        'pid' => 'islandora:100',
- *      )
- *   );
- * @endcode
  */
 function islandora_paged_content_get_pages(AbstractObject $object) {
   $query = <<<EOQ
@@ -87,7 +77,10 @@ EOQ;
 }
 
 /**
- * Gets the page progression to be used in a viewer paged content object.
+ * Function get_page_progression.
+ * 
+ * Gets the page progression to be used in a viewer from the given paged 
+ * content object.
  *
  * @param AbstractObject $object
  *   The paged content object to fetch the page progression from.
@@ -387,13 +380,12 @@ function islandora_paged_content_pdf_combine(array $files, $out) {
   $output = array(); $ret = 0;
   exec($command, $output, $ret);
   if ($ret != 0) {
-    $message = 'GhostScript failed to combine PDFs.<br/>Error: @ret<br/>Command: @command <br/>Output !output';
     $variables = array(
       '@ret' => $ret,
       '@command' => $command,
       '!output' => implode('<br/>', $output),
     );
-    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    watchdog('islandora_paged_content', 'GhostScript failed to combine PDFs.<br/>Error: @ret<br/>Command: @command <br/>Output !output', $variables, WATCHDOG_ERROR);
     return FALSE;
   }
   return TRUE;
@@ -464,14 +456,13 @@ function islandora_paged_content_convert_to_pdf($image_file, array $options) {
   $command_args = "{$options} {$image_file} {$pdf_file}";
   $output = array(); $ret = 0;
   if (_imagemagick_convert_exec($command_args, $output, $ret) !== TRUE) {
-    $message = 'ImageMagick failed to create a PDF.<br/>Error: ';
-    $message .= '@ret<br/>Command: @command<br/>Output: !output';
+    $message = 'ImageMagick failed to create a PDF.<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
     $variables = array(
       '@ret' => $ret,
       '@command' => "convert $command_args",
       '!output' => implode('<br/>', $output),
     );
-    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    watchdog('islandora_paged_content', 'ImageMagick failed to create a PDF.<br/>Error: @ret<br/>Command: @command<br/>Output: !output', $variables, WATCHDOG_ERROR);
     return FALSE;
   }
   return $pdf_file;
@@ -510,6 +501,7 @@ function islandora_paged_content_add_dimensions_relationships(AbstractObject $ob
   $temp_file = drupal_tempnam('temporary://', 'dimensions');
   $object['OBJ']->getContent($temp_file);
   list($width, $height) = getimagesize($temp_file);
+
   $rels = $object['JP2']->relationships;
   islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
       'width', $width, 1
