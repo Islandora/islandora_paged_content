@@ -495,22 +495,25 @@ function islandora_paged_content_page_derive_image_datastreams(AbstractObject $o
  * @param AbstractObject $object
  *   Page Object
  */
-function islandora_paged_content_add_dimensions_relationships(AbstractObject $object) {
-  // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're
-  // more widely supported...
-  $temp_file = drupal_tempnam('temporary://', 'dimensions');
-  $object['OBJ']->getContent($temp_file);
-  list($width, $height) = getimagesize($temp_file);
-
+function islandora_paged_content_add_dimensions_relationships(AbstractObject $object, $force = FALSE) {
   $rels = $object['JP2']->relationships;
-  islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
-      'width', $width, 1
-    );
-  islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
-      'height', $height, 1
-    );
+  $width_rels = $rels->get(ISLANDORA_RELS_EXT_URI, 'width');
+  if ($force || empty($width_rels)) {
+    // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're
+    // more widely supported...
+    $temp_file = drupal_tempnam('temporary://', 'dimensions');
+    $object['OBJ']->getContent($temp_file);
+    list($width, $height) = getimagesize($temp_file);
 
-  drupal_unlink($temp_file);
+    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+        'width', $width, 1
+      );
+    islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
+        'height', $height, 1
+      );
+
+    drupal_unlink($temp_file);
+  }
 }
 
 /**
