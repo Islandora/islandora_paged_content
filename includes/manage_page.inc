@@ -47,7 +47,7 @@ function islandora_paged_content_manage_page_menu(AbstractObject $object) {
         '#collapsed' => TRUE,
       ),
       'edit_ocr' => array(
-        '#access' => user_access(ISLANDORA_EDIT_OCR) && $object['OCR'],
+        '#access' => user_access(ISLANDORA_PAGED_CONTENT_EDIT_OCR) && $object['OCR'],
         '#title' => t('Edit OCR'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_page_edit_ocr_form', $object),
