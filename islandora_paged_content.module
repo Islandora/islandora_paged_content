@@ -49,7 +49,7 @@ function islandora_paged_content_theme() {
  *   TRUE if they can access, FALSE otherwise.
  */
 function islandora_paged_content_manage_page_access_callback($object, array $content_models) {
-  $permissions = array(FEDORA_ADD_DS, FEDORA_METADATA_EDIT, FEDORA_PURGE);
+  $permissions = array(ISLANDORA_ADD_DS, ISLANDORA_METADATA_EDIT, ISLANDORA_PURGE);
   return islandora_user_access($object, $permissions, $content_models);
 }
 
@@ -61,10 +61,10 @@ function islandora_paged_content_manage_page_access_callback($object, array $con
  */
 function islandora_paged_content_manage_pages_access_callback($object, array $content_models) {
   $permissions = array(
-    FEDORA_ADD_DS,
-    FEDORA_METADATA_EDIT,
-    FEDORA_PURGE,
-    FEDORA_INGEST,
+    ISLANDORA_ADD_DS,
+    ISLANDORA_METADATA_EDIT,
+    ISLANDORA_PURGE,
+    ISLANDORA_INGEST,
   );
   return islandora_user_access($object, $permissions, $content_models);
 }
