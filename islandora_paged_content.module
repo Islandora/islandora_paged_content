@@ -5,7 +5,12 @@
  * Defines management/helper/display functions for page like content.
  */
 
-define('ISLANDORA_EDIT_OCR', 'Edit existing OCR stream');
+define('ISLANDORA_PAGED_CONTENT_EDIT_OCR', 'Edit existing OCR stream');
+
+// @codingStandardsIgnoreStart
+// XXX: Remove this at some point in the future.
+define('ISLANDORA_EDIT_OCR', ISLANDORA_PAGED_CONTENT_EDIT_OCR);
+// @codingStandardsIgnoreEnd
 
 /**
  * Implements hook_menu().
@@ -49,7 +54,11 @@ function islandora_paged_content_theme() {
  *   TRUE if they can access, FALSE otherwise.
  */
 function islandora_paged_content_manage_page_access_callback($object, array $content_models) {
-  $permissions = array(FEDORA_ADD_DS, FEDORA_METADATA_EDIT, FEDORA_PURGE);
+  $permissions = array(
+    ISLANDORA_ADD_DS,
+    ISLANDORA_METADATA_EDIT,
+    ISLANDORA_PURGE,
+  );
   return islandora_user_access($object, $permissions, $content_models);
 }
 
@@ -61,10 +70,10 @@ function islandora_paged_content_manage_page_access_callback($object, array $con
  */
 function islandora_paged_content_manage_pages_access_callback($object, array $content_models) {
   $permissions = array(
-    FEDORA_ADD_DS,
-    FEDORA_METADATA_EDIT,
-    FEDORA_PURGE,
-    FEDORA_INGEST,
+    ISLANDORA_ADD_DS,
+    ISLANDORA_METADATA_EDIT,
+    ISLANDORA_PURGE,
+    ISLANDORA_INGEST,
   );
   return islandora_user_access($object, $permissions, $content_models);
 }
@@ -74,7 +83,7 @@ function islandora_paged_content_manage_pages_access_callback($object, array $co
  */
 function islandora_paged_content_permission() {
   return array(
-    ISLANDORA_EDIT_OCR => array(
+    ISLANDORA_PAGED_CONTENT_EDIT_OCR => array(
       'title' => t('Edit OCR stream'),
       'description' => t('Allows users to edit existing OCR stream. Note: Fedora XACML security policies may override this permission.'),
     ),
