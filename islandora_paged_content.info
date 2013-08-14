@@ -3,5 +3,5 @@ description = Libraries for paged content in Islandora.
 dependencies[] = islandora
 dependencies[] = file
 package = Islandora
-version = 7.x-1.2-RC1
+version = 7.x-1.2-RC2
 core = 7.x
