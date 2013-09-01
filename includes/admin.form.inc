@@ -52,7 +52,7 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
       '#prefix' => '<div id="djatoka-path-wrapper">',
       '#suffix' => '</div>',
       '#title' => t('djatoka URL'),
-      '#description' => filter_xss(t('URL to the djatoka instance.<br/>!msg', array('!msg' => $djatoka_availible_message))),
+      '#description' => filter_xss(t('<strong>Externally accessible</strong> URL to the djatoka instance.<br/>!msg', array('!msg' => $djatoka_availible_message))),
       '#default_value' => $djatoka_url,
       '#ajax' => array(
         'callback' => 'islandora_paged_content_admin_settings_form_djatoka_ajax_callback',
