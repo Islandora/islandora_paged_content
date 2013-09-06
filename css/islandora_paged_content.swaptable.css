@@ -1,0 +1,37 @@
+a.swaptable-handle-hover .handle {
+  background-position: 6px -11px;
+}
+a.swaptable-handle .handle {
+  background: url(/misc/draggable.png) no-repeat 6px 9px;
+  height: 13px;
+  margin: -0.4em 0.5em;
+  padding: 0.42em 0.5em;
+  width: 13px;
+}
+.draggable a.swaptable-handle {
+  cursor: move;
+  float: left;
+  height: 1.7em;
+  margin-left: -1em;
+  overflow: hidden;
+  text-decoration: none;
+}
+table.swaptable tbody > tr {
+  height: 100px;
+}
+tbody > tr.ui-selecting {
+  background: #ccc;
+}
+tbody > tr.ui-selected {
+  background: #999;
+}
+.swaptable-toggle-original-ordering {
+  font-size: 0.9em;
+}
+.swaptable-toggle-original-ordering-wrapper {
+  text-align: right;
+}
+tr.ui-modified > td.tn:after {
+  content: url(../images/modified.gif);
+  vertical-align: 240%;
+}

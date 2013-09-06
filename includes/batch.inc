@@ -102,7 +102,7 @@ function islandora_paged_content_batch_finished($success, $results, $operations)
     $error_operation = reset($operations);
     $message = t('An error occurred while processing %error_operation with arguments: @arguments', array(
                  '%error_operation' => $error_operation[0],
-                 '@arguments' => print_r($error_operation[1], TRUE)));
+                 '@arguemnts' => print_r($error_operation[1], TRUE)));
     drupal_set_message($message, 'error');
   }
 }
@@ -260,7 +260,7 @@ function islandora_paged_content_create_images_batch(AbstractObject $paged_conte
   return array(
     'operations' => array(
       array('islandora_paged_content_create_images_batch_operation', array(
-          $paged_content, $pages)),
+          $paged_content->id, $pages)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Creating Images for @label ...', array('@label' => $paged_content->label)),
@@ -274,15 +274,16 @@ function islandora_paged_content_create_images_batch(AbstractObject $paged_conte
 /**
  * Batch operation for creating the TN, JPG, JP2 datastreams.
  *
- * @param AbstractObject $paged_content
+ * @param AbstractObject $paged_content_id
  *   The book the pages belong to.
  * @param array $pages
  *   All the pages to create images for.
  * @param array $context
  *   The context of this batch operation.
  */
-function islandora_paged_content_create_images_batch_operation(AbstractObject $paged_content, array $pages, &$context) {
+function islandora_paged_content_create_images_batch_operation($paged_content_id, array $pages, &$context) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $paged_content = islandora_object_load($paged_content_id);
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
     $page = islandora_object_load($page);
@@ -314,7 +315,7 @@ function islandora_paged_content_sequence_pages_batch(AbstractObject $paged_cont
   return array(
     'operations' => array(
       array('islandora_paged_content_sequence_pages_batch_operation', array(
-          $paged_content, $pages)),
+          $paged_content->id, $pages)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t("Sequencing @label's pages ...", array('@label' => $paged_content->label)),
@@ -328,15 +329,16 @@ function islandora_paged_content_sequence_pages_batch(AbstractObject $paged_cont
 /**
  * Changes the ordering of the pages.
  *
- * @param AbstractObject $paged_content
+ * @param AbstractObject $paged_content_id
  *   The paged_content the pages belong to.
  * @param array $pages
  *   All the pages in the order they should be in.
  * @param array $context
  *   The context of this batch operation.
  */
-function islandora_paged_content_sequence_pages_batch_operation(AbstractObject $paged_content, array $pages, &$context) {
+function islandora_paged_content_sequence_pages_batch_operation($paged_content_id, array $pages, &$context) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $paged_content = islandora_object_load($paged_content_id);
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
     $page = islandora_object_load($page);
@@ -369,7 +371,7 @@ function islandora_paged_content_delete_pages_batch(AbstractObject $paged_conten
   return array(
     'operations' => array(
       array('islandora_paged_content_delete_pages_batch_operation', array(
-          $paged_content, $pages)),
+          $paged_content->id, $pages)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Deleting page(s) from @label ...', array('@label' => $paged_content->label)),
@@ -383,15 +385,16 @@ function islandora_paged_content_delete_pages_batch(AbstractObject $paged_conten
 /**
  * Batch operation for deleting a page object.
  *
- * @param AbstractObject $paged_content
+ * @param AbstractObject $paged_content_id
  *   The paged_content the pages belong to.
  * @param array $pages
  *   All the pages to delete.
  * @param array $context
  *   The context of this batch operation.
  */
-function islandora_paged_content_delete_pages_batch_operation(AbstractObject $paged_content, array $pages, &$context) {
+function islandora_paged_content_delete_pages_batch_operation($paged_content_id, array $pages, &$context) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $paged_content = islandora_object_load($paged_content_id);
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
     $page = islandora_object_load($page);
