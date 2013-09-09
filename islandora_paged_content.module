@@ -34,14 +34,55 @@ function islandora_paged_content_menu() {
  */
 function islandora_paged_content_theme() {
   return array(
-    'islandora_paged_content_manage_pages_sequences_form' => array(
-      'render element' => 'form',
-      'file' => 'theme/theme.inc',
-    ),
     'islandora_paged_content_page_navigator' => array(
       'file' => 'theme/theme.inc',
       'variables' => array(
         'object' => NULL,
+      ),
+    ),
+    'swaptable' => array(
+      'render element' => 'element',
+      'template' => 'theme/swaptable',
+      'file' => 'theme/theme.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_element_info().
+ */
+function islandora_paged_content_element_info() {
+  $module_path = drupal_get_path('module', 'islandora_paged_content');
+  return array(
+    'swaptable' => array(
+      '#input' => TRUE,
+      '#pager' => array(
+        // Pager ID's you may need to override this value if there are already
+        // several pagers on the page.
+        'element' => array(0, 1),
+        'tags' => array('<<', '<', '', '>', '>>'),
+        'limit' => 10,
+        'quantity' => 3,
+        'total' => 0,
+      ),
+      '#prefix' => '<div class="swaptable-wrapper">',
+      '#suffix' => '</div>',
+      '#attributes' => array(
+        'class' => array('swaptable'),
+      ),
+      '#theme' => 'swaptable',
+      '#theme_wrappers' => array('form_element'),
+      '#value_callback' => 'swaptable_value',
+      '#attached' => array(
+        'js' => array($module_path . '/js/swaptable.js'),
+        'css' => array($module_path . '/css/islandora_paged_content.swaptable.css'),
+        'library' => array(
+          array('system', 'jquery.cookie'),
+          array('system', 'ui.draggable'),
+          array('system', 'ui.droppable'),
+          array('system', 'ui.sortable'),
+          array('system', 'ui.selectable'),
+        ),
       ),
     ),
   );
@@ -88,4 +129,19 @@ function islandora_paged_content_permission() {
       'description' => t('Allows users to edit existing OCR stream. Note: Fedora XACML security policies may override this permission.'),
     ),
   );
+}
+
+/**
+ * Implements hook_value().
+ */
+function swaptable_value($element, $input, array $form_state) {
+  if ($input !== FALSE) {
+    return explode(' ', $input);
+  }
+  else {
+    $value = isset($element['#default_value']) ?
+      $element['#default_value'] :
+      element_children($element['#rows']);
+    return implode(' ', $value);
+  }
 }
