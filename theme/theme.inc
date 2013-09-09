@@ -107,10 +107,10 @@ function swaptable_pager($element, $tags, $quantity, $limit, $total) {
     'limit' => $limit,
     'element' => $element,
     'pager' => theme('pager', array(
-               'tags' => $tags,
-               'element' => $element,
-               'quantity' => $quantity,
-             )),
+        'tags' => $tags,
+        'element' => $element,
+        'quantity' => $quantity,
+      )),
   );
 }
 
@@ -131,9 +131,8 @@ function swaptable_pager($element, $tags, $quantity, $limit, $total) {
 function swaptable_table_rows($position, array &$items, array $pager) {
   $rows = array();
   // Once pager support is enabled uncomment the line below.
-  // @codingStandardsIgnoreStart
-  // $items = array_slice($items, $pager['page'] * $pager['limit'], $pager['limit']);
-  // @codingStandardsIgnoreEnd
+  // Code sniffer was refusing to ignore the commented code here.  Please see
+  // d251150a273ce3f4a52a3948ecb8ea235433cb8d to retrieve it.
   $count = 1;
   foreach ($items as $id => &$row) {
     $data = array();

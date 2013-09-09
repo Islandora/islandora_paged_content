@@ -78,8 +78,8 @@ EOQ;
 
 /**
  * Function get_page_progression.
- * 
- * Gets the page progression to be used in a viewer from the given paged 
+ *
+ * Gets the page progression to be used in a viewer from the given paged
  * content object.
  *
  * @param AbstractObject $object
