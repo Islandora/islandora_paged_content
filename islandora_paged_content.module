@@ -132,7 +132,9 @@ function islandora_paged_content_permission() {
 }
 
 /**
- * Implements form_type_hook_value().
+ * Implements hook_value().
+ *
+ * Really Implements form_type_hook_value(), but tell coder that.
  */
 function swaptable_value($element, $input, array $form_state) {
   if ($input !== FALSE) {
