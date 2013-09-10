@@ -132,7 +132,7 @@ function islandora_paged_content_permission() {
 }
 
 /**
- * Implements hook_value().
+ * Implements form_type_hook_value().
  */
 function swaptable_value($element, $input, array $form_state) {
   if ($input !== FALSE) {

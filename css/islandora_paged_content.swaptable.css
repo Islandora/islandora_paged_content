@@ -32,6 +32,6 @@ tbody > tr.ui-selected {
   text-align: right;
 }
 tr.ui-modified > td.tn:after {
-  content: url(../images/modified.gif);
+  content: url(../images/modified.png);
   vertical-align: 240%;
 }
