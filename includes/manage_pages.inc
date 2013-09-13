@@ -303,26 +303,32 @@ function islandora_paged_content_manage_pages_images_form_submit(array $form, ar
 function islandora_paged_content_manage_pages_sequences_form(array $form, array &$form_state, AbstractObject $object) {
   $form_state['object'] = $object;
   $pages = islandora_paged_content_get_pages($object);
-  $delta = count($pages);
-  $map = function($page) use($delta) {
-    return array(
-      'pid' => array('#markup' => check_plain($page['pid'])),
-      'label' => array('#markup' => check_plain($page['label'])),
-      'weight' => array(
-        '#type' => 'weight',
-        '#title' => t('Weight'),
-        '#default_value' => $page['page'],
-        '#delta' => $delta,
-        '#title-display' => 'invisible',
-      ));
-  };
-  $rows = array_map($map, $pages);
+  $rows = array();
+  foreach ($pages as $page) {
+    $id = $page['pid'];
+    $url = "islandora/object/{$id}";
+    $rows[$id] = array(
+      'tn' => array(
+        '#markup' => theme('image', array(
+            'path' => url("$url/datastream/TN/view"),
+            'attributes' => array(
+              'width' => '64px',
+              'height' => '64px',
+            )))),
+      'label' => array(
+        '#markup' => l($page['label'], $url, array(
+                     'html' => TRUE,
+                     'attributes' => array('title' => $page['label'])))),
+    );
+  }
   return array(
-    '#tree' => TRUE,
     'table' => array(
-      '#type' => 'markup',
-      '#header' => array(t('PID'), t('Label'), t('Page')),
-      'rows' => $rows,
+      '#type' => 'swaptable',
+      '#header' => array(
+        t('Thumbnail'),
+        t('Label'),
+      ),
+      '#rows' => $rows,
     ),
     'actions' => array(
       '#type' => 'actions',
@@ -344,10 +350,8 @@ function islandora_paged_content_manage_pages_sequences_form(array $form, array 
  */
 function islandora_paged_content_manage_pages_sequences_form_submit(array $form, array &$form_state) {
   $object = $form_state['object'];
-  $pages = &$form_state['values']['table']['rows'];
+  $pages = $form_state['values']['table'];
   if ($pages) {
-    uasort($pages, 'drupal_sort_weight');
-    $pages = array_keys($pages);
     $batch = islandora_paged_content_sequence_pages_batch($object, $pages);
     batch_set($batch);
   }
