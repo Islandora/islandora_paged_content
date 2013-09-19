@@ -710,8 +710,7 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
 function islandora_paged_content_page_derivatives(AbstractObject $object) {
   $is_tiff = preg_match('/image\/tif?f/i', $object['OBJ']->mimeType);
   $is_jpg = preg_match('/image\/jpe?g/i', $object['OBJ']->mimeType);
-  $pc_module_path = drupal_get_path('module', 'islandora_paged_content');
-  $li_module_path = drupal_get_path('module', 'islandora_large_image');
+  $large_image_module_path = drupal_get_path('module', 'islandora_large_image');
   $basic_image_module_path = drupal_get_path('module', 'islandora_basic_image');
   $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
   $ocr_module_path = drupal_get_path('module', 'islandora_ocr');
@@ -724,7 +723,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object) {
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'PDF',
       'function' => array('islandora_paged_content_derivatives_pdf'),
-      'file' => "$pc_module_path/includes/derivatives.inc",
+      'file' => "$paged_content_module_path/includes/derivatives.inc",
     );
   }
 
@@ -747,19 +746,19 @@ function islandora_paged_content_page_derivatives(AbstractObject $object) {
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'JP2',
       'function' => array('islandora_large_image_create_jp2_derivative'),
-      'file' => "$li_module_path/includes/derivatives.inc",
+      'file' => "$large_image_module_path/includes/derivatives.inc",
     );
     $derivatives[] = array(
       'source_dsid' => 'JP2',
       'destination_dsid' => NULL,
       'function' => array('islandora_paged_content_add_dimensions_relationships'),
-      'file' => "$pc_module_path/includes/utilities.inc",
+      'file' => "$paged_content_module_path/includes/utilities.inc",
     );
     $derivatives[] = array(
       'source_dsid' => 'TN',
       'destination_dsid' => NULL,
       'function' => array('islandora_paged_content_derive_thumbnail_on_parent'),
-      'file' => "$pc_module_path/includes/derivatives.inc",
+      'file' => "$paged_content_module_path/includes/derivatives.inc",
     );
   }
 
@@ -768,13 +767,13 @@ function islandora_paged_content_page_derivatives(AbstractObject $object) {
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'TN',
       'function' => array('islandora_large_image_create_tn_derivative'),
-      'file' => "$li_module_path/includes/derivatives.inc",
+      'file' => "$large_image_module_path/includes/derivatives.inc",
     );
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'JPG',
       'function' => array('islandora_large_image_create_jpg_derivative'),
-      'file' => "$li_module_path/includes/derivatives.inc",
+      'file' => "$large_image_module_path/includes/derivatives.inc",
     );
   }
 
@@ -799,7 +798,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object) {
 
 
 /**
- * Creates the MEDIUM_SIZE derivative for page object.
+ * Creates the JPG derivative for page object when OBJ is a jpeg.
  *
  * @param AbstractObject $object
  *   An AbstractObject representing a Fedora object.
@@ -820,7 +819,7 @@ function islandora_paged_content_create_medium_jpg(AbstractObject $object, $forc
       return islandora_basic_image_no_obj_datastream($object->id);
     }
     else {
-      $medium_file = file_copy($original_file['file'], 'temporary://' . $original_file['filename'] . 'TN.' . $original_file['extension']);
+      $medium_file = file_copy($original_file['file'], 'temporary://' . $original_file['filename'] . 'JPG.' . $original_file['extension']);
       if (islandora_basic_image_scale_image($medium_file, 500, 700)) {
         $added_successfully = islandora_basic_image_add_datastream($object, 'JPG', $medium_file);
         if ($added_successfully !== TRUE) {
