@@ -703,11 +703,13 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
  *
  * @param AbstractObject $object
  *   Object requiring derivatives
+ * @param String  $context
+ *   Indicator of which solution pack is calling this function
  *
  * @return array
  *   Structured array of page derivatives
  */
-function islandora_paged_content_page_derivatives(AbstractObject $object) {
+function islandora_paged_content_page_derivatives(AbstractObject $object, $context) {
   $is_tiff = preg_match('/image\/tif?f/i', $object['OBJ']->mimeType);
   $is_jpg = preg_match('/image\/jpe?g/i', $object['OBJ']->mimeType);
   $large_image_module_path = drupal_get_path('module', 'islandora_large_image');
@@ -715,7 +717,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object) {
   $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
   $ocr_module_path = drupal_get_path('module', 'islandora_ocr');
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-  $derive = islandora_paged_content_get_enabled_ingest_derivatives('islandora_book');
+  $derive = islandora_paged_content_get_enabled_ingest_derivatives($context);
   $derivatives = array();
 
   if ($derive['pdf']) {
