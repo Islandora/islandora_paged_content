@@ -19,8 +19,8 @@ before_install:
   - ln -s $TRAVIS_BUILD_DIR sites/all/modules/islandora_paged_content
   - ln -s $HOME/islandora_solutionpack_image sites/all/modules/islandora_solutionpack_image
   - ln -s $HOME/islandora_solutionpack_large_image sites/all/modules/islandora_solutionpack_large_image
-  - drush en --user=1 --yes islandora_solutionpack_image
-  - drush en --user=1 --yes islandora_solutionpack_large_image
+  - drush en --user=1 --yes islandora_basic_image
+  - drush en --user=1 --yes islandora_large_image
   - drush en --yes islandora_paged_content
 script:
   - ant -buildfile sites/all/modules/islandora_paged_content/build.xml lint
