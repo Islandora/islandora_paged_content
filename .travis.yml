@@ -20,6 +20,8 @@ before_install:
   - ln -s $HOME/islandora_solutionpack_image sites/all/modules/islandora_solutionpack_image
   - ln -s $HOME/islandora_solutionpack_large_image sites/all/modules/islandora_solutionpack_large_image
   - drush en --yes islandora_paged_content
+  - drush en --user=1 --yes islandora_solutionpack_image
+  - drush en --user=1 --yes islandora_solutionpack_large_image
 script:
   - ant -buildfile sites/all/modules/islandora_paged_content/build.xml lint
   - $ISLANDORA_DIR/tests/scripts/line_endings.sh sites/all/modules/islandora_paged_content
