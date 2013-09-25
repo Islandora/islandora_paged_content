@@ -704,7 +704,7 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
  * @param AbstractObject $object
  *   Object requiring derivatives
  * @param String  $context
- *   Indicator of which solution pack is calling this function
+ *   Indicator of which solution pack calling this function
  *
  * @return array
  *   Structured array of page derivatives
@@ -717,7 +717,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
   $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
   $ocr_module_path = drupal_get_path('module', 'islandora_ocr');
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-  $derive = islandora_paged_content_get_enabled_ingest_derivatives($context);
+  $derive = islandora_paged_content_get_enabled_ingest_derivatives('islandora_book');
   $derivatives = array();
 
   if ($derive['pdf']) {
@@ -729,7 +729,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
     );
   }
 
-  if ($derive['ocr']) {
+  if ($derive['ocr'] && $ocr_module_path) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'OCR',
@@ -743,7 +743,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
   }
-  if ($derive['image']) {
+  if ($derive['image'] && $large_image_module_path) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'JP2',
@@ -764,7 +764,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
     );
   }
 
-  if ($derive['image'] && $is_tiff) {
+  if ($derive['image'] && $is_tiff && $large_image_module_path) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'TN',
@@ -779,7 +779,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
     );
   }
 
-  if ($derive['image'] && $is_jpg) {
+  if ($derive['image'] && $is_jpg && $basic_image_module_path) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'TN',
@@ -813,6 +813,9 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
  * @see hook_islandora_derivative()
  */
 function islandora_paged_content_create_medium_jpg(AbstractObject $object, $force = FALSE) {
+  if (!module_exists('islandora_basic_image')) {
+    return;
+  }
   module_load_include('inc', 'islandora_basic_image', 'includes/derivatives');
   $return = '';
   if (!isset($object['JPG']) || (isset($object['JPG']) && $force === TRUE)) {
