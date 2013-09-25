@@ -728,7 +728,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
       'file' => "$paged_content_module_path/includes/derivatives.inc",
     );
   }
- 
+
   if ($derive['ocr'] &&  module_exists('islandora_ocr')) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
