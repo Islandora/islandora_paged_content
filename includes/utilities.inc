@@ -729,7 +729,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
     );
   }
 
-  if ($derive['ocr'] &&  module_exists('islandora_ocr')) {
+  if ($derive['ocr']) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'OCR',
@@ -743,7 +743,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
   }
-  if ($derive['image'] && module_exists('islandora_large_image')) {
+  if ($derive['image']) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'JP2',
@@ -764,7 +764,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
     );
   }
 
-  if ($derive['image'] && $is_tiff && module_exists('islandora_large_image')) {
+  if ($derive['image'] && $is_tiff) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'TN',
@@ -779,7 +779,7 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
     );
   }
 
-  if ($derive['image'] && $is_jpg && module_exists('islandora_basic_image')) {
+  if ($derive['image'] && $is_jpg) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'TN',
