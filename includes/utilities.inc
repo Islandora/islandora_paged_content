@@ -710,10 +710,7 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
  *   Structured array of page derivatives
  */
 function islandora_paged_content_page_derivatives(AbstractObject $object, $context) {
-  $is_tiff = preg_match('/image\/tif?f/i', $object['OBJ']->mimeType);
-  $is_jpg = preg_match('/image\/jpe?g/i', $object['OBJ']->mimeType);
   $large_image_module_path = drupal_get_path('module', 'islandora_large_image');
-  $basic_image_module_path = drupal_get_path('module', 'islandora_basic_image');
   $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
   $ocr_module_path = drupal_get_path('module', 'islandora_ocr');
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
@@ -762,9 +759,6 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
       'function' => array('islandora_paged_content_derive_thumbnail_on_parent'),
       'file' => "$paged_content_module_path/includes/derivatives.inc",
     );
-  }
-
-  if ($derive['image'] && $is_tiff) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'TN',
@@ -779,77 +773,5 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
     );
   }
 
-  if ($derive['image'] && $is_jpg) {
-    $derivatives[] = array(
-      'source_dsid' => 'OBJ',
-      'destination_dsid' => 'TN',
-      'function' => array('islandora_basic_image_create_thumbnail'),
-      'file' => "$basic_image_module_path/includes/derivatives.inc",
-    );
-
-    $derivatives[] = array(
-      'source_dsid' => 'OBJ',
-      'destination_dsid' => 'JPG',
-      'function' => array('islandora_paged_content_create_medium_jpg'),
-      'file' => "$paged_content_module_path/includes/utilities.inc",
-    );
-  }
-
   return $derivatives;
-}
-
-
-/**
- * Creates the JPG derivative for page object when OBJ is a jpeg.
- *
- * @param AbstractObject $object
- *   An AbstractObject representing a Fedora object.
- * @param bool $force
- *   Whether derivative generation is being forced.
- *
- * @return array
- *   An array describing the outcome of the jpeg creation.
- *
- * @see hook_islandora_derivative()
- */
-function islandora_paged_content_create_medium_jpg(AbstractObject $object, $force = FALSE) {
-  if (!module_exists('islandora_basic_image')) {
-    return;
-  }
-  module_load_include('inc', 'islandora_basic_image', 'includes/derivatives');
-  $return = '';
-  if (!isset($object['JPG']) || (isset($object['JPG']) && $force === TRUE)) {
-    $original_file = islandora_basic_image_copy_obj_datastream($object);
-    if ($original_file === FALSE) {
-      return islandora_basic_image_no_obj_datastream($object->id);
-    }
-    else {
-      $medium_file = file_copy($original_file['file'], 'temporary://' . $original_file['filename'] . 'JPG.' . $original_file['extension']);
-      if (islandora_basic_image_scale_image($medium_file, 500, 700)) {
-        $added_successfully = islandora_basic_image_add_datastream($object, 'JPG', $medium_file);
-        if ($added_successfully !== TRUE) {
-          $return = islandora_basic_image_failed_adding($added_successfully);
-        }
-        else {
-          $return = array(
-            'success' => TRUE,
-            'messages' => array(
-              array(
-                'message' => t('The JPG datastream was added successfully for @pid!'),
-                'message_sub' => array('@pid' => $object->id),
-                'type' => 'dsm',
-              ),
-            ),
-          );
-        }
-      }
-      else {
-        $return = islandora_basic_image_failed_scaling();
-      }
-    }
-    if (isset($original_file)) {
-      file_delete($original_file['file']);
-    }
-    return $return;
-  }
 }
