@@ -713,7 +713,6 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
   $large_image_module_path = drupal_get_path('module', 'islandora_large_image');
   $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
   $ocr_module_path = drupal_get_path('module', 'islandora_ocr');
-  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $derive = islandora_paged_content_get_enabled_ingest_derivatives($context);
   $derivatives = array();
 
