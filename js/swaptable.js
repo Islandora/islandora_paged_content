@@ -1,34 +1,41 @@
+var jQuery = jQuery || {};
+var Drupal = Drupal || { 'settings': {}, 'behaviors': {}, 'locale': {} };
 (function ($) {
+  "use strict";
 
   /**
    * jQuery Helper function for determining order.
    *
    * Very dumb method doesn't test for the same element or not siblings etc.
    */
-  $.fn.isAfter = function(sel){
+  $.fn.isAfter = function (sel) {
     return this.index() > $(sel).index();
-  }
+  };
 
   /**
    * jQuery Helper function for determining order.
    *
    * Very dumb method doesn't test for the same element or not siblings etc.
    */
-  $.fn.isBefore= function(sel){
+  $.fn.isBefore = function (sel) {
     return !this.isAfter(sel);
-  }
+  };
 
   /**
    * Two tables with drag and drop rows to move rows between them.
    */
   Drupal.behaviors.swapTable = {
     attach: function (context, settings) {
-      for (var base in settings.swapTable) {
-        $('#' + base, context).once('swaptable', function () {
+      var base,
+        constructSwapTable = function () {
           // Create the new swapTable instance. Save in the Drupal variable
           // to allow other scripts access to the object.
-          Drupal.swapTable[base] = new Drupal.swapTable(this, settings.swapTable[base]);
-        });
+          Drupal.swapTable[this.id] = new Drupal.swapTable(this, settings.swapTable[this.id]);
+        };
+      for (base in settings.swapTable) {
+        if (settings.swapTable.hasOwnProperty(base)) {
+          $('#' + base, context).once('swaptable', constructSwapTable);
+        }
       }
     }
   };
@@ -42,8 +49,7 @@
    *   Settings for the swap tables.
    */
   Drupal.swapTable = function (table, settings) {
-    var self = this;
-    var name = settings.name;
+    var self = this, name = settings.name;
 
     // Required object variables.
     this.table = table;
@@ -62,7 +68,7 @@
     this.settings = settings;
 
     // Attach ajax properties to each pager link
-    $('.pager a', this.table).bind('click', function(e) {
+    $('.pager a', this.table).bind('click', function (e) {
       e.preventDefault();
       // Change the url to have the pager parameters.
       self.reload(this.href.match('\\?.*page=([^&]*)')[1]);
@@ -71,49 +77,48 @@
     // Before any ajax elements within this form serialize the form values
     // make sure we update the hidden value with the latest ordering and
     // modifications.
-    $('.ajax-processed', this.form).each(function() {
-      Drupal.ajax[this.id].beforeSerialize = function(element, options) {
-        self.serializeOrderAndModifications()
+    $('.ajax-processed', this.form).each(function () {
+      Drupal.ajax[this.id].beforeSerialize = function (element, options) {
+        self.serializeOrderAndModifications();
         Drupal.ajax.prototype.beforeSerialize.call(this, element, options);
       };
     });
 
     // Always ensure the hidden fields has the latest ordering/modifications
     // before submitting.
-    this.form.submit(function() {
-      self.serializeOrderAndModifications()
+    this.form.submit(function () {
+      self.serializeOrderAndModifications();
       return true;
     });
 
     // Add the actual ID of the row to each row in left tables.
     // ID's are assumed to be unique and also assumed not to contain spaces.
-    $('tbody > tr', this.left).each(function(index) {
+    $('tbody > tr', this.left).each(function (index) {
       index = (self.limit * self.page.left) + index;
       $.data(this, 'id', settings.order[index]);
     });
 
     // Add the actual ID of the row to each row in right tables.
     // ID's are assumed to be unique and also assumed not to contain spaces.
-    $('tbody > tr', this.right).each(function(index) {
+    $('tbody > tr', this.right).each(function (index) {
       index = (self.limit * self.page.right) + index;
       $.data(this, 'id', settings.order[index]);
     });
 
     // Add a link before the table for users to show or hide weight columns.
-    var toggle_original_display = $('<a href="#" class="swaptable-toggle-original-ordering"></a>')
+    $('<a href="#" class="swaptable-toggle-original-ordering"></a>')
       .attr('title', Drupal.t('Show the original order of items.'))
       .click(function () {
-        if ($.cookie('Drupal.swapTable.showOriginal') == 1) {
+        if ($.cookie('Drupal.swapTable.showOriginal') === 1) {
           self.hideColumns();
-        }
-        else {
+        } else {
           self.showColumns();
         }
         return false;
       })
       .wrap('<div class="swaptable-toggle-original-ordering-wrapper"></div>')
-      .parent();
-    $(this.table).before(toggle_original_display);
+      .parent()
+      .insertBefore(this.table);
 
     // Initialize the specified columns.
     self.initColumns();
@@ -124,12 +129,12 @@
     this.createPlaceholder(this.right);
 
     // Listen to click events to select rows in the left table.
-    $('tbody > tr', this.left).bind("click", function(event) {
+    $('tbody > tr', this.left).bind("click", function (event) {
       self.selectRow(event, self.left, this);
     });
 
     // Listen to click events to select rows in the right table.
-    $('tbody > tr', this.right).bind("click", function(event) {
+    $('tbody > tr', this.right).bind("click", function (event) {
       self.selectRow(event, self.right, this);
     });
 
@@ -144,22 +149,21 @@
       containment: this.table,
       opacity: 0.7,
       helper: function (event) {
-        var content = '';
-        var selected = $(event.currentTarget).siblings('.ui-selected').andSelf().addClass('ui-selected');
-        var content = $(selected[0]).clone(false).removeAttr('id').removeClass('ui-droppable');
+        var selected = $(event.currentTarget).siblings('.ui-selected').andSelf().addClass('ui-selected'),
+          content = $(selected[0]).clone(false).removeAttr('id').removeClass('ui-droppable'),
+          helper = $('<div class="ui-helper" style="position: absolute;"/>');
         $('.ordering', content).hide();
         $('.original-ordering', content).text('');
         if (selected.length > 1) {
           $('.original-ordering', content).text(Drupal.t('Multiple Selected: #') + selected.length);
           $('.original-ordering', content).removeAttr('class').show();
         }
-        var helper = $('<div class="ui-helper" style="position: absolute;"/>');
-        $('td:not(.ordering, .original-ordering)', content).each(function() {
-          var style = { 'display': 'inline-block', 'vertical-align': 'middle' };
-          var span = $('<span/>')
-            .addClass($(this).attr('class'))
-            .html($(this).html())
-            .css(style);
+        $('td:not(.ordering, .original-ordering)', content).each(function () {
+          var style = { 'display': 'inline-block', 'vertical-align': 'middle' },
+            span = $('<span/>')
+              .addClass($(this).attr('class'))
+              .html($(this).html())
+              .css(style);
           helper.append(span);
         });
         helper.appendTo('body');
@@ -171,12 +175,11 @@
         return helper;
       },
       start: function (event, ui) {
-        var table = $(this).parents('table')[0];
-        var otherTable = (table === self.left) ? self.right : self.left;
+        var table = $(this).parents('table')[0],
+          otherTable = (table === self.left) ? self.right : self.left,
+          selected = $(this).siblings('.ui-selected').andSelf();
         // Cancel selections in other table now that dragging has begun.
         $('tr.ui-selected', otherTable).removeClass('ui-selected');
-        // Store the selected values.
-        var selected = $(this).siblings('.ui-selected').andSelf();
         self.selectElements(this, selected);
         // Move the place holder to the selected row.
         $(this).before($('.ui-placeholder', table).show());
@@ -204,16 +207,16 @@
     // ignore the over events.
     $('tbody > tr:not(.ui-placeholder)', this.tables).droppable({
       tolerance: 'intersect',
-      over: function(event, ui) {
-        var table = $(this).parents('table')[0];
-        var selected = self.selected(ui.draggable[0]);
+      over: function (event, ui) {
+        var table = $(this).parents('table')[0],
+          selected = self.selected(ui.draggable[0]);
         self.overTable(table, selected);
         self.movePlaceholder(table, this);
         self.updateOrdering(table, selected);
       },
-      drop: function(event, ui) {
-        var table = $(this).parents('table')[0];
-        var selected = self.selected(ui.draggable[0]);
+      drop: function (event, ui) {
+        var table = $(this).parents('table')[0],
+          selected = self.selected(ui.draggable[0]);
         self.drop(table, this, selected);
       }
     });
@@ -227,7 +230,7 @@
     pages = pages || this.page.left + ',' + this.page.right;
     Drupal.ajax[id].options.url += '?page=' + pages;
     $(this.load).trigger('mousedown');
-  }
+  };
 
   /**
    * Serializes the current order of the rows as well as any modifications made.
@@ -235,44 +238,44 @@
   Drupal.swapTable.prototype.serializeOrderAndModifications = function () {
     $(this.order).val(this.settings.order.join(' '));
     $(this.modified).val(this.settings.modified.join(' '));
-  }
+  };
 
   /**
    * Marks the given ids as selected for the given draggable element.
    */
   Drupal.swapTable.prototype.select = function (draggable, ids) {
     $.data(draggable, 'selected', ids);
-  }
+  };
 
   /**
    * Gets the selected elements.
    */
   Drupal.swapTable.prototype.selected = function (draggable) {
     return $.data(draggable, 'selected').get();
-  }
+  };
 
   /**
    * Meant to be called in the context of the element.
    */
   Drupal.swapTable.prototype.getID = function () {
     return $.data(this, 'id');
-  }
+  };
 
   /**
    * Selects the given elements and saves them with the given draggable element.
    */
   Drupal.swapTable.prototype.selectElements = function (draggable, selected) {
     this.select(draggable, selected.map(this.getID));
-  }
+  };
 
   /**
    * Gets all the given elements within the given table.
    */
   Drupal.swapTable.prototype.getSelectedElements = function (table, selected) {
-    return $('tr', table).filter(function() {
+    return $('tr', table).filter(function () {
       return $.inArray($.data(this, 'id'), selected) !== -1;
     });
-  }
+  };
 
   /**
    * Selection is "stored" by attaching the class 'ui-selected' to rows.
@@ -282,51 +285,51 @@
    */
   Drupal.swapTable.prototype.selectRow = function (event, table, row) {
     // Store the last selected row for building the multi-select list.
-    var last = $.data(table, 'last');
+    var last = $.data(table, 'last'),
+      id = '#' + row.id,
+      list;
     // Shift indicates an intention to select multiple.
     if (event.shiftKey && !event.metaKey && last) {
-      var id = '#' + row.id;
-      var list = $(row).isAfter($(last)) ? $(last).nextUntil(id) : $(last).prevUntil(id);
+      list = $(row).isAfter($(last)) ? $(last).nextUntil(id) : $(last).prevUntil(id);
       list.add(row).addClass('ui-selected');
-    }
-    // Select/Deselect only the current selection.
-    else if (event.metaKey) {
+    } else if (event.metaKey) {
+      // Select/Deselect only the current selection.
       $(row).toggleClass('ui-selected');
       $.data(table, 'last', row);
-    }
-    // Select only the given row.
-    else {
+    } else {
+      // Select only the given row.
       $(row).addClass('ui-selected').siblings().removeClass('ui-selected');
       $.data(table, 'last', row);
     }
-  }
+  };
 
   /**
    * Drop callback for droppable elements.
    */
   Drupal.swapTable.prototype.drop = function (table, row, selected) {
-    var self = this;
-    var page = (table === this.left) ? this.page.left : this.page.right;
+    var self = this,
+      page = (table === this.left) ? this.page.left : this.page.right,
+      row_index = $(row).parent().children(':visible').index(row),
+      index = (this.limit * page) + row_index,
+      args = [index, 0].concat(selected),
+      order;
     // Remove the selected items before reinserting them.
-    var order = $.grep(this.settings.order, function(element, index) {
-      return $.inArray(element, selected) == -1;
+    order = $.grep(this.settings.order, function (element, index) {
+      return $.inArray(element, selected) === -1;
     });
-    var row_index = $(row).parent().children(':visible').index(row)
-    var index = (this.limit * page) + row_index;
-    var args = [index, 0].concat(selected);
     Array.prototype.splice.apply(order, args);
     this.settings.order = order;
     this.settings.modified = this.settings.modified.concat(selected);
-    this.settings.modified = $.grep(this.settings.modified, function(v, k) {
+    this.settings.modified = $.grep(this.settings.modified, function (v, k) {
       return $.inArray(v, self.settings.modified) === k;
     });
     this.reload();
-  }
+  };
 
   /**
    * Callback for when a droppable element is hovering over the given table.
    */
-  Drupal.swapTable.prototype.overTable = function(table, selected) {
+  Drupal.swapTable.prototype.overTable = function (table, selected) {
     var otherTable = (table === this.left) ? this.right : this.left;
     // Show the currently selected rows only if they belong to the other table.
     this.getSelectedElements(table, selected).hide();
@@ -334,64 +337,66 @@
     // Show the place holder on only the current table
     $('tr.ui-placeholder', table).show();
     $('tr.ui-placeholder', otherTable).hide();
-  }
+  };
 
   /**
    * Creates a place holder element for the given table.
    */
   Drupal.swapTable.prototype.createPlaceholder = function (table) {
     var self = this;
-    var placeholder = $('<tr class="ui-placeholder"><td class="ordering">-1</td><td class="original-ordering"></td><td class="empty"/></tr>');
-    $('td.empty', placeholder).attr('colspan', $('th', table).length - 2);
-    placeholder.hide()
+    $('<td class="empty"/>')
+      .attr('colspan', $('th', table).length - 2)
+      .wrap('<tr class="ui-placeholder">')
+      .parent()
+      .prepend('<td class="ordering">-1</td><td class="original-ordering"/>')
+      .hide()
       .droppable({
-        drop: function(event, ui) {
-          var table = $(this).parents('table')[0];
-          var selected = self.selected(ui.draggable[0]);
+        drop: function (event, ui) {
+          var table = $(this).parents('table')[0],
+            selected = self.selected(ui.draggable[0]);
           self.drop(table, this, selected);
         }
       }).prependTo($('tbody', table));
-  }
+  };
 
   /**
    * Move the place holder to before or after the given row.
    */
-  Drupal.swapTable.prototype.movePlaceholder = function(table, row) {
+  Drupal.swapTable.prototype.movePlaceholder = function (table, row) {
     // Move placeholder to current drop point.
-    var placeholder = $('.ui-placeholder', table);
-    var list = $('tbody > tr:visible', table);
+    var placeholder = $('.ui-placeholder', table),
+      list = $('tbody > tr:visible', table);
     if (list.index(row) > list.index(placeholder)) {
       $(row).after(placeholder);
-    }
-    else {
+    } else {
       $(row).before(placeholder);
     }
-  }
+  };
 
   /**
    * Update the ordering and classes for the given table.
    */
-  Drupal.swapTable.prototype.updateOrdering = function(table, selected) {
+  Drupal.swapTable.prototype.updateOrdering = function (table, selected) {
     this.updateTableOrdering(this.left, selected);
     this.updateTableOrdering(this.right, selected);
-  }
+  };
 
   /**
    * Update the ordering and classes for the given table.
    */
-  Drupal.swapTable.prototype.updateTableOrdering = function(table, selected) {
+  Drupal.swapTable.prototype.updateTableOrdering = function (table, selected) {
+    var page = (table === this.left) ? this.page.left : this.page.right,
+      index = (this.limit * page),
+      count = index + 1;
     selected = selected || [];
-    var page = (table === this.left) ? this.page.left : this.page.right;
-    var index = (this.limit * page);
-    var count = index + 1;
-    $('tbody > tr:visible', table).each(function(index) {
+    $('tbody > tr:visible', table).each(function (index) {
       // Restripe the table.
       $(this).removeClass('odd even').addClass(index % 2 ? 'even' : 'odd');
       // Reorder the displayed values to always be in order.
       $('td.ordering', this).text(count);
       count += $(this).hasClass('ui-placeholder') ? selected.length : 1;
     });
-  }
+  };
 
   /**
    * Initialize columns containing form elements to be hidden by default.
@@ -410,13 +415,11 @@
         expires: 365
       });
       this.hideColumns();
-    }
-    // Check cookie value and show/hide weight columns accordingly.
-    else {
-      if ($.cookie('Drupal.swapTable.showOriginal') == 1) {
+    } else {
+      // Check cookie value and show/hide weight columns accordingly.
+      if ($.cookie('Drupal.swapTable.showOriginal') === 1) {
         this.showColumns();
-      }
-      else {
+      } else {
         this.hideColumns();
       }
     }
@@ -455,5 +458,4 @@
       expires: 365
     });
   };
-
-})(jQuery);
+}(jQuery));
