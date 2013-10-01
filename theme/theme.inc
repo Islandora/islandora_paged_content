@@ -49,17 +49,17 @@ function theme_islandora_paged_content_page_navigator(array $variables) {
  * Implements template_preprocess_theme().
  */
 function template_preprocess_swaptable(array &$variables) {
+  global $pager_page_array, $pager_total, $pager_total_items, $pager_limits;
   element_set_attributes($variables['element'], array('id', 'name'));
   $table = &$variables['element'];
-  $items = element_children($table['#rows']);
-  $pagers = swaptable_pagers($table['#pager'], count($items));
-  $variables['left_table'] = swaptable_table('left', $table, $pagers[0]);
-  $variables['right_table'] = swaptable_table('right', $table, $pagers[1]);
+  $variables['pager'] = swaptable_pagers($table['#pager'], count($table['#rows']));
+  $variables['table']['left'] = swaptable_table('left', $table, $variables['pager']['left']);
+  $variables['table']['right'] = swaptable_table('right', $table, $variables['pager']['right']);
   $base = $table['#id'];
   $settings['swapTable'][$base] = array(
-    'left' => "{$base}-left",
-    'right' => "{$base}-right",
-    'items' => $items,
+    'name' => $table['#name'],
+    'order' => $table['order']['#value'],
+    'modified' => $table['modified']['#value'],
   );
   drupal_add_js($settings, 'setting');
 }
@@ -78,8 +78,8 @@ function template_preprocess_swaptable(array &$variables) {
 function swaptable_pagers(array $pager, $total) {
   extract($pager);
   return array(
-    0 => swaptable_pager($element[0], $tags, $quantity, $limit, $total),
-    1 => swaptable_pager($element[1], $tags, $quantity, $limit, $total),
+    'left' => swaptable_pager($element['left'], $tags, $quantity, $limit, $total),
+    'right' => swaptable_pager($element['right'], $tags, $quantity, $limit, $total),
   );
 }
 
@@ -103,14 +103,11 @@ function swaptable_pagers(array $pager, $total) {
 function swaptable_pager($element, $tags, $quantity, $limit, $total) {
   $page = pager_default_initialize($total, $limit, $element);
   return array(
-    'page' => $page,
-    'limit' => $limit,
     'element' => $element,
-    'pager' => theme('pager', array(
-        'tags' => $tags,
-        'element' => $element,
-        'quantity' => $quantity,
-      )),
+    'tags' => $tags,
+    'quantity' => $quantity,
+    'limit' => $limit,
+    'page' => $page,
   );
 }
 
@@ -122,42 +119,44 @@ function swaptable_pager($element, $tags, $quantity, $limit, $total) {
  * @param array $items
  *   The description of each row of the table where the keys are the unique
  *   identifers for each row.
+ * @param array $ordering
+ *   The ordering in which to display the given rows.
+ * @param array $modified
+ *   The rows which have been modified by the user directly.
  * @param array $pager
  *   The description of the pager to attach to this table.
  *
  * @return array
  *   The rows definition for the table.
  */
-function swaptable_table_rows($position, array &$items, array $pager) {
+function swaptable_table_rows($position, array $items, array $ordering, array $modified, array $pager) {
   $rows = array();
-  // Once pager support is enabled uncomment the line below.
-  // Code sniffer was refusing to ignore the commented code here.  Please see
-  // d251150a273ce3f4a52a3948ecb8ea235433cb8d to retrieve it.
-  $count = 1;
-  foreach ($items as $id => &$row) {
+  $offset = $pager['page'] * $pager['limit'];
+  $ordering = array_slice($ordering, $offset, $pager['limit']);
+  $original_ordering = element_children($items);
+  foreach ($ordering as $i => $item) {
+    $row = $items[$item];
     $data = array();
     $data[] = array(
-      'data' => $count,
+      'data' => $offset + $i + 1,
       'class' => array('ordering'),
     );
     $data[] = array(
-      'data' => $count,
+      'data' => array_search($item, $original_ordering) + 1,
       'class' => array('original-ordering', 'swaptable-hide'),
     );
     foreach (element_children($row) as $j) {
-      $cell = &$row[$j];
-      // @todo Make label into links?
+      $cell = $row[$j];
       $data[] = array(
         'data' => empty($cell['#printed']) ? drupal_render($cell) : $cell['#children'],
         'class' => array($j),
       );
     }
     $rows[] = array(
-      'id' => str_replace(':', '-', "{$position}-{$id}"),
-      'class' => array(),
+      'id' => str_replace(':', '-', "{$position}-{$item}"),
+      'class' => in_array($item, $modified) ? array('ui-modified') : array(),
       'data' => $data,
     );
-    $count++;
   }
   return $rows;
 }
@@ -176,22 +175,22 @@ function swaptable_table_rows($position, array &$items, array $pager) {
  *   The rendered table.
  */
 function swaptable_table($position, array $table, array $pager) {
-  // To get pagers to render just add append "$pager['pager']" to the
-  // the returned value.
   $table['#attributes']['id'] = "{$table['#id']}-{$position}";
   $table['#attributes']['name'] = $position;
   $table['#attributes']['valign'] = 'top';
   $header = array(
     array(
-      'data' => t('#'),
+      'data' => t('Page #'),
       'class' => array('ordering'),
     ),
     array(
-      'data' => t('*#'),
+      'data' => t('*Original Page #'),
       'class' => array('original-ordering', 'swaptable-hide'),
-    ));
-  return theme('table', array(
-      'header' => array_merge($header, $table['#header']),
-      'rows' => swaptable_table_rows($position, $table['#rows'], $pager),
-      'attributes' => $table['#attributes']));
+    ),
+  );
+  return array(
+    'header' => array_merge($header, $table['#header']),
+    'rows' => swaptable_table_rows($position, $table['#rows'], $table['order']['#value'], $table['modified']['#value'], $pager),
+    'attributes' => $table['#attributes'],
+  );
 }
