@@ -1,5 +1,3 @@
-var jQuery = jQuery || {};
-var Drupal = Drupal || { 'settings': {}, 'behaviors': {}, 'locale': {} };
 (function ($) {
   "use strict";
 
