@@ -554,7 +554,7 @@ function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $
   $page = islandora_object_load($page['pid']);
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($page['TN']->mimeType);
-  $file = drupal_realpath('temporary://{$page->id}_TN.{$ext}');
+  $file = drupal_realpath("temporary://{$page->id}_TN.{$ext}");
   $page['TN']->getContent($file);
   $ret = islandora_paged_content_update_datastream($object,
     $file,
