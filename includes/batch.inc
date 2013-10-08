@@ -74,27 +74,31 @@ function islandora_paged_content_end_batch_operation(&$context, $count = 1, $mes
 function islandora_paged_content_batch_finished($success, $results, $operations) {
   if ($success) {
     // Delete any lingering files.
-    foreach ($results['files'] as $file) {
-      if (file_exists($file)) {
-        file_unmanaged_delete($file);
+    if (isset($results['files'])) {
+      foreach ($results['files'] as $file) {
+        if (file_exists($file)) {
+          file_unmanaged_delete($file);
+        }
       }
     }
     // Build generic place holders for the message.
-    $total = count($results['successful']);
-    $successful = count(array_filter($results['successful']));
-    $failed = $total - $successful;
-    $place_holders = array(
-      '@successful' => $successful,
-      '@failed' => $failed,
-      '@total' => $total,
-    );
-    // Display all messages/errors/warnings.
-    $messages = array_filter($results['messages']);
-    foreach ($messages as $message) {
-      $vars = isset($message[1]) ? array_merge($message[1], $place_holders) : $place_holders;
-      $status = isset($message[2]) ? $message[2] : 'status';
-      $message = format_string($message[0], $vars);
-      drupal_set_message(check_plain($message), $status);
+    if (isset($results['successful'])) {
+      $total = count($results['successful']);
+      $successful = count(array_filter($results['successful']));
+      $failed = $total - $successful;
+      $place_holders = array(
+        '@successful' => $successful,
+        '@failed' => $failed,
+        '@total' => $total,
+      );
+      // Display all messages/errors/warnings.
+      $messages = array_filter($results['messages']);
+      foreach ($messages as $message) {
+        $vars = isset($message[1]) ? array_merge($message[1], $place_holders) : $place_holders;
+        $status = isset($message[2]) ? $message[2] : 'status';
+        $message = format_string($message[0], $vars);
+        drupal_set_message(check_plain($message), $status);
+      }
     }
   }
   else {
@@ -404,4 +408,15 @@ function islandora_paged_content_delete_pages_batch_operation($paged_content_id,
       islandora_paged_content_update_paged_content_thumbnail($paged_content);
     }
   }
+}
+
+/**
+ * Deletes the parent issue or book object.
+ *
+ * @param string $pid
+ *   The pid of the issue or book object.
+ */
+function islandora_paged_content_delete_parent_object_operation($pid) {
+  $object = islandora_object_load($pid);
+  islandora_delete_object($object);
 }
