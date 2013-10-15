@@ -312,12 +312,13 @@ function islandora_paged_content_manage_pages_sequences_form(array $form, array 
       $url = "islandora/object/{$id}";
       $rows[$id] = array(
         'tn' => array(
-          '#markup' => theme('image', array(
-                       'path' => url("$url/datastream/TN/view"),
-                       'attributes' => array(
-                         'width' => '64px',
-                         'height' => '64px',
-                       )))),
+          '#markup' => theme(
+            'image', array(
+              'path' => url("$url/datastream/TN/view"),
+              'attributes' => array(
+                'width' => '64px',
+                'height' => '64px',
+              )))),
         'label' => array(
           '#markup' => l($page['label'], $url, array(
                        'html' => TRUE,
