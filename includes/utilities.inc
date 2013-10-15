@@ -155,7 +155,7 @@ function islandora_paged_content_update_datastream(AbstractObject $object, $file
  * Assumes only one relationship matches the given parameters.
  * Will return the given default if no relationship is found.
  *
- * @param FedoraRelationships $relationships
+ * @param object $relationships
  *   The Fedora relationships to check, either RELS-EXT or RELS-INT.
  * @param string $predicate_uri
  *   The predicate URI.
@@ -168,7 +168,7 @@ function islandora_paged_content_update_datastream(AbstractObject $object, $file
  *   The first matching relationships value if found, otherwise the given
  *   default it returned.
  */
-function islandora_paged_content_get_relationship(FedoraRelationships $relationships, $predicate_uri, $predicate, $default = NULL) {
+function islandora_paged_content_get_relationship($relationships, $predicate_uri, $predicate, $default = NULL) {
   $results = $relationships->get($predicate_uri, $predicate);
   return count($results) > 0 ? $results[0]['object']['value'] : $default;
 }
@@ -176,7 +176,7 @@ function islandora_paged_content_get_relationship(FedoraRelationships $relations
 /**
  * Sets a relationship removing any previous relationships.
  *
- * @param FedoraRelationships $relationships
+ * @param object $relationships
  *   The Fedora relationships to be modified, either RELS-EXT or RELS-INT.
  * @param string $predicate_uri
  *   The predicate URI.
@@ -187,7 +187,7 @@ function islandora_paged_content_get_relationship(FedoraRelationships $relations
  * @param bool $literal
  *   TRUE if the object is a literal, FALSE if it is an object.
  */
-function islandora_paged_content_set_relationship(FedoraRelationships $relationships, $predicate_uri, $predicate, $object, $literal = FALSE) {
+function islandora_paged_content_set_relationship($relationships, $predicate_uri, $predicate, $object, $literal = FALSE) {
   $relationships->remove($predicate_uri, $predicate, NULL, $literal);
   $relationships->add($predicate_uri, $predicate, $object, $literal);
 }
