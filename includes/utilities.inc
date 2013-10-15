@@ -17,7 +17,8 @@
  *   The paged content object to fetch the pages from.
  *
  * @return array
- *   All the pages in the given paged content object.
+ *   All the pages in the given paged content object. Ordered by sequence
+ *   number. Each an array containing info.
  */
 function islandora_paged_content_get_pages(AbstractObject $object) {
   $query = <<<EOQ
@@ -773,4 +774,32 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
   }
 
   return $derivatives;
+}
+
+/**
+ * Helper function for parsing the pages_to_move string.
+ *
+ * @param string $pages_to_move
+ *   A string of the form '1, 2-4,5'.
+ *
+ * @return array
+ *   The page numbers that are to be moved.
+ */
+function islandora_paged_content_parse_pages_to_move($pages_to_move) {
+  $ranges = explode(',', $pages_to_move);
+  $page_numbers_to_move = array();
+  foreach ($ranges as $range) {
+    $dash_index = strpos($range, '-');
+    if ($dash_index) {
+      $page_range_start = trim(substr($range, 0, $dash_index));
+      $page_range_end = trim(substr($range, $dash_index + 1, strlen($range) - 1));
+      $current_range = range($page_range_start, $page_range_end);
+      $page_numbers_to_move = array_merge($page_numbers_to_move, $current_range);
+    }
+    else {
+      $page_numbers_to_move[] = trim($range);
+    }
+  }
+
+  return $page_numbers_to_move;
 }

@@ -312,12 +312,13 @@ function islandora_paged_content_manage_pages_sequences_form(array $form, array 
       $url = "islandora/object/{$id}";
       $rows[$id] = array(
         'tn' => array(
-          '#markup' => theme('image', array(
-                       'path' => url("$url/datastream/TN/view"),
-                       'attributes' => array(
-                         'width' => '64px',
-                         'height' => '64px',
-                       )))),
+          '#markup' => theme(
+            'image', array(
+              'path' => url("$url/datastream/TN/view"),
+              'attributes' => array(
+                'width' => '64px',
+                'height' => '64px',
+              )))),
         'label' => array(
           '#markup' => l($page['label'], $url, array(
                        'html' => TRUE,
@@ -335,6 +336,25 @@ function islandora_paged_content_manage_pages_sequences_form(array $form, array 
       ),
       '#rows' => $form_state['rows'],
     ),
+    'quick_reorder' => array(
+      '#type' => 'fieldset',
+      '#title' => t('Quick Reorder'),
+      'pages_to_move' => array(
+        '#type' => 'textfield',
+        '#title' => t('Move Pages:'),
+        '#description' => t("Must follow the form '1, 2-4,5'."),
+      ),
+      'pages_insert_point' => array(
+        '#type' => 'textfield',
+        '#title' => t('Insert After:'),
+      ),
+      'submit' => array(
+        '#validate' => array('islandora_paged_content_quick_reorder_validate'),
+        '#type' => 'submit',
+        '#submit' => array('islandora_paged_content_quick_reorder_submit'),
+        '#value' => t('Go'),
+      ),
+    ),
     'actions' => array(
       '#type' => 'actions',
       'submit' => array(
@@ -343,6 +363,82 @@ function islandora_paged_content_manage_pages_sequences_form(array $form, array 
       ),
     ),
   );
+}
+
+/**
+ * Validates quick_reorder fieldset.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ */
+function islandora_paged_content_quick_reorder_validate($form, &$form_state) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+
+  $pages = islandora_paged_content_get_pages(islandora_object_load($form_state['pid']));
+  $first_page = array_shift($pages);
+  $last_page = array_pop($pages);
+  $page_numbers = range($first_page['page'], $last_page['page']);
+
+  // Insert point validation.
+  if (!preg_match('/^[0-9\s]/', $form_state['values']['pages_insert_point']) ||
+        !in_array($form_state['values']['pages_insert_point'], $page_numbers)) {
+    form_set_error('pages_insert_point', t('Insert point must be a valid page number.'));
+  }
+
+  // Pages to move validation.
+  if (!preg_match('/^[0-9\s,\-]/', $form_state['values']['pages_to_move'])) {
+    form_set_error(
+      'pages_to_move',
+      t("Pages to move must follow the form '1, 2-4,5'.")
+    );
+  }
+  $pages_to_move_list = islandora_paged_content_parse_pages_to_move($form_state['values']['pages_to_move']);
+  if ($pages_to_move_list != array_intersect($pages_to_move_list, $page_numbers)) {
+    form_set_error('pages_to_move', t('All pages must be in range.'));
+  }
+}
+
+/**
+ * Validates quick_reorder fieldset.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ */
+function islandora_paged_content_quick_reorder_submit($form, &$form_state) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $page_numbers_to_move = islandora_paged_content_parse_pages_to_move($form_state['values']['pages_to_move']);
+
+  // Build page array without changed pids.
+  $book = islandora_object_load($form_state['pid']);
+  $raw_pages = islandora_paged_content_get_pages($book);
+  $pages = array();
+  $page_pids_to_move = array();
+  foreach ($raw_pages as $page_pid => $page_info) {
+    if (in_array($page_info['page'], $page_numbers_to_move)) {
+      $page_pids_to_move[] = $page_pid;
+    }
+    else {
+      $pages[$page_info['page']] = $page_pid;
+    }
+  }
+
+  // Add in changed PIDs. Fixes sequence numbers.
+  array_splice(
+    $pages,
+    array_search(
+      $form_state['values']['pages_insert_point'],
+      array_keys($pages)
+    ) + 1,
+    0,
+    $page_pids_to_move
+  );
+
+  $batch = islandora_paged_content_sequence_pages_batch($book, $pages);
+  batch_set($batch);
 }
 
 /**
