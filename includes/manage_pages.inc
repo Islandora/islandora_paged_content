@@ -384,7 +384,7 @@ function islandora_paged_content_quick_reorder_validate($form, &$form_state) {
   // Insert point validation.
   if (!preg_match('/^[0-9\s]/', $form_state['values']['pages_insert_point']) ||
         !in_array($form_state['values']['pages_insert_point'], $page_numbers)) {
-    form_set_error('pages_insert_point', t('Insert point be a valid page number.'));
+    form_set_error('pages_insert_point', t('Insert point must be a valid page number.'));
   }
 
   // Pages to move validation.
