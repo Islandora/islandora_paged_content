@@ -13,23 +13,14 @@
 /**
  * Gets all the pages in the given paged content object.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The paged content object to fetch the pages from.
  *
  * @return array
- *   All the pages in the given paged content object.
- *
- * @code
- *   array(
- *     'islandora:100' => array(
- *        'label' => 'Page 100',
- *        'page' => '100',
- *        'pid' => 'islandora:100',
- *      )
- *   );
- * @endcode
+ *   All the pages in the given paged content object. Ordered by sequence
+ *   number. Each an array containing info.
  */
-function islandora_paged_content_get_pages(FedoraObject $object) {
+function islandora_paged_content_get_pages(AbstractObject $object) {
   $query = <<<EOQ
 PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
 SELECT ?pid ?page ?label ?width ?height
@@ -87,17 +78,19 @@ EOQ;
 }
 
 /**
- * Gets the page progression to be used in a viewer from the given paged content
- * object.
+ * Function get_page_progression.
  *
- * @param FedoraObject $object
+ * Gets the page progression to be used in a viewer from the given paged
+ * content object.
+ *
+ * @param AbstractObject $object
  *   The paged content object to fetch the page progression from.
  *
  * @return string
  *   The page progression of the paged content object:  either left to right
  *   'lr' or right to left 'rl'.
  */
-function islandora_paged_content_get_page_progression(FedoraObject $object) {
+function islandora_paged_content_get_page_progression(AbstractObject $object) {
   $query = 'select $page_progression from <#ri> where <info:fedora/';
   $query .= $object->id;
   $query .= '><fedora-rels-ext:hasPageProgression> $page_progression';
@@ -112,7 +105,7 @@ function islandora_paged_content_get_page_progression(FedoraObject $object) {
 /**
  * Create/Update a datastream with the given parameters.
  *
- * @param AbstractFedoraObject $object
+ * @param AbstractObject $object
  *   The object to update.
  * @param string $file
  *   The absolute path to the file to use as content for the datastream.
@@ -129,22 +122,29 @@ function islandora_paged_content_get_page_progression(FedoraObject $object) {
  * @return bool
  *   TRUE if successful, FALSE otherwise.
  */
-function islandora_paged_content_update_datastream(AbstractFedoraObject $object, $file, $dsid, $label = NULL, $mimetype = NULL, $control_group = 'M', $copy = TRUE) {
-  $mime_detector = new MimeDetect();
-  if (empty($object[$dsid])) {
+function islandora_paged_content_update_datastream(AbstractObject $object, $file, $dsid, $label = NULL, $mimetype = NULL, $control_group = 'M', $copy = TRUE) {
+  if (!isset($mimetype)) {
+    $mime_detector = new MimeDetect();
+    $mimetype = $mime_detector->getMimetype($file);
+  }
+  $label = isset($label) ? $label : $dsid;
+
+  if (!isset($object[$dsid])) {
     $ds = $object->constructDatastream($dsid, $control_group);
+    $ds->mimetype = $mimetype;
+    $ds->label = $label;
+    $ds->setContentFromFile($file, $copy);
     $object->ingestDatastream($ds);
   }
   else {
     $ds = $object[$dsid];
-  }
-  $ds->setContentFromFile($file, $copy);
-  $ds->label = isset($label) ? $label : $dsid;
-  if (isset($mimetype)) {
-    $ds->mimetype = $mimetype;
-  }
-  else {
-    $ds->mimetype = $mime_detector->getMimetype($file);
+    $ds->setContentFromFile($file, $copy);
+    if ($ds->label != $label) {
+      $ds->label = $label;
+    }
+    if ($ds->mimetype != $mimetype) {
+      $ds->mimetype = $mimetype;
+    }
   }
   return TRUE;
 }
@@ -233,7 +233,7 @@ function islandora_paged_content_get_page_derivative_source_id($dsid) {
 /**
  * Checks if the given derivative datastream's intended source exists.
  *
- * @param AbstractFedoraObject $object
+ * @param AbstractObject $object
  *   The object to check.
  * @param string $dsid
  *   The derived datastream ID.
@@ -241,7 +241,7 @@ function islandora_paged_content_get_page_derivative_source_id($dsid) {
  * @return bool
  *   TRUE if the source datastream exists, FALSE otherwise.
  */
-function islandora_paged_content_page_has_derivative_source(AbstractFedoraObject $object, $dsid) {
+function islandora_paged_content_page_has_derivative_source(AbstractObject $object, $dsid) {
   $source_dsid = islandora_paged_content_get_page_derivative_source_id($dsid);
   return isset($object[$source_dsid]);
 }
@@ -249,7 +249,7 @@ function islandora_paged_content_page_has_derivative_source(AbstractFedoraObject
 /**
  * Gets the source file for the given, derivative datastream.
  *
- * @param AbstractFedoraObject $object
+ * @param AbstractObject $object
  *   The owner of the datastreams.
  * @param string $dsid
  *   The derived datastream ID.
@@ -257,7 +257,7 @@ function islandora_paged_content_page_has_derivative_source(AbstractFedoraObject
  * @return string
  *   The path to the source file.
  */
-function islandora_paged_content_get_page_derivative_source(AbstractFedoraObject $object, $dsid) {
+function islandora_paged_content_get_page_derivative_source(AbstractObject $object, $dsid) {
   if (!islandora_paged_content_can_derive($object, $dsid)) {
     return FALSE;
   }
@@ -278,7 +278,7 @@ function islandora_paged_content_get_page_derivative_source(AbstractFedoraObject
 /**
  * Checks if the given object can derive the given datastream.
  *
- * @param AbstractFedoraObject $object
+ * @param AbstractObject $object
  *   The object to check.
  * @param string $dsid
  *   The derived datastream ID.
@@ -286,7 +286,7 @@ function islandora_paged_content_get_page_derivative_source(AbstractFedoraObject
  * @return bool
  *   TRUE if the datastream can be derived, FALSE otherwise.
  */
-function islandora_paged_content_can_derive(AbstractFedoraObject $object, $dsid) {
+function islandora_paged_content_can_derive(AbstractObject $object, $dsid) {
   $can_derive = FALSE;
   $to_derive = array(
     'islandora:newspaperCModel',
@@ -388,13 +388,12 @@ function islandora_paged_content_pdf_combine(array $files, $out) {
   $output = array(); $ret = 0;
   exec($command, $output, $ret);
   if ($ret != 0) {
-    $message = 'GhostScript failed to combine PDFs.<br/>Error: @ret<br/>Command: @command <br/>Output !output';
     $variables = array(
       '@ret' => $ret,
       '@command' => $command,
       '!output' => implode('<br/>', $output),
     );
-    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    watchdog('islandora_paged_content', 'GhostScript failed to combine PDFs.<br/>Error: @ret<br/>Command: @command <br/>Output !output', $variables, WATCHDOG_ERROR);
     return FALSE;
   }
   return TRUE;
@@ -403,7 +402,7 @@ function islandora_paged_content_pdf_combine(array $files, $out) {
 /**
  * Creates a PDF derivative for the given Page object.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object that the derivative will be generated from, and added to.
  * @param array $options
  *   The options to be passed to convert.
@@ -411,7 +410,7 @@ function islandora_paged_content_pdf_combine(array $files, $out) {
  * @return bool
  *   TRUE if successful, FALSE otherwise.
  */
-function islandora_paged_content_page_derive_pdf_datastream(FedoraObject $object, array $options = array('-compress' => 'LZW')) {
+function islandora_paged_content_page_derive_pdf_datastream(AbstractObject $object, array $options = array('-compress' => 'LZW')) {
   $pdf_file = islandora_paged_content_page_derive_pdf($object, $options);
   if (!$pdf_file) {
     return FALSE;
@@ -424,7 +423,7 @@ function islandora_paged_content_page_derive_pdf_datastream(FedoraObject $object
 /**
  * Creates a PDF derivative from the given Page object and convert options.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object that the derivative will be generated from.
  * @param array $options
  *   The options to be passed to convert.
@@ -432,7 +431,7 @@ function islandora_paged_content_page_derive_pdf_datastream(FedoraObject $object
  * @return string
  *   The absolute path to the derived file if successful, FALSE otherwise.
  */
-function islandora_paged_content_page_derive_pdf(FedoraObject $object, array $options = array('-compress' => 'LZW')) {
+function islandora_paged_content_page_derive_pdf(AbstractObject $object, array $options = array('-compress' => 'LZW')) {
   if (!islandora_paged_content_can_derive($object, 'PDF')) {
     return FALSE;
   }
@@ -465,14 +464,13 @@ function islandora_paged_content_convert_to_pdf($image_file, array $options) {
   $command_args = "{$options} {$image_file} {$pdf_file}";
   $output = array(); $ret = 0;
   if (_imagemagick_convert_exec($command_args, $output, $ret) !== TRUE) {
-    $message = 'ImageMagick failed to create a PDF.<br/>Error: ';
-    $message .= '@ret<br/>Command: @command<br/>Output: !output';
+    $message = 'ImageMagick failed to create a PDF.<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
     $variables = array(
       '@ret' => $ret,
       '@command' => "convert $command_args",
       '!output' => implode('<br/>', $output),
     );
-    watchdog('islandora_paged_content', $message, $variables, WATCHDOG_ERROR);
+    watchdog('islandora_paged_content', 'ImageMagick failed to create a PDF.<br/>Error: @ret<br/>Command: @command<br/>Output: !output', $variables, WATCHDOG_ERROR);
     return FALSE;
   }
   return $pdf_file;
@@ -481,13 +479,13 @@ function islandora_paged_content_convert_to_pdf($image_file, array $options) {
 /**
  * Creates and adds all the image derivatives for the given Page object.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object that the derivative will be generated for.
  *
  * @return bool
  *   TRUE if successful, FALSE otherwise.
  */
-function islandora_paged_content_page_derive_image_datastreams(FedoraObject $object) {
+function islandora_paged_content_page_derive_image_datastreams(AbstractObject $object) {
   module_load_include('inc', 'islandora_large_image', 'includes/derivatives');
   $ret = islandora_large_image_create_all_derivatives($object);
   if ($ret) {
@@ -502,30 +500,34 @@ function islandora_paged_content_page_derive_image_datastreams(FedoraObject $obj
  *
  * This makes the dimensions accessible when we query for the pages.
  *
- * @param AbstractFedoraObject $object
+ * @param AbstractObject $object
+ *   Page Object
  */
-function islandora_paged_content_add_dimensions_relationships(AbstractFedoraObject $object) {
-    // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're more
-    // widely supported...
+function islandora_paged_content_add_dimensions_relationships(AbstractObject $object, $force = FALSE) {
+  $rels = $object['JP2']->relationships;
+  $width_rels = $rels->get(ISLANDORA_RELS_EXT_URI, 'width');
+  if ($force || empty($width_rels)) {
+    // XXX: ... seems a little odd to grab them from the OBJ/tiff, but they're
+    // more widely supported...
     $temp_file = drupal_tempnam('temporary://', 'dimensions');
     $object['OBJ']->getContent($temp_file);
     list($width, $height) = getimagesize($temp_file);
 
-    $rels = $object['JP2']->relationships;
     islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
-      'width', $width, 1
-    );
+        'width', $width, 1
+      );
     islandora_paged_content_set_relationship($rels, ISLANDORA_RELS_EXT_URI,
-      'height', $height, 1
-    );
+        'height', $height, 1
+      );
 
     drupal_unlink($temp_file);
+  }
 }
 
 /**
  * Checks if it is possible to update a paged content's thumbnail image.
  */
-function islandora_paged_content_can_update_paged_content_thumbnail(FedoraObject $object) {
+function islandora_paged_content_can_update_paged_content_thumbnail(AbstractObject $object) {
   $pages = islandora_paged_content_get_pages($object);
   if (count($pages)) {
     $page = array_shift($pages);
@@ -536,16 +538,15 @@ function islandora_paged_content_can_update_paged_content_thumbnail(FedoraObject
 }
 
 /**
- * Updates the given paged content's thumbnail from the first page in the paged
- * content.
+ * Updates the thumbnail from the first page in the paged content.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The paged content object to update.
  *
  * @return bool
  *   TRUE on success, FALSE otherwise.
  */
-function islandora_paged_content_update_paged_content_thumbnail(FedoraObject $object) {
+function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $object) {
   if (!islandora_paged_content_can_update_paged_content_thumbnail($object)) {
     return FALSE;
   }
@@ -554,7 +555,7 @@ function islandora_paged_content_update_paged_content_thumbnail(FedoraObject $ob
   $page = islandora_object_load($page['pid']);
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($page['TN']->mimeType);
-  $file = drupal_realpath('temporary://{$page->id}_TN.{$ext}');
+  $file = drupal_realpath("temporary://{$page->id}_TN.{$ext}");
   $page['TN']->getContent($file);
   $ret = islandora_paged_content_update_datastream($object,
     $file,
@@ -567,7 +568,7 @@ function islandora_paged_content_update_paged_content_thumbnail(FedoraObject $ob
 /**
  * Creates and adds the OCR, HOCR datastreams.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object that the derivatives will be generated for.
  * @param array $options
  *   The options for tesseract/gimp.
@@ -575,7 +576,7 @@ function islandora_paged_content_update_paged_content_thumbnail(FedoraObject $ob
  * @return bool
  *   TRUE on success, FALSE otherwise.
  */
-function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $object, array $options = NULL) {
+function islandora_paged_content_page_derive_ocr_datastreams(AbstractObject $object, array $options = NULL) {
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $rels_ext = $object->relationships;
   $options = isset($options) ? $options : array(
@@ -588,7 +589,7 @@ function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $objec
   module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
   $ret = islandora_ocr_derive_datastreams($object['OBJ'], $options);
 
-  // Check the depth of the image, to see if it can be processed with Tesseract...
+  // Check the depth of the image, to see if it can be processed with Tesseract.
   // If it can not, reduce the depth and grayscale it...
   $language = $options['language'];
   islandora_paged_content_set_relationship($rels_ext,
@@ -605,7 +606,7 @@ function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $objec
  * Firsts attempts to get it from the FITS metadata datastream, if that fails
  * it will use Djatoka.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object.
  *
  * @return array
@@ -614,7 +615,7 @@ function islandora_paged_content_page_derive_ocr_datastreams(FedoraObject $objec
  *   - height: The width of the image in pixels.
  *   If this function should fail for some reason all the fields will be 0.
  */
-function islandora_paged_content_get_page_dimensions(FedoraObject $object) {
+function islandora_paged_content_get_page_dimensions(AbstractObject $object) {
   $dimensions = array('width' => 0, 'height' => 0);
   $metadata = islandora_paged_content_get_technical_metadata($object);
   $metadata = $metadata ? $metadata : islandora_paged_content_get_page_metadata_from_djatoka($object->id);
@@ -627,7 +628,7 @@ function islandora_paged_content_get_page_dimensions(FedoraObject $object) {
  * The technical metadata is pull from the techincal metadata datastream created
  * by islandora_fits.
  *
- * @param FedoraObject $object
+ * @param AbstractObject $object
  *   The page object.
  *
  * @return array
@@ -636,7 +637,7 @@ function islandora_paged_content_get_page_dimensions(FedoraObject $object) {
  *   - height: The width of the image in pixels.
  *   If this function fails FALSE is returned.
  */
-function islandora_paged_content_get_technical_metadata(FedoraObject $object) {
+function islandora_paged_content_get_technical_metadata(AbstractObject $object) {
   $dsid = variable_get('islandora_fits_techmd_dsid', 'TECHMD');
   if (empty($object[$dsid])) {
     return FALSE;
@@ -696,4 +697,109 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
     return drupal_json_decode($request->data);
   }
   return FALSE;
+}
+
+/**
+ * Returns page derivatives.
+ *
+ * @param AbstractObject $object
+ *   Object requiring derivatives
+ * @param String  $context
+ *   Indicator of which solution pack calling this function
+ *
+ * @return array
+ *   Structured array of page derivatives
+ */
+function islandora_paged_content_page_derivatives(AbstractObject $object, $context) {
+  $large_image_module_path = drupal_get_path('module', 'islandora_large_image');
+  $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
+  $ocr_module_path = drupal_get_path('module', 'islandora_ocr');
+  $derive = islandora_paged_content_get_enabled_ingest_derivatives($context);
+  $derivatives = array();
+
+  if ($derive['pdf']) {
+    $derivatives[] = array(
+      'source_dsid' => 'OBJ',
+      'destination_dsid' => 'PDF',
+      'function' => array('islandora_paged_content_derivatives_pdf'),
+      'file' => "$paged_content_module_path/includes/derivatives.inc",
+    );
+  }
+
+  if ($derive['ocr']) {
+    $derivatives[] = array(
+      'source_dsid' => 'OBJ',
+      'destination_dsid' => 'OCR',
+      'function' => array('islandora_ocr_derive_ocr'),
+      'file' => "$ocr_module_path/includes/derivatives.inc",
+    );
+    $derivatives[] = array(
+      'source_dsid' => 'OBJ',
+      'destination_dsid' => 'HOCR',
+      'function' => array('islandora_ocr_derive_hocr'),
+      'file' => "$ocr_module_path/includes/derivatives.inc",
+    );
+  }
+  if ($derive['image']) {
+    $derivatives[] = array(
+      'source_dsid' => 'OBJ',
+      'destination_dsid' => 'JP2',
+      'function' => array('islandora_large_image_create_jp2_derivative'),
+      'file' => "$large_image_module_path/includes/derivatives.inc",
+    );
+    $derivatives[] = array(
+      'source_dsid' => 'JP2',
+      'destination_dsid' => NULL,
+      'function' => array('islandora_paged_content_add_dimensions_relationships'),
+      'file' => "$paged_content_module_path/includes/utilities.inc",
+    );
+    $derivatives[] = array(
+      'source_dsid' => 'TN',
+      'destination_dsid' => NULL,
+      'function' => array('islandora_paged_content_derive_thumbnail_on_parent'),
+      'file' => "$paged_content_module_path/includes/derivatives.inc",
+    );
+    $derivatives[] = array(
+      'source_dsid' => 'OBJ',
+      'destination_dsid' => 'TN',
+      'function' => array('islandora_large_image_create_tn_derivative'),
+      'file' => "$large_image_module_path/includes/derivatives.inc",
+    );
+    $derivatives[] = array(
+      'source_dsid' => 'OBJ',
+      'destination_dsid' => 'JPG',
+      'function' => array('islandora_large_image_create_jpg_derivative'),
+      'file' => "$large_image_module_path/includes/derivatives.inc",
+    );
+  }
+
+  return $derivatives;
+}
+
+/**
+ * Helper function for parsing the pages_to_move string.
+ *
+ * @param string $pages_to_move
+ *   A string of the form '1, 2-4,5'.
+ *
+ * @return array
+ *   The page numbers that are to be moved.
+ */
+function islandora_paged_content_parse_pages_to_move($pages_to_move) {
+  $ranges = explode(',', $pages_to_move);
+  $page_numbers_to_move = array();
+  foreach ($ranges as $range) {
+    $dash_index = strpos($range, '-');
+    if ($dash_index) {
+      $page_range_start = trim(substr($range, 0, $dash_index));
+      $page_range_end = trim(substr($range, $dash_index + 1, strlen($range) - 1));
+      $current_range = range($page_range_start, $page_range_end);
+      $page_numbers_to_move = array_merge($page_numbers_to_move, $current_range);
+    }
+    else {
+      $page_numbers_to_move[] = trim($range);
+    }
+  }
+
+  return $page_numbers_to_move;
 }

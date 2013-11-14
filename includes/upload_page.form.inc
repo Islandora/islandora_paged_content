@@ -13,14 +13,14 @@
  * @param array $form_state
  *   The Drupal form state.
  */
-function islandora_paged_content_upload_page_form(array $form, array &$form_state, FedoraObject $parent) {
+function islandora_paged_content_upload_page_form(array $form, array &$form_state, AbstractObject $parent) {
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $get_default_value = function($name, $default) use(&$form_state) {
     return isset($form_state['values'][$name]) ? $form_state['values'][$name] : $default;
   };
   $form_state['parent'] = $parent;
   $upload_size = min((int) ini_get('post_max_size'), (int) ini_get('upload_max_filesize'));
-  $extensions = array('tiff tif');
+  $extensions = array('tiff tif jp2 jpg jpeg');
   $languages = module_exists('islandora_ocr') ? islandora_ocr_get_enabled_tesseract_languages() : array();
   return array(
     'file' => array(
