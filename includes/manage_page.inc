@@ -47,10 +47,10 @@ function islandora_paged_content_manage_page_menu(AbstractObject $object) {
         '#collapsed' => TRUE,
       ),
       'edit_ocr' => array(
-        '#access' => user_access(ISLANDORA_PAGED_CONTENT_EDIT_OCR) && $object['OCR'],
+        '#access' => user_access(ISLANDORA_PAGED_CONTENT_EDIT_OCR) && isset($object['OCR']) && isset($object['JPG']),
         '#title' => t('Edit OCR'),
         '#type' => 'fieldset',
-        'form' => drupal_get_form('islandora_paged_content_manage_page_edit_ocr_form', $object),
+        'form' => isset($object['OCR']) && isset($object['JPG']) ? drupal_get_form('islandora_paged_content_manage_page_edit_ocr_form', $object) : NULL,
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       ),
@@ -75,8 +75,12 @@ function islandora_paged_content_manage_page_ocr_form(array $form, array &$form_
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $can_derive = islandora_paged_content_can_derive($object, 'OCR');
-  $languages = islandora_ocr_get_enabled_tesseract_languages();
+  $languages = module_exists('islandora_ocr') ? islandora_ocr_get_enabled_tesseract_languages() : array('eng' => t('English'));
   return array(
+    'description' => array(
+      '#type' => 'item',
+      '#description' => t('You must have <b>Islandora OCR</b> installed to create OCR/HOCR files.'),
+    ),
     'language' => array(
       '#title' => t('Language'),
       '#type' => 'select',
