@@ -346,6 +346,11 @@ function islandora_paged_content_sequence_pages_batch_operation($paged_content_i
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
     $page = islandora_object_load($page);
+    // Change the label of the page to the sequence number if variable is set.
+    if (variable_get('islandora_paged_content_page_label', FALSE)) {
+      $page->label = $context['sandbox']['progress'] + 1;
+    }
+
     // Pages are offset from 1 rather than 0.
     islandora_paged_content_set_relationship($page->relationships, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', $context['sandbox']['progress'] + 1, TRUE);
     // Assume it worked.
