@@ -58,7 +58,17 @@ function islandora_paged_content_upload_page_form_submit(array $form, array &$fo
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $object = islandora_ingest_form_get_object($form_state);
   $file = file_load($form_state['values']['file']);
-  $object->label = $file->filename;
+  $parent = $form_state['parent'];
+  $pages = islandora_paged_content_get_pages($parent);
+  $num_pages = count($pages) + 1;
+
+  $label = $file->filename;
+  // Change the label of the page to the sequence number if variable is set.
+  if (variable_get('islandora_paged_content_page_label', FALSE)) {
+    $label = $num_pages;
+  }
+  $object->label = $label;
+
   islandora_paged_content_update_datastream($object, drupal_realpath($file->uri), 'OBJ', NULL, NULL, 'M', FALSE);
   // Update RELS-EXT properties, page/sequence/etc, and append the page at the
   // end of the book.
@@ -66,9 +76,7 @@ function islandora_paged_content_upload_page_form_submit(array $form, array &$fo
   if (isset($form_state['values']['language'])) {
     islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $form_state['values']['language'], TRUE);
   }
-  $parent = $form_state['parent'];
-  $pages = islandora_paged_content_get_pages($parent);
-  $num_pages = count($pages) + 1;
+
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $parent->id);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', (string) $num_pages, TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', (string) $num_pages, TRUE);
