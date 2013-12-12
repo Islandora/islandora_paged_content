@@ -512,6 +512,12 @@ function islandora_paged_content_manage_pages_delete_form_submit(array $form, ar
  *
  * @param AbstractObject $object
  *   The object to ingest into.
+ * @param array $allowed_extensions
+ *   The array of allowed extensions.
+ * @param string $model
+ *   The content model of the page object
+ * @param array $derivatives
+ *   The array of derivatives.
  *
  * @return string
  *   The HTML representation of the ingest page form.
@@ -532,7 +538,13 @@ function islandora_paged_content_ingest_zipped_pages(AbstractObject $object, $al
  *   The Drupal form state.
  * @param string $pid
  *   PID of object into which pages are being ingested.
- *
+ * @param array $allowed_extensions
+ *   The array of allowed extensions.
+ * @param string $model
+ *   The content model of the page object
+ * @param array $derivatives
+ *   The array of derivatives.
+ * 
  * @return array
  *   Drupal form definition.
  */
