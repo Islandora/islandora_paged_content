@@ -557,7 +557,7 @@ function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $
   $page = islandora_object_load($page['pid']);
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($page['TN']->mimeType);
-  // slangerx: Concatenate the variables (rather than using complex syntax).
+  // slangerx: Concatenate the path (rather than using complex syntax).
   $file = drupal_realpath('temporary://' . str_replace(':', '-', $page->id) . '_TN.' . $ext);
   $page['TN']->getContent($file);
   $ret = islandora_paged_content_update_datastream($object,
