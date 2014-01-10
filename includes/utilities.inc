@@ -557,9 +557,7 @@ function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $
   $page = islandora_object_load($page['pid']);
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($page['TN']->mimeType);
-  // slangerx: For some reason, complex syntax {$...} sometimes doesn't get
-  // processed, causing error messages like: "The file {$page->id}_TN.{$ext}
-  // cannot be found." Concatenating the variables seemed to fix this problem.
+  // slangerx: Concatenate the variables (rather than using complex syntax).
   $file = drupal_realpath('temporary://' . str_replace(':', '-', $page->id) . '_TN.' . $ext);
   $page['TN']->getContent($file);
   $ret = islandora_paged_content_update_datastream($object,
