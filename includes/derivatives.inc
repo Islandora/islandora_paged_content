@@ -10,6 +10,7 @@
  */
 function islandora_paged_content_derivatives_pdf(AbstractObject $object, $force = TRUE) {
   if ($force || !isset($object['PDF'])) {
+    module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
     $pdf_file = islandora_paged_content_page_derive_pdf($object);
     if (!$pdf_file) {
       return FALSE;
