@@ -346,7 +346,6 @@ function islandora_paged_content_can_create_pdf() {
  *   TRUE if it is possible, FALSE otherwise.
  */
 function islandora_paged_content_can_combine_pdf() {
-  // slangerx: Variable name was 'islandora_book_gs', which doesn't exist.
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   return is_executable($gs);
 }
@@ -383,7 +382,6 @@ function islandora_paged_content_pdf_append($file, array $files) {
  *   TRUE on success, FALSE otherwise.
  */
 function islandora_paged_content_pdf_combine(array $files, $out) {
-  // slangerx: Variable name was 'islandora_book_gs', which doesn't exist.
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   $files = implode(' ', $files);
   $command = "{$gs} -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile={$out} {$files}";
@@ -549,6 +547,7 @@ function islandora_paged_content_can_update_paged_content_thumbnail(AbstractObje
  *   TRUE on success, FALSE otherwise.
  */
 function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $object) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
   if (!islandora_paged_content_can_update_paged_content_thumbnail($object)) {
     return FALSE;
   }
@@ -557,8 +556,11 @@ function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $
   $page = islandora_object_load($page['pid']);
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($page['TN']->mimeType);
-  // slangerx: Concatenate the path, rather than using complex syntax.
-  $file = drupal_realpath('temporary://' . str_replace(':', '-', $page->id) . '_TN.' . $ext);
+  // Windows will likely store temp data in a temp directory
+  // rather than in memory. Since the colon is forbidden in
+  // filenames, replace it with an underscore instead.
+  $thumbnail_id = ((islandora_deployed_on_windows()) ? str_replace(':', '_', $page->id) : $page->id);
+  $file = drupal_realpath("temporary://{$thumbnail_id}_TN.{$ext}");
   $page['TN']->getContent($file);
   $ret = islandora_paged_content_update_datastream($object,
     $file,
