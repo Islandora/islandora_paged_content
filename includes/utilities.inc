@@ -704,7 +704,7 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
  *
  * @param AbstractObject $object
  *   Object requiring derivatives
- * @param String  $context
+ * @param string $context
  *   Indicator of which solution pack calling this function
  *
  * @return array
