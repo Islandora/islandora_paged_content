@@ -489,6 +489,10 @@ function islandora_paged_content_manage_pages_delete_form(array $form, array &$f
       '#type' => 'submit',
       '#value' => t('Delete Selected Pages'),
     ),
+    'item' => array(
+      '#type' => 'item',
+      '#markup' => t('Note: Make sure to re-order pages after deleting pages to keep the numerical index in sequence for search term highlighting.'),
+    ),
   );
 }
 
