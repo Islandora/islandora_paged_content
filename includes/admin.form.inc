@@ -124,7 +124,7 @@ function islandora_paged_content_admin_settings_form_executable_available_messag
  *   The element to render as part the ajax callback.
  */
 function islandora_paged_content_admin_settings_form_gs_ajax_callback(array $form, array $form_state) {
-  return $form['local_derivative_settings']['pdf_derivative_settings']['islandora_book_gs'];
+  return $form['local_derivative_settings']['pdf_derivative_settings']['islandora_paged_content_gs'];
 }
 
 /**
