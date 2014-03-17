@@ -22,8 +22,7 @@ function islandora_paged_content_upload_page_form(array $form, array &$form_stat
   $upload_size = min((int) ini_get('post_max_size'), (int) ini_get('upload_max_filesize'));
   $extensions = array('tiff tif jp2 jpg jpeg');
   $languages = module_exists('islandora_ocr') ? islandora_ocr_get_enabled_tesseract_languages() : array();
-  return array(
-    'file' => array(
+  $form[]['file'] = array(
       '#title' => t('Page'),
       '#type' => 'managed_file',
       '#description' => t('Select an image to upload.<br/>Files must be less than <b>@size MB.</b><br/>Allowed file types: <b>@ext.</b>', array('@size' => $upload_size, '@ext' => $extensions[0])),
@@ -34,16 +33,60 @@ function islandora_paged_content_upload_page_form(array $form, array &$form_stat
         'file_validate_extensions' => $extensions,
         'file_validate_size' => array($upload_size * 1024 * 1024),
       ),
-    ),
-    'language' => array(
+    );
+
+  $form[]['language'] = array(
       '#access' => module_exists('islandora_ocr'),
       '#title' => t('Language'),
       '#type' => 'select',
       '#description' => t('Please select the language the page is written in.'),
       '#options' => $languages,
       '#default_value' => $get_default_value('language', NULL),
+    );
+
+  $form[]['transcription'] = islandora_paged_content_create_transcription_form($form_state, $parent);
+  return $form;
+}
+
+/**
+ * The form for creating a transcription object.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ */
+function islandora_paged_content_create_transcription_form(array &$form_state) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $object = islandora_ingest_form_get_object($form_state);
+  $upload_size = min((int) ini_get('post_max_size'), (int) ini_get('upload_max_filesize'));
+  $extensions = array('txt');
+  $form = array();
+  $input_types = array();
+  $input_types['none'] = t('Create born-digital transcription');
+  $input_types['file'] = t('Upload transcription from file');
+  $form['content_source'] = array(
+    '#type' => 'radios',
+    '#options' => $input_types,
+    '#default_value' => 'none',
+  );
+  $form['transcription_file'] = array(
+    '#title' => t('Upload Optional Transcription.'),
+    '#type' => 'managed_file',
+    '#description' => t('Select file to upload.<br/>Files must be less than <b>@size MB.</b><br/>Allowed file types: <b>@ext.</b>', array('@size' => $upload_size, '@ext' => $extensions[0])),
+    '#default_value' => isset($form_state['values']['files']) ? $form_state['values']['files'] : NULL,
+    '#upload_location' => 'temporary://',
+    '#upload_validators' => array(
+      'file_validate_extensions' => $extensions,
+      'file_validate_size' => array($upload_size * 1024 * 1024),
+    ),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="content_source"]' => array('value' => 'file'),
+      ),
     ),
   );
+  return $form;
 }
 
 /**
