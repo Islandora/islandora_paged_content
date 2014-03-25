@@ -346,7 +346,7 @@ function islandora_paged_content_can_create_pdf() {
  *   TRUE if it is possible, FALSE otherwise.
  */
 function islandora_paged_content_can_combine_pdf() {
-  $gs = variable_get('islandora_book_gs', '/usr/bin/gs');
+  $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   return is_executable($gs);
 }
 
@@ -382,7 +382,7 @@ function islandora_paged_content_pdf_append($file, array $files) {
  *   TRUE on success, FALSE otherwise.
  */
 function islandora_paged_content_pdf_combine(array $files, $out) {
-  $gs = variable_get('islandora_book_gs', '/usr/bin/gs');
+  $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   $files = implode(' ', $files);
   $command = "{$gs} -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile={$out} {$files}";
   $output = array(); $ret = 0;
@@ -547,6 +547,7 @@ function islandora_paged_content_can_update_paged_content_thumbnail(AbstractObje
  *   TRUE on success, FALSE otherwise.
  */
 function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $object) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
   if (!islandora_paged_content_can_update_paged_content_thumbnail($object)) {
     return FALSE;
   }
@@ -555,7 +556,11 @@ function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $
   $page = islandora_object_load($page['pid']);
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($page['TN']->mimeType);
-  $file = drupal_realpath("temporary://{$page->id}_TN.{$ext}");
+  // Windows will likely store temp data in a temp directory
+  // rather than in memory. Since the colon is forbidden in
+  // filenames, replace it with an underscore instead.
+  $thumbnail_id = ((islandora_deployed_on_windows()) ? str_replace(':', '_', $page->id) : $page->id);
+  $file = drupal_realpath("temporary://{$thumbnail_id}_TN.{$ext}");
   $page['TN']->getContent($file);
   $ret = islandora_paged_content_update_datastream($object,
     $file,
@@ -704,7 +709,7 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
  *
  * @param AbstractObject $object
  *   Object requiring derivatives
- * @param String  $context
+ * @param string $context
  *   Indicator of which solution pack calling this function
  *
  * @return array
@@ -730,13 +735,22 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'OCR',
+      'weight' => 0,
       'function' => array('islandora_ocr_derive_ocr'),
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'HOCR',
+      'weight' => 0,
       'function' => array('islandora_ocr_derive_hocr'),
+      'file' => "$ocr_module_path/includes/derivatives.inc",
+    );
+    $derivatives[] = array(
+      'source_dsid' => 'OBJ',
+      'destination_dsid' => NULL,
+      'weight' => 1,
+      'function' => array('islandora_ocr_remove_generate_ocr_rels_ext_statement'),
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
   }
