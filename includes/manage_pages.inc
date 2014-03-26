@@ -313,16 +313,16 @@ function islandora_paged_content_manage_pages_sequences_form(array $form, array 
       $rows[$id] = array(
         'tn' => array(
           '#markup' => theme(
-            'image', array(
-              'path' => url("$url/datastream/TN/view"),
-              'attributes' => array(
-                'width' => '64px',
-                'height' => '64px',
-              )))),
+              'image', array(
+                'path' => url("$url/datastream/TN/view"),
+                'attributes' => array(
+                  'width' => '64px',
+                  'height' => '64px',
+                )))),
         'label' => array(
           '#markup' => l($page['label'], $url, array(
-                       'html' => TRUE,
-                       'attributes' => array('title' => $page['label'])))),
+            'html' => TRUE,
+            'attributes' => array('title' => $page['label'])))),
       );
     }
     $form_state['rows'] = $rows;
@@ -383,15 +383,14 @@ function islandora_paged_content_quick_reorder_validate($form, &$form_state) {
 
   // Insert point validation.
   if (!preg_match('/^[0-9\s]/', $form_state['values']['pages_insert_point']) ||
-        !in_array($form_state['values']['pages_insert_point'], $page_numbers)) {
+      !in_array($form_state['values']['pages_insert_point'], $page_numbers)) {
     form_set_error('pages_insert_point', t('Insert point must be a valid page number.'));
   }
 
   // Pages to move validation.
   if (!preg_match('/^[0-9\s,\-]/', $form_state['values']['pages_to_move'])) {
     form_set_error(
-      'pages_to_move',
-      t("Pages to move must follow the form '1, 2-4,5'.")
+        'pages_to_move', t("Pages to move must follow the form '1, 2-4,5'.")
     );
   }
   $pages_to_move_list = islandora_paged_content_parse_pages_to_move($form_state['values']['pages_to_move']);
@@ -428,13 +427,9 @@ function islandora_paged_content_quick_reorder_submit($form, &$form_state) {
 
   // Add in changed PIDs. Fixes sequence numbers.
   array_splice(
-    $pages,
-    array_search(
-      $form_state['values']['pages_insert_point'],
-      array_keys($pages)
-    ) + 1,
-    0,
-    $page_pids_to_move
+      $pages, array_search(
+          $form_state['values']['pages_insert_point'], array_keys($pages)
+      ) + 1, 0, $page_pids_to_move
   );
 
   $batch = islandora_paged_content_sequence_pages_batch($book, $pages);
@@ -643,7 +638,7 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
     drupal_set_message(t("This object does not exist in this repository"), 'warning');
     return;
   }
-
+  $language = $form_state['values']['language'];
   $current_pages = unserialize($form_state['values']['current_pages']);
 
   $insertion_point = isset($form_state['values']['insertion_point']) ? (int) $form_state['values']['insertion_point'] : 0;
@@ -693,14 +688,14 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
   $renumber_count = count($pages_to_renumber);
   $add_count = count($files_to_add);
   $status_message = format_plural(
-    $add_count, 'adding 1 page', 'adding @count pages'
+      $add_count, 'adding 1 page', 'adding @count pages'
   );
 
   if ($renumber_count) {
     $status_message = format_plural(
-      $renumber_count, 'Renumbering 1 page and @adding_message.', 'Renumbering @count pages and @adding_message.', array(
-        '@adding_message' => $status_message,
-      )
+        $renumber_count, 'Renumbering 1 page and @adding_message.', 'Renumbering @count pages and @adding_message.', array(
+          '@adding_message' => $status_message,
+        )
     );
   }
 
@@ -714,6 +709,7 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
     );
     $file_count = count($files_to_add);
     $config = array(
+      'language' => $language,
       'pid' => $pid,
       'destination_dir' => $destination_dir,
       'namespace' => $namespace,
@@ -773,6 +769,8 @@ function islandora_paged_content_add_pages($repository, $config, $pages_director
   $rels_ext = $object->relationships;
   $parent = $config['pid'];
   $object->relationships->add(FEDORA_MODEL_URI, 'hasModel', $config['model']);
+
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $config['language'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $parent);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', (string) $config['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', (string) $config['page_number'], TRUE);
