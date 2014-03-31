@@ -12,7 +12,6 @@
  *  Reorder Pages.
  *  Delete Pages.
  */
-
 require_once dirname(__FILE__) . '/utilities.inc';
 require_once dirname(__FILE__) . '/batch.inc';
 
@@ -154,6 +153,7 @@ function islandora_paged_content_manage_pages_ocr_form(array $form, array &$form
   $form_state['object'] = $object;
   $can_derive = FALSE;
   $languages = array();
+  unset($languages['no_ocr']);
   if (module_exists('islandora_ocr')) {
     module_load_include('inc', 'islandora_ocr', 'includes/utilities');
     $can_derive = islandora_ocr_can_derive_ocr();
@@ -314,11 +314,11 @@ function islandora_paged_content_manage_pages_sequences_form(array $form, array 
         'tn' => array(
           '#markup' => theme(
               'image', array(
-                'path' => url("$url/datastream/TN/view"),
-                'attributes' => array(
-                  'width' => '64px',
-                  'height' => '64px',
-                )))),
+            'path' => url("$url/datastream/TN/view"),
+            'attributes' => array(
+              'width' => '64px',
+              'height' => '64px',
+        )))),
         'label' => array(
           '#markup' => l($page['label'], $url, array(
             'html' => TRUE,
@@ -665,12 +665,12 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
 
   $allowed_extensions = $form_state['values']['allowed_extensions'];
   $callback = function ($element) use ($allowed_extensions) {
-    $ext = pathinfo($element, PATHINFO_EXTENSION);
-    $ext = drupal_strtolower($ext);
+        $ext = pathinfo($element, PATHINFO_EXTENSION);
+        $ext = drupal_strtolower($ext);
 
-    // An allowed extension and does /not/ contain __MACOSX.
-    return in_array($ext, $allowed_extensions) && preg_match('/__MACOSX/', $element) === 0;
-  };
+        // An allowed extension and does /not/ contain __MACOSX.
+        return in_array($ext, $allowed_extensions) && preg_match('/__MACOSX/', $element) === 0;
+      };
 
   $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($destination_dir), RecursiveIteratorIterator::SELF_FIRST);
   foreach ($objects as $file => $object) {
@@ -679,10 +679,10 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
   $files_to_add = array_values(array_filter($unfiltered, $callback));
   // Sort files based on name.
   $comparator = function ($a, $b) {
-    $file_a = pathinfo($a, PATHINFO_FILENAME);
-    $file_b = pathinfo($b, PATHINFO_FILENAME);
-    return ($file_a < $file_b) ? -1 : 1;
-  };
+        $file_a = pathinfo($a, PATHINFO_FILENAME);
+        $file_b = pathinfo($b, PATHINFO_FILENAME);
+        return ($file_a < $file_b) ? -1 : 1;
+      };
   usort($files_to_add, $comparator);
 
   $renumber_count = count($pages_to_renumber);
@@ -694,7 +694,7 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
   if ($renumber_count) {
     $status_message = format_plural(
         $renumber_count, 'Renumbering 1 page and @adding_message.', 'Renumbering @count pages and @adding_message.', array(
-          '@adding_message' => $status_message,
+      '@adding_message' => $status_message,
         )
     );
   }
