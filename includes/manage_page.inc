@@ -76,6 +76,7 @@ function islandora_paged_content_manage_page_ocr_form(array $form, array &$form_
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $can_derive = islandora_paged_content_can_derive($object, 'OCR');
   $languages = module_exists('islandora_ocr') ? islandora_ocr_get_enabled_tesseract_languages() : array('eng' => t('English'));
+  unset($languages['no_ocr']);
   return array(
     'description' => array(
       '#type' => 'item',

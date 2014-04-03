@@ -154,6 +154,7 @@ function islandora_paged_content_manage_pages_ocr_form(array $form, array &$form
   $form_state['object'] = $object;
   $can_derive = FALSE;
   $languages = array();
+  unset($languages['no_ocr']);
   if (module_exists('islandora_ocr')) {
     module_load_include('inc', 'islandora_ocr', 'includes/utilities');
     $can_derive = islandora_ocr_can_derive_ocr();
