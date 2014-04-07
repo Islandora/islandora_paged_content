@@ -136,3 +136,42 @@ function islandora_paged_content_derive_thumbnail_of_parent(AbstractObject $book
     }
   }
 }
+
+/**
+ * Creates a PDF of all the pages on a paged content object.
+ */
+function islandora_paged_content_aggregate_pdf_derivative(AbstractObject $object, $force = TRUE) {
+  if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'create_pdf', 'true', TRUE)) {
+    $batch = islandora_paged_content_create_pdf_batch(
+      $object,
+      array_keys(islandora_paged_content_get_pages($object)),
+      array(
+        '-density' => '96',
+        '-compress' => 'LZW',
+      )
+    );
+
+    $batch['operations'][] = array('islandora_book_batch_remove_pdf_flag', array($object));
+    islandora_paged_content_remove_pdf_flag($object);
+  }
+}
+
+/**
+ * Removes the PDF derivative creation flag.
+ *
+ * @param AbstractObject $object
+ *   The object to remove the relationship from.
+ */
+function islandora_paged_content_remove_pdf_flag(AbstractObject $object) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'create_pdf', 'true', RELS_TYPE_PLAIN_LITERAL);
+}
+
+/**
+ * Sets the PDF derivative creation flag.
+ *
+ * @param AbstractObject $object
+ *   The object to set the relationship on.
+ */
+function islandora_paged_content_set_pdf_flag(AbstractObject $object) {
+  $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'create_pdf', 'true', RELS_TYPE_PLAIN_LITERAL);
+}
