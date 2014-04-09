@@ -13,9 +13,13 @@ require_once dirname(__FILE__) . '/../includes/utilities.inc';
 function theme_islandora_paged_content_page_navigator(array $variables) {
   $object = $variables['object'];
   $results = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'isPageOf');
-  $parent = islandora_object_load($results[0]['object']['value']);
-  $pages = islandora_paged_content_get_pages($parent);
+  $result = reset($results);
+  $parent = $result ? islandora_object_load($result['object']['value']) : FALSE;
+  $pages = $parent ? islandora_paged_content_get_pages($parent) : array();
   $pages = array_keys($pages);
+  if (empty($pages)) {
+    $pages[] = $object->id;
+  }
   $index = array_search($object->id, $pages);
   $previous_page = isset($pages[$index - 1]) ? $pages[$index - 1] : NULL;
   $next_page = isset($pages[$index + 1]) ? $pages[$index + 1] : NULL;
@@ -36,13 +40,21 @@ function theme_islandora_paged_content_page_navigator(array $variables) {
       'href' => url("islandora/object/{$next_page}", array('absolute' => TRUE)),
     );
   }
-  $links[] = array(
-    'title' => t('All Pages'),
-    'href' => url("islandora/object/{$parent->id}", array('absolute' => TRUE)),
-  );
+  if ($parent) {
+    $links[] = array(
+      'title' => t('All Pages'),
+      'href' => url("islandora/object/{$parent->id}", array('absolute' => TRUE)),
+    );
+  }
   return theme('links', array(
-      'links' => $links,
-      'attributes' => array('class' => array('links', 'inline'))));
+    'links' => $links,
+    'attributes' => array(
+      'class' => array(
+        'links',
+        'inline',
+      ),
+    ),
+  ));
 }
 
 /**
