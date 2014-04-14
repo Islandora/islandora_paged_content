@@ -17,7 +17,7 @@ define('ISLANDORA_EDIT_OCR', ISLANDORA_PAGED_CONTENT_EDIT_OCR);
  */
 function islandora_paged_content_menu() {
   return array(
-    'admin/islandora/paged_content' => array(
+    'admin/islandora/solution_pack_config/paged_content' => array(
       'title' => 'Paged Content Module',
       'description' => 'Configuration for the Paged Content solution pack.',
       'page callback' => 'drupal_get_form',
