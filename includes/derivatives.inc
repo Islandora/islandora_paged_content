@@ -141,7 +141,9 @@ function islandora_paged_content_derive_thumbnail_of_parent(AbstractObject $book
  * Creates a PDF of all the pages on a paged content object.
  */
 function islandora_paged_content_aggregate_pdf_derivative(AbstractObject $object, $force = TRUE) {
-  if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'create_pdf', 'true', TRUE)) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  module_load_include('inc', 'islandora_paged_content', 'includes/batch');
+  if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'create_pdf', 'true', TRUE) || $force) {
     $batch = islandora_paged_content_create_pdf_batch(
       $object,
       array_keys(islandora_paged_content_get_pages($object)),
@@ -152,7 +154,7 @@ function islandora_paged_content_aggregate_pdf_derivative(AbstractObject $object
     );
 
     $batch['operations'][] = array('islandora_book_batch_remove_pdf_flag', array($object));
-    islandora_paged_content_remove_pdf_flag($object);
+    batch_set($batch);
   }
 }
 
