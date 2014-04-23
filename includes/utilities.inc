@@ -705,6 +705,44 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
 }
 
 /**
+ * Returns paged object derivatives.
+ *
+ * @param string $context
+ *   Indicator of which solution pack calling this function
+ *
+ * @return array
+ *   Structured array of paged object derivatives
+ */
+function islandora_paged_content_paged_object_derivatives($context) {
+  $derive = islandora_paged_content_get_enabled_ingest_derivatives('islandora_book');
+  $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
+  $derivatives = array();
+
+  if ($derive['image']) {
+    $derivatives[] = array(
+      'source_dsid' => NULL,
+      'destination_dsid' => 'TN',
+      'function' => array('islandora_paged_content_derive_thumbnail_of_parent'),
+      'file' => "$paged_content_module_path/includes/derivatives.inc",
+    );
+  }
+  if ($derive['pdf']) {
+    $derivatives = array_merge(
+      $derivatives,
+      array(
+        array(
+          'source_dsid' => NULL,
+          'destination_dsid' => 'PDF',
+          'function' => array('islandora_paged_content_aggregate_pdf_derivative'),
+          'file' => "$paged_content_module_path/includes/derivatives.inc",
+        ),
+      )
+    );
+  }
+  return $derivatives;
+}
+
+/**
  * Returns page derivatives.
  *
  * @param string $context
