@@ -60,40 +60,7 @@ function islandora_paged_content_derive_thumbnail_on_parent(AbstractObject $obje
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $book_pid = islandora_paged_content_get_relationship($object->relationships, FEDORA_RELS_EXT_URI, 'isMemberOf', NULL);
   $book_object = islandora_object_load($book_pid);
-  if ($book_object && ($force || !isset($book_object['TN']))) {
-    if (islandora_paged_content_update_paged_content_thumbnail($book_object)) {
-      return array(
-        'success' => TRUE,
-        'messages' => array(
-          array(
-            'message' => t('Updated @dsid on @parent.'),
-            'message_sub' => array(
-              '@dsid' => 'TN',
-              '@parent' => $book_object->id,
-            ),
-            'type' => 'dsm',
-            'severity' => 'status',
-          ),
-        ),
-      );
-    }
-    else {
-      return array(
-        'success' => FALSE,
-        'messages' => array(
-          array(
-            'message' => t('Failed to update @dsid on @parent.'),
-            'message_sub' => array(
-              '@dsid' => 'TN',
-              '@parent' => $book_object->id,
-            ),
-            'type' => 'watchdog',
-            'severity' => WATCHDOG_ERROR,
-          ),
-        ),
-      );
-    }
-  }
+  islandora_paged_content_derive_thumbnail_of_parent($book_object, $force);
 }
 
 /**

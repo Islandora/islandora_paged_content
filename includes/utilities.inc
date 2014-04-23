@@ -707,15 +707,13 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
 /**
  * Returns page derivatives.
  *
- * @param AbstractObject $object
- *   Object requiring derivatives
  * @param string $context
  *   Indicator of which solution pack calling this function
  *
  * @return array
  *   Structured array of page derivatives
  */
-function islandora_paged_content_page_derivatives(AbstractObject $object, $context) {
+function islandora_paged_content_page_derivatives($context) {
   $large_image_module_path = drupal_get_path('module', 'islandora_large_image');
   $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
   $ocr_module_path = drupal_get_path('module', 'islandora_ocr');
