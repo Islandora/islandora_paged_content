@@ -714,7 +714,7 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
  *   Structured array of paged object derivatives
  */
 function islandora_paged_content_paged_object_derivatives($context) {
-  $derive = islandora_paged_content_get_enabled_ingest_derivatives('islandora_book');
+  $derive = islandora_paged_content_get_enabled_ingest_derivatives($context);
   $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
   $derivatives = array();
 
