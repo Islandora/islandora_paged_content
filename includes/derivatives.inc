@@ -60,7 +60,9 @@ function islandora_paged_content_derive_thumbnail_on_parent(AbstractObject $obje
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $book_pid = islandora_paged_content_get_relationship($object->relationships, FEDORA_RELS_EXT_URI, 'isMemberOf', NULL);
   $book_object = islandora_object_load($book_pid);
-  islandora_paged_content_derive_thumbnail_of_parent($book_object, $force);
+  if (is_object($book_object)) {
+    islandora_paged_content_derive_thumbnail_of_parent($book_object, $force);
+  }
 }
 
 /**
