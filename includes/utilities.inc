@@ -28,7 +28,8 @@ FROM <#ri>
 WHERE {
   ?pid <fedora-rels-ext:isMemberOf> <info:fedora/{$object->id}> ;
        <fedora-model:label> ?label ;
-       islandora-rels-ext:isSequenceNumber ?page .
+       islandora-rels-ext:isSequenceNumber ?page ;
+       <fedora-model:state> <fedora-model:Active> .
   OPTIONAL {
     ?pid <fedora-view:disseminates> ?dss .
     ?dss <fedora-view:disseminationType> <info:fedora/*/JP2> ;
