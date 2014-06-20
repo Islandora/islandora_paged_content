@@ -295,6 +295,8 @@ function islandora_paged_content_can_derive(AbstractObject $object, $dsid) {
     'islandora:pageCModel',
     'islandora:bookPageCModel',
     'islandora:newspaperPageCModel',
+    'islandora:manuscriptCModel',
+    'islandora:manuscriptPageCModel',
   );
   if (array_intersect($to_derive, $object->models)) {
     $check_function = array(
