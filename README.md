@@ -10,6 +10,7 @@ This module requires the following modules/libraries:
 
 * [Islandora](https://github.com/islandora/islandora)
 * [Tuque](https://github.com/islandora/tuque)
+* [Xacml Editor](https://github.com/Islandora/islandora_xacml_editor)
 
 ## Installation
 
