@@ -780,7 +780,8 @@ function islandora_paged_content_add_pages($repository, $config, $pages_director
 
   if (module_exists('islandora_xacml_editor')) {
     // XACML inheritance.
-    // TODO: Implement in hook in XACML editor module.
+    // TODO: Implement in hook an object altered hook? May need a better way to
+    // identify paged content objects.
     $parent_object = islandora_object_load($parent);
     islandora_xacml_editor_apply_parent_policy($object, $parent_object);
   }
