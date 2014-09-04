@@ -777,9 +777,14 @@ function islandora_paged_content_add_pages($repository, $config, $pages_director
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', (string) $config['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSection', '1', TRUE);
   islandora_paged_content_set_relationship($rels_ext, FEDORA_RELS_EXT_URI, 'isMemberOf', $parent);
-  // XACML inheritance.
-  $parent_object = islandora_object_load($parent);
-  islandora_xacml_editor_apply_parent_policy($object, $parent_object);
+
+  if (module_exists('islandora_xacml_editor')) {
+    // XACML inheritance.
+    // TODO: Implement in an object altered hook? May need a better way to
+    // identify paged content objects.
+    $parent_object = islandora_object_load($parent);
+    islandora_xacml_editor_apply_parent_policy($object, $parent_object);
+  }
 
   islandora_add_object($object);
 }
