@@ -305,7 +305,7 @@ function islandora_paged_content_can_derive(AbstractObject $object, $dsid) {
       'HOCR' => 'islandora_ocr_can_derive_ocr',
       'TN' => 'islandora_paged_content_can_create_images',
       'JP2' => 'islandora_paged_content_can_create_images',
-      'JPEG' => 'islandora_paged_content_can_create_images',
+      'JPG' => 'islandora_paged_content_can_create_images',
     );
 
     if (isset($check_function[$dsid])) {
