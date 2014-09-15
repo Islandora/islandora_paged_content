@@ -7,11 +7,6 @@
 
 define('ISLANDORA_PAGED_CONTENT_EDIT_OCR', 'Edit existing OCR stream');
 
-// @codingStandardsIgnoreStart
-// XXX: Remove this at some point in the future.
-define('ISLANDORA_EDIT_OCR', ISLANDORA_PAGED_CONTENT_EDIT_OCR);
-// @codingStandardsIgnoreEnd
-
 /**
  * Implements hook_menu().
  */
