@@ -17,7 +17,7 @@
  *   An array as per islandora_paged_content_parse_solr_highlighting().
  */
 function islandora_paged_content_perform_solr_highlighting_query($query, $params = array()) {
-  if (!module_exists('islandora_ocr')) {
+  if (!$query || $query == ' ' || !module_exists('islandora_ocr')) {
     return array();
   }
   module_load_include('inc', 'islandora_ocr', 'includes/solr');
