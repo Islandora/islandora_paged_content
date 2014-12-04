@@ -12,7 +12,6 @@
   <dsTypeModel ID="OBJ" optional="false">
     <form MIME="image/tiff"/>
     <form MIME="image/jpeg"/>
-    <form MIME="image/jpg"/>
     <form MIME="image/jp2"/>
   </dsTypeModel>
   <dsTypeModel ID="JP2" optional="true">
@@ -20,11 +19,11 @@
   </dsTypeModel>
   <dsTypeModel ID="TN" optional="true">
     <form MIME="image/jpeg"/>
-    <form MIME="image/jpg"/>
+    <form MIME="image/png"/>
+    <form MIME="image/gif"/>
   </dsTypeModel>
   <dsTypeModel ID="JPG" optional="true">
     <form MIME="image/jpeg"/>
-    <form MIME="image/jpg"/>
     <form MIME="image/png"/>
     <form MIME="image/gif"/>
   </dsTypeModel>
