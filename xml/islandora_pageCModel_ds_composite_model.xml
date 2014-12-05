@@ -24,8 +24,6 @@
   </dsTypeModel>
   <dsTypeModel ID="JPG" optional="true">
     <form MIME="image/jpeg"/>
-    <form MIME="image/png"/>
-    <form MIME="image/gif"/>
   </dsTypeModel>
   <dsTypeModel ID="OCR" optional="true">
     <form MIME="text/plain"/>
