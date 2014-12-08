@@ -651,7 +651,7 @@ function islandora_paged_content_get_technical_metadata(AbstractObject $object) 
     return FALSE;
   }
   $metadata = FALSE;
-  $file = file_create_filename("{object->id}_{$dsid}.xml", 'temporary://');
+  $file = file_create_filename("{$object->id}_{$dsid}.xml", 'temporary://');
   $file = drupal_realpath($file);
   if (strpos($object[$dsid]->mimetype, 'xml') !== FALSE && $object[$dsid]->getContent($file)) {
     $doc = simplexml_load_file($file);
