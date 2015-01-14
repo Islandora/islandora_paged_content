@@ -5,7 +5,7 @@
  * Unit tests for tools extracting a PDF into a book and individual pages.
  */
 
-class BookPDFIngestUnitTestCase extends DrupalUnitTestCase {
+class PDFInfoTestCase extends DrupalUnitTestCase {
 
   /**
    * Gets info to display to describe this test.
@@ -14,8 +14,8 @@ class BookPDFIngestUnitTestCase extends DrupalUnitTestCase {
    */
   public static function getInfo() {
     return array(
-      'name' => 'Islandora Paged Content PDF Book Ingest Unit Tests',
-      'description' => 'Ensure that wrapper functions for ingesting a PDF work correctly.',
+      'name' => 'PDFInfo Unit Tests',
+      'description' => 'Ensure that wrapper functions for pdfinfo work correctly.',
       'group' => 'Islandora Paged Content',
     );
   }
@@ -28,7 +28,6 @@ class BookPDFIngestUnitTestCase extends DrupalUnitTestCase {
   public function setUp() {
     module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
     parent::setUp('islandora_paged_content');
-    $this->fixtures_path = drupal_get_path('module', 'islandora_paged_content') . '/tests/fixtures';
   }
 
   /**
