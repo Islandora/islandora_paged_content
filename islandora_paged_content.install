@@ -20,6 +20,7 @@ function islandora_paged_content_install() {
 function islandora_paged_content_uninstall() {
   $variables = array(
     'islandora_paged_content_gs',
+    'islandora_paged_content_pdfinfo',
   );
   array_walk($variables, 'variable_del');
 }
