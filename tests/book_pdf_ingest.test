@@ -38,7 +38,6 @@ class BookPDFIngestUnitTestCase extends DrupalUnitTestCase {
     $pdf_info = islandora_paged_content_pdfinfo_availability();
     if (!$pdf_info) {
       $this->fail('Valid version of pdfinfo was not found.');
-      return;
     }
     else {
       $this->pass('Valid version of pdfinfo was found.');
