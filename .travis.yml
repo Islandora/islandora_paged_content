@@ -17,6 +17,7 @@ before_install:
   - $HOME/islandora/tests/scripts/travis_setup.sh
   - cd $HOME/drupal-*
   - ln -s $TRAVIS_BUILD_DIR sites/all/modules/islandora_paged_content
+  - sudo sh $TRAVIS_BUILD_DIR/tests/scripts/pdfinfo-install.sh
   - drush en --yes islandora_paged_content
 script:
   - ant -buildfile sites/all/modules/islandora_paged_content/build.xml lint
