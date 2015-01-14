@@ -849,3 +849,46 @@ function islandora_paged_content_parse_pages_to_move($pages_to_move) {
 
   return $page_numbers_to_move;
 }
+
+
+/**
+ * Helper function to determine whether or not pdfinfo is available.
+ *
+ * @return bool
+ *   TRUE if it's available, FALSE if not.
+ */
+function islandora_paged_content_pdfinfo_availability() {
+  $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
+  return is_executable($pdfinfo);
+}
+
+/**
+ * Helper function to parse the number of pages in a supplied PDF.
+ *
+ * @param string $uri
+ *   The URI or path to the file that is being examined.
+ *
+ * @return bool|int
+ *   FALSE if it fails, the number of pages in the PDF.
+ */
+function islandora_paged_content_length_of_pdf($uri) {
+  $file_path = drupal_realpath($uri);
+  // PDF doesn't exist, abort.
+  if (!file_exists($file_path)) {
+    return FALSE;
+  }
+  $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
+  $command = "{$pdfinfo} {$file_path}";
+  $output = array();
+  $ret = 0;
+  exec($command, $output, $ret);
+  // UNIX exit code is 0, so this succeeded.
+  if (!$ret) {
+    foreach ($output as $line) {
+      if (strpos($line, 'Pages:') === 0) {
+        return intval(str_replace('Pages:', '', $line));
+      }
+    }
+  }
+  return FALSE;
+}

@@ -22,6 +22,7 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
     return isset($form_state['values'][$name]) ? $form_state['values'][$name] : variable_get($name, $default);
   };
   $gs = $get_default_value('islandora_paged_content_gs', '/usr/bin/gs');
+  $pdfinfo = $get_default_value('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
 
   $djatoka_url = $get_default_value('islandora_paged_content_djatoka_url', 'http://localhost:8080/adore-djatoka/');
   $djatoka_availible_message = islandora_paged_content_admin_settings_form_djatoka_availible_message($djatoka_url);
@@ -42,6 +43,28 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
         '#ajax' => array(
           'callback' => 'islandora_paged_content_admin_settings_form_gs_ajax_callback',
           'wrapper' => 'gs-wrapper',
+          'effect' => 'fade',
+          'event' => 'change',
+        ),
+      ),
+    ),
+    'pdf_book_ingestion_settings' => array(
+      '#type' => 'fieldset',
+      '#title' => t('PDF Book Ingest Settings'),
+      'islandora_paged_content_pdfinfo' => array(
+        '#type' => 'textfield',
+        '#title' => t('pdfinfo'),
+        '#description' => t('Pdfinfo is used to extract information needed when ingesting a single PDF into a book and page objects.<br/>!msg',
+          array(
+            '!msg' => islandora_paged_content_admin_settings_form_executable_available_message($pdfinfo),
+          )
+        ),
+        '#default_value' => $pdfinfo,
+        '#prefix' => '<div id="pdfinfo-wrapper">',
+        '#suffix' => '</div>',
+        '#ajax' => array(
+          'callback' => 'islandora_paged_content_admin_settings_form_pdfinfo_ajax_callback',
+          'wrapper' => 'pdfinfo-wrapper',
           'effect' => 'fade',
           'event' => 'change',
         ),
@@ -124,7 +147,7 @@ function islandora_paged_content_admin_settings_form_executable_available_messag
  *   The element to render as part the ajax callback.
  */
 function islandora_paged_content_admin_settings_form_gs_ajax_callback(array $form, array $form_state) {
-  return $form['local_derivative_settings']['pdf_derivative_settings']['islandora_paged_content_gs'];
+  return $form['pdf_derivative_settings']['islandora_paged_content_gs'];
 }
 
 /**
@@ -164,4 +187,19 @@ function islandora_paged_content_admin_settings_form_djatoka_availible_message($
  */
 function islandora_paged_content_admin_settings_form_djatoka_ajax_callback(array $form, array &$form_state) {
   return $form['islandora_paged_content_djatoka_url'];
+}
+
+/**
+ * Ajax callback for the pdfinfo textfield.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ *
+ * @return array
+ *   The element to render as part the ajax callback.
+ */
+function islandora_paged_content_admin_settings_form_pdfinfo_ajax_callback(array $form, array $form_state) {
+  return $form['pdf_book_ingestion_settings']['islandora_paged_content_pdfinfo'];
 }
