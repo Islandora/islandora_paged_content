@@ -52,7 +52,6 @@ class PDFToTextTestCase extends DrupalUnitTestCase {
     $test_mcmaster_pdf = drupal_get_path('module', 'islandora_paged_content') . '/tests/fixtures/arl-carl-statement-supporting-askey-mcmaster-final.pdf';
     $fixture_text_mcmaster = drupal_get_path('module', 'islandora_paged_content') . '/tests/fixtures/mcmaster_text_layout_page1.txt';
 
-
     $test_mcgill_text_uri = islandora_paged_content_extract_text_from_pdf($test_mcgill_pdf, 4);
     $this->assertEqual(file_get_contents($test_mcgill_text_uri), file_get_contents($fixture_text_mcgill), 'The extracted text matches the contents and layout of the McGill fixture.');
     file_unmanaged_delete($test_mcgill_text_uri);
@@ -70,7 +69,6 @@ class PDFToTextTestCase extends DrupalUnitTestCase {
     $fixture_text_mcgill = drupal_get_path('module', 'islandora_paged_content') . '/tests/fixtures/mcgill_text_no_layout_page4.txt';
     $test_mcmaster_pdf = drupal_get_path('module', 'islandora_paged_content') . '/tests/fixtures/arl-carl-statement-supporting-askey-mcmaster-final.pdf';
     $fixture_text_mcmaster = drupal_get_path('module', 'islandora_paged_content') . '/tests/fixtures/mcmaster_text_no_layout_page1.txt';
-
 
     $test_mcgill_text_uri = islandora_paged_content_extract_text_from_pdf($test_mcgill_pdf, 4, FALSE);
     $this->assertEqual(file_get_contents($test_mcgill_text_uri), file_get_contents($fixture_text_mcgill), 'The extracted text matches the contents of the McGill fixture.');
