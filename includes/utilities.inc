@@ -861,12 +861,23 @@ function islandora_paged_content_pdftotext_availability() {
   return is_executable($pdftotext);
 }
 
+
+/**
+ * Helper function to determine whether or not pdfinfo is available.
+ *
+ * @return bool
+ *   TRUE if it's available, FALSE if not.
+ */
+function islandora_paged_content_pdfinfo_availability() {
+  $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
+  return is_executable($pdfinfo);
+}
+
 /**
  * Helper function to extract the text for a single page beginning at an offset.
  *
  * @param string $uri
  *   The URI or path to the file that is being examined.
- *
  * @param string $offset
  *   The page number to extract it will be used as the first and last page
  *   value. Note that pdftotext won't complain about using an offset greater
@@ -880,8 +891,8 @@ function islandora_paged_content_pdftotext_availability() {
  */
 function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = TRUE) {
   $file_path = drupal_realpath($uri);
-  // PDF doesn't exist, abort.
-  if (!file_exists($file_path)) {
+  // PDF doesn't exist or pdftotext isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_pdftotext_availability()) {
     return FALSE;
   }
   $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
@@ -900,6 +911,37 @@ function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = 
   // UNIX exit code is 0, so this succeeded.
   if (!$ret) {
     return $output_file;
+  }
+  return FALSE;
+}
+
+/**
+ * Helper function to parse the number of pages in a supplied PDF.
+ *
+ * @param string $uri
+ *   The URI or path to the file that is being examined.
+ *
+ * @return bool|int
+ *   FALSE if it fails, the number of pages in the PDF.
+ */
+function islandora_paged_content_length_of_pdf($uri) {
+  $file_path = drupal_realpath($uri);
+  // PDF doesn't exist or pdfinfo isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_pdfinfo_availability()) {
+    return FALSE;
+  }
+  $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
+  $command = "$pdfinfo $file_path";
+  $output = array();
+  $ret = 0;
+  exec(escapeshellcmd($command), $output, $ret);
+  // UNIX exit code is 0, so this succeeded.
+  if (!$ret) {
+    foreach ($output as $line) {
+      if (strpos($line, 'Pages:') === 0) {
+        return intval(str_replace('Pages:', '', $line));
+      }
+    }
   }
   return FALSE;
 }
