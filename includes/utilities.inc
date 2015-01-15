@@ -863,7 +863,7 @@ function islandora_paged_content_pdftotext_availability() {
 
 
 /**
- * Helper function to determine whether or not pdftotext is available.
+ * Helper function to determine whether or not pdfinfo is available.
  *
  * @return bool
  *   TRUE if it's available, FALSE if not.
