@@ -945,4 +945,3 @@ function islandora_paged_content_length_of_pdf($uri) {
   }
   return FALSE;
 }
-

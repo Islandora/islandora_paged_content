@@ -237,4 +237,3 @@ function islandora_paged_content_admin_settings_form_pdftotext_ajax_callback(arr
 function islandora_paged_content_admin_settings_form_pdfinfo_ajax_callback(array $form, array $form_state) {
   return $form['pdf_book_ingestion_settings']['islandora_paged_content_pdfinfo'];
 }
-
