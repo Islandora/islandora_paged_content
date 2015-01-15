@@ -850,9 +850,20 @@ function islandora_paged_content_parse_pages_to_move($pages_to_move) {
   return $page_numbers_to_move;
 }
 
+/**
+ * Helper function to determine whether or not pdftotext is available.
+ *
+ * @return bool
+ *   TRUE if it's available, FALSE if not.
+ */
+function islandora_paged_content_pdftotext_availability() {
+  $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
+  return is_executable($pdftotext);
+}
+
 
 /**
- * Helper function to determine whether or not pdfinfo is available.
+ * Helper function to determine whether or not pdftotext is available.
  *
  * @return bool
  *   TRUE if it's available, FALSE if not.
@@ -860,6 +871,46 @@ function islandora_paged_content_parse_pages_to_move($pages_to_move) {
 function islandora_paged_content_pdfinfo_availability() {
   $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
   return is_executable($pdfinfo);
+}
+
+/**
+ * Helper function to extract the text for a single page beginning at an offset.
+ *
+ * @param string $offset
+ *   The page number to extract it will be used as the first and last page
+ *   value. Note that pdftotext won't complain about using an offset greater
+ *   than the number of allotted pages of a PDF.
+ *
+ * @param bool $layout
+ *   Whether we are retaining layout of the PDF or not.
+ *
+ * @return bool|string
+ *   FALSE if it fails, the URI of the text file otherwise.
+ */
+function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = TRUE) {
+  $file_path = drupal_realpath($uri);
+  // PDF doesn't exist, abort.
+  if (!file_exists($file_path)) {
+    return FALSE;
+  }
+  $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
+  $base_command = '!pdftotext_path !layout -f !offset -l !offset !pdf_uri !output_file';
+  $output_file = file_create_filename('full.txt', '/tmp');
+  $command = format_string($base_command, array(
+    '!pdftotext_path' => $pdftotext,
+    '!layout' => $layout ? '-layout' : '',
+    '!offset' => $offset,
+    '!pdf_uri' => $file_path,
+    '!output_file' => $output_file,
+  ));
+  $output = array();
+  $ret = 0;
+  exec(escapeshellcmd($command), $output, $ret);
+  // UNIX exit code is 0, so this succeeded.
+  if (!$ret) {
+    return $output_file;
+  }
+  return FALSE;
 }
 
 /**
@@ -892,3 +943,4 @@ function islandora_paged_content_length_of_pdf($uri) {
   }
   return FALSE;
 }
+

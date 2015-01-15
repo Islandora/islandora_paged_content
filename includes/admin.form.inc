@@ -23,6 +23,7 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
   };
   $gs = $get_default_value('islandora_paged_content_gs', '/usr/bin/gs');
   $pdfinfo = $get_default_value('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
+  $pdftotext = $get_default_value('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
 
   $djatoka_url = $get_default_value('islandora_paged_content_djatoka_url', 'http://localhost:8080/adore-djatoka/');
   $djatoka_availible_message = islandora_paged_content_admin_settings_form_djatoka_availible_message($djatoka_url);
@@ -65,6 +66,24 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
         '#ajax' => array(
           'callback' => 'islandora_paged_content_admin_settings_form_pdfinfo_ajax_callback',
           'wrapper' => 'pdfinfo-wrapper',
+          'effect' => 'fade',
+          'event' => 'change',
+        ),
+      ),
+      'islandora_paged_content_pdftotext' => array(
+        '#type' => 'textfield',
+        '#title' => t('pdftotext'),
+        '#description' => t('Pdftotext is used to extract text for OCR when ingesting a single PDF into a book and page objects.<br/>!msg',
+          array(
+            '!msg' => islandora_paged_content_admin_settings_form_executable_available_message($pdftotext),
+          )
+        ),
+        '#default_value' => $pdftotext,
+        '#prefix' => '<div id="pdftotext-wrapper">',
+        '#suffix' => '</div>',
+        '#ajax' => array(
+          'callback' => 'islandora_paged_content_admin_settings_form_pdftotext_ajax_callback',
+          'wrapper' => 'pdftotext-wrapper',
           'effect' => 'fade',
           'event' => 'change',
         ),
@@ -190,6 +209,21 @@ function islandora_paged_content_admin_settings_form_djatoka_ajax_callback(array
 }
 
 /**
+ * Ajax callback for the pdftotext textfield.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ *
+ * @return array
+ *   The element to render as part the ajax callback.
+ */
+function islandora_paged_content_admin_settings_form_pdftotext_ajax_callback(array $form, array $form_state) {
+  return $form['pdf_book_ingestion_settings']['islandora_paged_content_pdftotext'];
+}
+
+/**
  * Ajax callback for the pdfinfo textfield.
  *
  * @param array $form
@@ -203,3 +237,4 @@ function islandora_paged_content_admin_settings_form_djatoka_ajax_callback(array
 function islandora_paged_content_admin_settings_form_pdfinfo_ajax_callback(array $form, array $form_state) {
   return $form['pdf_book_ingestion_settings']['islandora_paged_content_pdfinfo'];
 }
+
