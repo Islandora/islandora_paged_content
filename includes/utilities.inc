@@ -876,6 +876,8 @@ function islandora_paged_content_pdfinfo_availability() {
 /**
  * Helper function to extract the text for a single page beginning at an offset.
  *
+ * @param string $uri
+ *   The URI or path to the file that is being examined.
  * @param string $offset
  *   The page number to extract it will be used as the first and last page
  *   value. Note that pdftotext won't complain about using an offset greater
