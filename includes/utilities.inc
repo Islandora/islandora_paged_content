@@ -931,10 +931,10 @@ function islandora_paged_content_length_of_pdf($uri) {
     return FALSE;
   }
   $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
-  $command = "{$pdfinfo} {$file_path}";
+  $command = "$pdfinfo $file_path";
   $output = array();
   $ret = 0;
-  exec($command, $output, $ret);
+  exec(escapeshellcmd($command), $output, $ret);
   // UNIX exit code is 0, so this succeeded.
   if (!$ret) {
     foreach ($output as $line) {
