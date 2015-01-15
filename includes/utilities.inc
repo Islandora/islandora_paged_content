@@ -891,8 +891,8 @@ function islandora_paged_content_pdfinfo_availability() {
  */
 function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = TRUE) {
   $file_path = drupal_realpath($uri);
-  // PDF doesn't exist, abort.
-  if (!file_exists($file_path)) {
+  // PDF doesn't exist or pdftotext isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_pdftotext_availability()) {
     return FALSE;
   }
   $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
@@ -926,8 +926,8 @@ function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = 
  */
 function islandora_paged_content_length_of_pdf($uri) {
   $file_path = drupal_realpath($uri);
-  // PDF doesn't exist, abort.
-  if (!file_exists($file_path)) {
+  // PDF doesn't exist or pdfinfo isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_pdfinfo_availability()) {
     return FALSE;
   }
   $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
