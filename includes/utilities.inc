@@ -945,3 +945,45 @@ function islandora_paged_content_length_of_pdf($uri) {
   }
   return FALSE;
 }
+
+/**
+ * Helper function to extract a page of a PDF into a TIFF.
+ *
+ * @param string $uri
+ *   The URI or path to the file that is being examined.
+ * @param string $offset
+ *   The page number to extract it will be used as the first and last page
+ *   value.
+ * @param string $device
+ *   Selects an alternate initial output device, as described above.
+ * @param string $resolution
+ *   The dimensions of the resolution to be used in NUMxNUM form.
+ *
+ * @return bool|string
+ *   FALSE if it fails, the URI of the TIFF otherwise.
+ */
+function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $resolution) {
+  $file_path = drupal_realpath($uri);
+  // PDF doesn't exist or gs isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_can_combine_pdf()) {
+    return FALSE;
+  }
+  $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
+  $output_file = file_create_filename("page{$offset}.tif", '/tmp');
+  $base_command = '!gs_path -q -dNOPAUSE -sDEVICE=!device -sOutputFile=!output_file -sCompression=lzw -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+  $command = format_string($base_command, array(
+    '!gs_path' => $gs,
+    '!device' => $device,
+    '!offset' => $offset,
+    '!output_file' => $output_file,
+    '!resolution' => $resolution,
+    '!pdf_uri' => $uri,
+  ));
+  $output = array();
+  $ret = 0;
+  exec(escapeshellcmd($command), $output, $ret);
+  if (!$ret) {
+    return $output_file;
+  }
+  return FALSE;
+}
