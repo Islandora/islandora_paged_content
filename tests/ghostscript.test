@@ -78,6 +78,6 @@ class GhostscriptTestCase extends DrupalUnitTestCase {
   public function testGhostscriptNonValidURI() {
     $test_pdf = "temporary://totally_doesnt_exist.pdf";
     $num_pages = islandora_paged_content_length_of_pdf($test_pdf);
-    $this->assertFalse($num_pages, 'No page count was returned for a non-existent PDF.');
+    $this->assertFalse($num_pages, 'No TIF was attempted to be extracted from a non-existent PDF.');
   }
 }
