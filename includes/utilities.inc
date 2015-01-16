@@ -957,7 +957,7 @@ function islandora_paged_content_length_of_pdf($uri) {
  * @param string $device
  *   Selects an alternate initial output device, as described above.
  * @param string $resolution
- *   The dimensions of the resolution to be used in NUMxNUM form.
+ *   The DPI of the resolution to be used.
  *
  * @return bool|string
  *   FALSE if it fails, the URI of the TIFF otherwise.
@@ -977,7 +977,7 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
     '!offset' => $offset,
     '!output_file' => $output_file,
     '!resolution' => $resolution,
-    '!pdf_uri' => $uri,
+    '!pdf_uri' => $file_path,
   ));
   $output = array();
   $ret = 0;
@@ -986,4 +986,61 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
     return $output_file;
   }
   return FALSE;
+}
+
+/**
+ * Helper to determine whether all requirements are met to extract from PDF.
+ *
+ * @return bool
+ *   TRUE if all requirements are present, FALSE otherwise.
+ */
+function islandora_paged_content_can_extract_from_pdf() {
+  return islandora_paged_content_can_combine_pdf() && islandora_paged_content_pdftotext_availability() && islandora_paged_content_pdfinfo_availability();
+}
+
+/**
+ * Helper function to add the PDF datastream to an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @param stdClass $file_obj
+ *   The PDF file object that is being added.
+ */
+function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file_obj) {
+  if (!isset($object['PDF'])) {
+    $pdf = $object->constructDatastream('PDF', 'M');
+    $object->ingestDatastream($pdf);
+  }
+  else {
+    $pdf = $object['PDF'];
+  }
+  $pdf->setContentFromFile(drupal_realpath($file_obj->uri, FALSE));
+  if ($pdf->label != $file_obj->filename) {
+    $pdf->label = $file_obj->filename;
+  }
+  if ($pdf->mimetype != $file_obj->filemime) {
+    $pdf->mimetype = $file_obj->filemime;
+  }
+}
+
+/**
+ * Helper function to add all relationships to a paged content child.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ */
+function islandora_paged_content_add_relationships_to_child(AbstractObject $object, $params) {
+  $rels_ext = $object->relationships;
+  $object->models = $params['model'];
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $params['parent']);
+  islandora_paged_content_set_relationship($rels_ext, FEDORA_RELS_EXT_URI, 'isMemberOf', $params['parent']);
+
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', $params['page_number'], TRUE);
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', $params['page_number'], TRUE);
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSection', '1', TRUE);
+  if ($params['extract_text']) {
+    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
+  }
 }

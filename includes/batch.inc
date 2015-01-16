@@ -425,3 +425,89 @@ function islandora_paged_content_delete_parent_object_operation($pid) {
   $object = islandora_object_load($pid);
   islandora_delete_object($object);
 }
+
+/**
+ * Gets the batch definition for creating a book from a PDF.
+ *
+ * This also updates each page object with the corresponding data.
+ *
+ * @param AbstractObject $paged_content
+ *   The paged_content the pages belong to.
+ * @param array $pages
+ *   All the pages to include in the PDF.
+ * @param array $options
+ *   Options to pass into convert.
+ *
+ * @return array
+ *   The batch definition.
+ */
+function islandora_paged_content_create_book_from_pdf_batch(AbstractObject $paged_content, array $pages, array $options) {
+  return array(
+    'operations' => array(
+      array('islandora_paged_content_create_page_from_pdf_batch_operation', array(
+        $pages, $options, $paged_content->id)),
+    ),
+    'finished' => 'islandora_paged_content_batch_finished',
+    'title' => t('Creating pages from @label ...', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to pages from @label ...', array('@label' => $paged_content->label)),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining @estimate.'),
+    'error_message' => t('An error has occurred.'),
+    'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
+  );
+}
+
+/**
+ * Batch operation for converting a page into a PDF.
+ *
+ * @param array $pages
+ *   All the pages to convert.
+ * @param array $options
+ *   Options to pass into ghostscript and pdftotext.
+ * @param string $pid
+ *   The PID of the parent pid.
+ * @param array $context
+ *   The context of this batch operation.
+ */
+function islandora_paged_content_create_page_from_pdf_batch_operation(array $pages, array $options, $pid, &$context) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  module_load_include('inc', 'islandora', 'includes/utilities');
+  $page = islandora_paged_content_start_batch_operation($pages, $context);
+  if ($page) {
+    $options['page_number'] = $page;
+    $file = $options['pdf_file'];
+    $tuque = islandora_get_tuque_connection();
+    // Go construct a new object for our page.
+    $object = $tuque->repository->constructObject(islandora_get_namespace($pid));
+    islandora_paged_content_add_relationships_to_child($object, $options);
+    if (variable_get('islandora_paged_content_page_label', FALSE)) {
+      $object->label = $page;
+    }
+    else {
+      $object->label = "$file->filename-$page";
+    }
+    $tif = islandora_paged_content_extract_tiff_from_pdf($file->uri, $page, $options['image_format'], $options['resolution']);
+    if ($tif) {
+      $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $tif, 'OBJ');
+      $context['results']['files'][] = $tif;
+    }
+    else {
+      $context['messages'][] = t('Unable to extract a TIF for page @page', array('@page' => $page));
+    }
+    if ($options['extract_text']) {
+      $full_text = islandora_paged_content_extract_text_from_pdf($file->uri, $page);
+      if ($full_text) {
+        $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $full_text, 'OCR');
+        $context['results']['files'][] = $full_text;
+      }
+      else {
+        $context['messages'][] = t('Unable to extract a OCR for page @page', array('@page' => $page));
+      }
+    }
+    $tuque->repository->ingestObject($object);
+    islandora_paged_content_end_batch_operation($context);
+    $context['message'] = t('Converting page @page of @total from a PDF ...', array(
+      '@page' => $context['sandbox']['progress'],
+      '@total' => $context['sandbox']['total']));
+
+  }
+}

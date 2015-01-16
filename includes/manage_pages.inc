@@ -754,7 +754,6 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
  *   the temporary directory used to store  pages.
  */
 function islandora_paged_content_add_pages($repository, $config, $pages_directory, &$context) {
-  module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $context['results']['pages_directory'] = $pages_directory;
 
