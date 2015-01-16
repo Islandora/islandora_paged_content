@@ -1,3 +1,3 @@
 #!/bin/bash
 
-apt-get install gs
+apt-get install ghostscript
