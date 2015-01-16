@@ -27,7 +27,9 @@ class PDFToTextTestCase extends DrupalUnitTestCase {
    */
   public function setUp() {
     module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+    $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
     parent::setUp('islandora_paged_content');
+    variable_set('islandora_paged_content_pdftotext', $pdftotext);
   }
 
   /**

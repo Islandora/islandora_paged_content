@@ -27,7 +27,9 @@ class PDFInfoTestCase extends DrupalUnitTestCase {
    */
   public function setUp() {
     module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+    $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
     parent::setUp('islandora_paged_content');
+    variable_set('islandora_paged_content_pdfinfo', $pdfinfo);
   }
 
   /**
