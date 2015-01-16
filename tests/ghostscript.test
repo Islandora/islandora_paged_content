@@ -27,9 +27,7 @@ class GhostscriptTestCase extends DrupalUnitTestCase {
    */
   public function setUp() {
     module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-    $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
     parent::setUp('islandora_paged_content');
-    variable_set('islandora_paged_content_gs', $gs);
   }
 
   /**
