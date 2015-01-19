@@ -436,7 +436,16 @@ function islandora_paged_content_delete_parent_object_operation($pid) {
  * @param array $pages
  *   All the pages to include in the PDF.
  * @param array $options
- *   Options to pass into convert.
+ *   An array of options to pass into the batch operations containing:
+ *   -image_format: A string specifying the device to be used when generating
+ *   images.
+ *   -resolution: A string specifying the DPI of the to be generated image.
+ *   -language: A string specifying the language of the OCR text.
+ *   -extract_text: An integer specifying whether to extract text from the PDF
+ *   page or to let tesseract work its magic for us.
+ *   -model: A string specifying the content model of the parent.
+ *   -pdf_file: A Drupal file object of the uploaded PDF to be processed.
+ *   -parent: A string specifying the parent pid of the to be ingested pages.
  *
  * @return array
  *   The batch definition.
@@ -449,7 +458,7 @@ function islandora_paged_content_create_book_from_pdf_batch(AbstractObject $page
     ),
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Creating pages from @label ...', array('@label' => $paged_content->label)),
-    'init_message' => t('Preparing to pages from @label ...', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to extract pages from @label ...', array('@label' => $paged_content->label)),
     'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
@@ -460,9 +469,18 @@ function islandora_paged_content_create_book_from_pdf_batch(AbstractObject $page
  * Batch operation for converting a page into a PDF.
  *
  * @param array $pages
- *   All the pages to convert.
+ *   All the pages to create.
  * @param array $options
- *   Options to pass into ghostscript and pdftotext.
+ *   An array of options to pass into ghostscript and pdftotext containing:
+ *   -image_format: A string specifying the device to be used when generating
+ *   images.
+ *   -resolution: A string specifying the DPI of the to be generated image.
+ *   -language: A string specifying the language of the OCR text.
+ *   -extract_text: An integer specifying whether to extract text from the PDF
+ *   page or to let tesseract or pdftext work their magic for us.
+ *   -model: A string specifying the content model of the parent.
+ *   -pdf_file: A Drupal file object of the uploaded PDF to be processed.
+ *   -parent: A string specifying the parent pid of the to be ingested pages.
  * @param string $pid
  *   The PID of the parent pid.
  * @param array $context
@@ -487,16 +505,16 @@ function islandora_paged_content_create_page_from_pdf_batch_operation(array $pag
     }
     $tif = islandora_paged_content_extract_tiff_from_pdf($file->uri, $page, $options['image_format'], $options['resolution']);
     if ($tif) {
-      $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $tif, 'OBJ');
+      $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $tif, 'OBJ', 'OBJ Datastream', 'image/tiff', 'M', FALSE);
       $context['results']['files'][] = $tif;
     }
     else {
       $context['messages'][] = t('Unable to extract a TIF for page @page', array('@page' => $page));
     }
-    if ($options['extract_text']) {
+    if ($options['extract_text'] == 'pdftotext') {
       $full_text = islandora_paged_content_extract_text_from_pdf($file->uri, $page);
       if ($full_text) {
-        $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $full_text, 'OCR');
+        $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $full_text, 'OCR', 'OCR', 'text/plain', 'M', FALSE);
         $context['results']['files'][] = $full_text;
       }
       else {

@@ -11,12 +11,14 @@
  *   An array representing a form within Drupal.
  * @param array $form_state
  *   An array containing the Drupal form state.
+ * @param string $model
+ *   A string specifying the content model of the page(s) to be ingested.
  *
  * @return array
  *   An array containing the form to be rendered.
  */
 function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
-  module_load_include('inc', 'islandora_ocr', 'includes/utilities');
+  module_load_include('inc', 'islandora', 'includes/ingest.form');
   $form['pdf_file'] = array(
     '#type' => 'managed_file',
     '#title' => t('PDF File'),
@@ -65,18 +67,52 @@ function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
     '#collapsed' => FALSE,
     '#collapsible' => FALSE,
   );
-  $languages = module_exists('islandora_ocr') ? islandora_ocr_get_enabled_tesseract_languages() : array();
+  module_load_include('inc', 'islandora_ocr', 'includes/utilities');
+  $ocr_options = array(
+    'do_not_perform' => t('Do not perform any OCR.'),
+  );
+  $states = array();
+  $languages = array();
+  $default_value = 'do_not_perform';
+  if (module_exists('islandora_ocr')) {
+    $ocr_options['tesseract'] = t('Extract text using tesseract.');
+    $states[] = array('value' => 'tesseract');
+    $languages = islandora_ocr_get_enabled_tesseract_languages();
+    // Don't need the no OCR option.
+    unset($languages['no_ocr']);
+  }
+  if (islandora_paged_content_pdftotext_availability()) {
+    $ocr_options['pdftotext'] = t('Extract text using pdftotext.');
+    $default_value = 'pdftotext';
+    $states[] = array('value' => 'pdftotext');
+    // Need to fallback if tesseract isn't available for future OCR.
+    $languages = array(
+      'eng' => t('English'),
+      'fra' => t('French'),
+      'deu-frak' => t('German'),
+      'por' => t('Portugese'),
+      'spa' => t('Spanish'),
+      'hin' => t('Hindi'),
+      'jpn' => t('Japanese'),
+      'ita' => t('Italian'),
+    );
+  }
+  $form['text_settings']['extract_text'] = array(
+    '#type' => 'radios',
+    '#title' => t('Extract Text'),
+    '#options' => $ocr_options,
+    '#default_value' => $default_value,
+  );
   $form['text_settings']['language'] = array(
     '#type' => 'select',
     '#title' => t('Language'),
-    '#description' => t('Please select the language the page is written in'),
+    '#description' => t('Please select the language the page is written in.'),
     '#options' => $languages,
-  );
-  $form['text_settings']['extract_text'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Extract Text'),
-    '#description' => t('Do not perform OCR, rather extract the text from the PDF.'),
-    '#default_value' => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="extract_text"]' => $states,
+      ),
+    ),
   );
   $form['model'] = array(
     '#type' => 'value',
@@ -85,6 +121,14 @@ function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
   return $form;
 }
 
+/**
+ * Validation for the PDF upload form.
+ *
+ * @param array $form
+ *   An array representing a form within Drupal.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
 function islandora_paged_content_upload_pdf_form_validate($form, &$form_state) {
   // Only do things if the user has uploaded a PDF.
   if ($form_state['values']['pdf_file']) {
@@ -101,6 +145,14 @@ function islandora_paged_content_upload_pdf_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Submit handler for the PDF upload form.
+ *
+ * @param array $form
+ *   An array representing a form within Drupal.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
 function islandora_paged_content_upload_pdf_form_submit($form, $form_state) {
   // Only do things if the user has uploaded a PDF.
   if ($form_state['values']['pdf_file']) {

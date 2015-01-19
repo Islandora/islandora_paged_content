@@ -12,6 +12,11 @@
  *   The Drupal form definition.
  * @param array $form_state
  *   The Drupal form state.
+ * @param AbstractObject $parent
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @return array
+ *   An array containing the form to be rendered.
  */
 function islandora_paged_content_upload_page_form(array $form, array &$form_state, AbstractObject $parent) {
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');

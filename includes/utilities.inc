@@ -438,8 +438,7 @@ function islandora_paged_content_page_derive_pdf(AbstractObject $object, array $
   if (!islandora_paged_content_can_derive($object, 'PDF')) {
     return FALSE;
   }
-  $source_file
-    = islandora_paged_content_get_page_derivative_source($object, 'PDF');
+  $source_file = islandora_paged_content_get_page_derivative_source($object, 'PDF');
   $pdf_file = islandora_paged_content_convert_to_pdf($source_file, $options);
   file_unmanaged_delete($source_file);
   return $pdf_file;
@@ -504,7 +503,9 @@ function islandora_paged_content_page_derive_image_datastreams(AbstractObject $o
  * This makes the dimensions accessible when we query for the pages.
  *
  * @param AbstractObject $object
- *   Page Object
+ *   An AbstractObject representing an object within Fedora.
+ * @param bool $force
+ *   Whether we are forcing the creation of dimensions or not.
  */
 function islandora_paged_content_add_dimensions_relationships(AbstractObject $object, $force = FALSE) {
   $rels = $object['JP2']->relationships;
@@ -656,8 +657,10 @@ function islandora_paged_content_get_technical_metadata(AbstractObject $object) 
   if (strpos($object[$dsid]->mimetype, 'xml') !== FALSE && $object[$dsid]->getContent($file)) {
     $doc = simplexml_load_file($file);
     $doc->registerXPathNamespace('ns', 'http://hul.harvard.edu/ois/xml/ns/fits/fits_output');
-    $width = (int) array_pop($doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageWidth'));
-    $height = (int) array_pop($doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageHeight'));
+    $width_xpath = $doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageWidth');
+    $width = (int) array_pop($width_xpath);
+    $height_xpath = $doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageHeight');
+    $height = (int) array_pop($height_xpath);
     $metadata = array('width' => $width, 'height' => $height);
   }
   file_unmanaged_delete($file);
@@ -1004,10 +1007,11 @@ function islandora_paged_content_can_extract_from_pdf() {
  * @param AbstractObject $object
  *   An AbstractObject representing an object within Fedora.
  *
- * @param stdClass $file_obj
+ * @param object $file_obj
  *   The PDF file object that is being added.
  */
 function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file_obj) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/db');
   if (!isset($object['PDF'])) {
     $pdf = $object->constructDatastream('PDF', 'M');
     $object->ingestDatastream($pdf);
@@ -1015,13 +1019,14 @@ function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file
   else {
     $pdf = $object['PDF'];
   }
-  $pdf->setContentFromFile(drupal_realpath($file_obj->uri, FALSE));
+  $pdf->setContentFromFile(drupal_realpath($file_obj->uri), FALSE);
   if ($pdf->label != $file_obj->filename) {
     $pdf->label = $file_obj->filename;
   }
   if ($pdf->mimetype != $file_obj->filemime) {
     $pdf->mimetype = $file_obj->filemime;
   }
+  islandora_paged_content_track_pdf_ingestion($object->id, $file_obj->fid);
 }
 
 /**
@@ -1029,7 +1034,12 @@ function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file
  *
  * @param AbstractObject $object
  *   An AbstractObject representing an object within Fedora.
- *
+ * @param array $params
+ *   An array of parameters to be added as relationships containing:
+ *   -model: A string representing the content model of the child.
+ *   -parent: A string representing the PID of the parent.
+ *   -page_number: A string representing the page number of the child.
+ *   -language: A string representing the language of the text.
  */
 function islandora_paged_content_add_relationships_to_child(AbstractObject $object, $params) {
   $rels_ext = $object->relationships;
@@ -1040,7 +1050,8 @@ function islandora_paged_content_add_relationships_to_child(AbstractObject $obje
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', $params['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', $params['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSection', '1', TRUE);
-  if ($params['extract_text']) {
-    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
+  if ($params['extract_text'] == 'do_not_perform') {
+    $params['language'] = 'no_ocr';
   }
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
 }
