@@ -934,7 +934,7 @@ function islandora_paged_content_length_of_pdf($uri) {
     return FALSE;
   }
   $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
-  $command = "$pdfinfo $file_path";
+  $command = escapeshellarg($pdfinfo) . ' ' . escapeshellarg($file_path);
   $output = array();
   $ret = 0;
   exec(escapeshellcmd($command), $output, $ret);
@@ -975,12 +975,12 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
   $output_file = file_create_filename("page{$offset}.tif", file_directory_temp());
   $base_command = '!gs_path -q -dNOPAUSE -sDEVICE=!device -sOutputFile=!output_file -sCompression=lzw -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   $command = format_string($base_command, array(
-    '!gs_path' => $gs,
+    '!gs_path' => escapeshellarg($gs),
     '!device' => $device,
     '!offset' => $offset,
     '!output_file' => $output_file,
     '!resolution' => $resolution,
-    '!pdf_uri' => $file_path,
+    '!pdf_uri' => escapeshellarg($file_path),
   ));
   $output = array();
   $ret = 0;
