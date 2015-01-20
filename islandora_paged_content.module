@@ -243,8 +243,10 @@ function swaptable_value($element, $input, array $form_state) {
  * Implements hook_islandora_object_ingested().
  */
 function islandora_paged_content_islandora_object_ingested(AbstractObject $object) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   // Only do this check on paged content that have PDFs.
-  if (array_intersect_key(array('islandora:bookCModel', 'islandora:newspaperIssueCModel'), $object->models) && isset($object['PDF'])) {
+  $applicable_paged_cmodels = islandora_paged_content_retrieve_applicable_cmodels();
+  if (array_intersect($applicable_paged_cmodels, $object->models) && isset($object['PDF'])) {
     module_load_include('inc', 'islandora_paged_content', 'includes/db');
     islandora_paged_content_cleanup_source_pdf($object->id);
   }

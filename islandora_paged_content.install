@@ -32,7 +32,7 @@ function islandora_paged_content_uninstall() {
 function islandora_paged_content_schema() {
   $schema = array();
   $schema['islandora_paged_content_pdf_ingest'] = array(
-    'description' => 'Tracks PDFs uploaded to be extracted into books for deletion after ingest is complete.',
+    'description' => 'Tracks PDFs uploaded to be extracted into paged content for deletion after ingest is complete.',
     'fields' => array(
       'pid' => array(
         'description' => 'The PID of the paged content object that has a PDF file associated with it to be deleted.',
@@ -63,7 +63,7 @@ function islandora_paged_content_schema() {
  */
 function islandora_paged_content_update_7001() {
   db_create_table('islandora_paged_content_pdf_ingest', array(
-    'description' => 'Tracks PDFs uploaded to be extracted into books for deletion after ingest is complete.',
+    'description' => 'Tracks PDFs uploaded to be extracted into paged content for deletion after ingest is complete.',
     'fields' => array(
       'pid' => array(
         'description' => 'The PID of the paged content object that has a PDF file associated with it to be deleted.',

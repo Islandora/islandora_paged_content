@@ -279,7 +279,7 @@ function islandora_paged_content_create_images_batch(AbstractObject $paged_conte
  * Batch operation for creating the TN, JPG, JP2 datastreams.
  *
  * @param AbstractObject $paged_content_id
- *   The book the pages belong to.
+ *   The paged content the pages belong to.
  * @param array $pages
  *   All the pages to create images for.
  * @param array $context
@@ -427,7 +427,7 @@ function islandora_paged_content_delete_parent_object_operation($pid) {
 }
 
 /**
- * Gets the batch definition for creating a book from a PDF.
+ * Gets the batch definition for creating paged content from a PDF.
  *
  * This also updates each page object with the corresponding data.
  *
@@ -450,7 +450,7 @@ function islandora_paged_content_delete_parent_object_operation($pid) {
  * @return array
  *   The batch definition.
  */
-function islandora_paged_content_create_book_from_pdf_batch(AbstractObject $paged_content, array $pages, array $options) {
+function islandora_paged_content_create_paged_content_from_pdf_batch(AbstractObject $paged_content, array $pages, array $options) {
   return array(
     'operations' => array(
       array('islandora_paged_content_create_page_from_pdf_batch_operation', array(
@@ -459,14 +459,14 @@ function islandora_paged_content_create_book_from_pdf_batch(AbstractObject $page
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Creating pages from @label ...', array('@label' => $paged_content->label)),
     'init_message' => t('Preparing to extract pages from @label ...', array('@label' => $paged_content->label)),
-    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining @estimate.'),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining: @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
   );
 }
 
 /**
- * Batch operation for converting a page into a PDF.
+ * Batch operation for converting a PDF into a single page.
  *
  * @param array $pages
  *   All the pages to create.
@@ -482,7 +482,7 @@ function islandora_paged_content_create_book_from_pdf_batch(AbstractObject $page
  *   -pdf_file: A Drupal file object of the uploaded PDF to be processed.
  *   -parent: A string specifying the parent pid of the to be ingested pages.
  * @param string $pid
- *   The PID of the parent pid.
+ *   The PID of the parent object.
  * @param array $context
  *   The context of this batch operation.
  */

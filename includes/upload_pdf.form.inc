@@ -140,7 +140,7 @@ function islandora_paged_content_upload_pdf_form_validate($form, &$form_state) {
       $form_state['number_of_pages'] = $num_pages;
     }
     else {
-      form_error($form['pdf_file'], t('Pdfino was unable to extract required information from the supplied PDF.'));
+      form_error($form['pdf_file'], t('Unable to extract required information from the supplied PDF.'));
     }
   }
 }
@@ -172,7 +172,7 @@ function islandora_paged_content_upload_pdf_form_submit($form, $form_state) {
       'extract_text',
       'model',
     ))) + array('pdf_file' => $file_obj, 'parent' => $object->id);
-    $batch = islandora_paged_content_create_book_from_pdf_batch($object, $pages, $options);
+    $batch = islandora_paged_content_create_paged_content_from_pdf_batch($object, $pages, $options);
     batch_set($batch);
   }
 }

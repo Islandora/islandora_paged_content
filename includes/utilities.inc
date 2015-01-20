@@ -1014,7 +1014,6 @@ function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file
   module_load_include('inc', 'islandora_paged_content', 'includes/db');
   if (!isset($object['PDF'])) {
     $pdf = $object->constructDatastream('PDF', 'M');
-    $object->ingestDatastream($pdf);
   }
   else {
     $pdf = $object['PDF'];
@@ -1026,6 +1025,7 @@ function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file
   if ($pdf->mimetype != $file_obj->filemime) {
     $pdf->mimetype = $file_obj->filemime;
   }
+  $object->ingestDatastream($pdf);
   islandora_paged_content_track_pdf_ingestion($object->id, $file_obj->fid);
 }
 
@@ -1054,4 +1054,11 @@ function islandora_paged_content_add_relationships_to_child(AbstractObject $obje
     $params['language'] = 'no_ocr';
   }
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
+}
+
+/**
+ * Retrieves all applicable content models for paged content.
+ */
+function islandora_paged_content_retrieve_applicable_cmodels() {
+  return module_invoke_all('islandora_paged_content_registry');
 }
