@@ -49,13 +49,13 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
         ),
       ),
     ),
-    'pdf_book_ingestion_settings' => array(
+    'pdf_paged_content_ingestion_settings' => array(
       '#type' => 'fieldset',
-      '#title' => t('PDF Book Ingest Settings'),
+      '#title' => t('PDF Paged Content Ingest Settings'),
       'islandora_paged_content_pdfinfo' => array(
         '#type' => 'textfield',
         '#title' => t('pdfinfo'),
-        '#description' => t('Pdfinfo is used to extract information needed when ingesting a single PDF into a book and page objects.<br/>!msg',
+        '#description' => t('Pdfinfo is used to extract information needed when ingesting a single PDF into paged content and individual page objects.<br/>!msg',
           array(
             '!msg' => islandora_paged_content_admin_settings_form_executable_available_message($pdfinfo),
           )
@@ -73,7 +73,7 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
       'islandora_paged_content_pdftotext' => array(
         '#type' => 'textfield',
         '#title' => t('pdftotext'),
-        '#description' => t('Pdftotext is used to extract text for OCR when ingesting a single PDF into a book and page objects.<br/>!msg',
+        '#description' => t('Pdftotext is used to extract text for OCR when ingesting a single PDF into paged content and individual page objects.<br/>!msg',
           array(
             '!msg' => islandora_paged_content_admin_settings_form_executable_available_message($pdftotext),
           )
@@ -220,7 +220,7 @@ function islandora_paged_content_admin_settings_form_djatoka_ajax_callback(array
  *   The element to render as part the ajax callback.
  */
 function islandora_paged_content_admin_settings_form_pdftotext_ajax_callback(array $form, array $form_state) {
-  return $form['pdf_book_ingestion_settings']['islandora_paged_content_pdftotext'];
+  return $form['pdf_paged_content_ingestion_settings']['islandora_paged_content_pdftotext'];
 }
 
 /**
@@ -235,5 +235,5 @@ function islandora_paged_content_admin_settings_form_pdftotext_ajax_callback(arr
  *   The element to render as part the ajax callback.
  */
 function islandora_paged_content_admin_settings_form_pdfinfo_ajax_callback(array $form, array $form_state) {
-  return $form['pdf_book_ingestion_settings']['islandora_paged_content_pdfinfo'];
+  return $form['pdf_paged_content_ingestion_settings']['islandora_paged_content_pdfinfo'];
 }
