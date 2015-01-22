@@ -76,6 +76,7 @@ function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
   $languages = array();
   $default_value = 'do_not_perform';
   if (module_exists('islandora_ocr')) {
+    module_load_include('inc', 'islandora_ocr', 'includes/utilities');
     $ocr_options['tesseract'] = t('Perform OCR on the PDF.');
     $states[] = array('value' => 'tesseract');
     $languages = islandora_ocr_get_enabled_tesseract_languages();

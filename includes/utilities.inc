@@ -1015,11 +1015,12 @@ function islandora_paged_content_can_extract_from_pdf() {
  *
  * @param AbstractObject $object
  *   An AbstractObject representing an object within Fedora.
- *
  * @param object $file_obj
  *   The PDF file object that is being added.
+ * @param bool $batch
+ *   Whether we are adding this PDF in the batch context or not.
  */
-function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file_obj) {
+function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file_obj, $batch = FALSE) {
   module_load_include('inc', 'islandora_paged_content', 'includes/db');
   if (!isset($object['PDF'])) {
     $pdf = $object->constructDatastream('PDF', 'M');
@@ -1035,7 +1036,9 @@ function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file
     $pdf->mimetype = $file_obj->filemime;
   }
   $object->ingestDatastream($pdf);
-  islandora_paged_content_track_pdf_ingestion($object->id, $file_obj->fid);
+  if (!$batch) {
+    islandora_paged_content_track_pdf_ingestion($object->id, $file_obj->fid);
+  }
 }
 
 /**
@@ -1060,14 +1063,16 @@ function islandora_paged_content_add_relationships_to_child(AbstractObject $obje
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', $params['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSection', '1', TRUE);
   if ($params['extract_text'] == 'do_not_perform') {
-    $params['language'] = 'no_ocr';
+    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'FALSE', RELS_TYPE_PLAIN_LITERAL);
   }
-  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
+  else {
+    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
+  }
 }
 
 /**
  * Retrieves all applicable content models for paged content.
  */
 function islandora_paged_content_retrieve_applicable_cmodels() {
-  return module_invoke_all('islandora_paged_content_registry');
+  return module_invoke_all('islandora_paged_content_content_model_registry');
 }
