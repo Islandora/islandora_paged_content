@@ -67,7 +67,6 @@ function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
     '#collapsed' => FALSE,
     '#collapsible' => FALSE,
   );
-  module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $ocr_options = array(
     'do_not_perform' => t('Do not perform any OCR.'),
   );
