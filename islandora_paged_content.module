@@ -246,7 +246,7 @@ function islandora_paged_content_islandora_object_ingested(AbstractObject $objec
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   // Only do this check on paged content that have PDFs.
   $applicable_paged_cmodels = islandora_paged_content_retrieve_applicable_cmodels();
-  if (array_intersect($applicable_paged_cmodels, $object->models) && isset($object['PDF'])) {
+  if (array_intersect(array_keys($applicable_paged_cmodels), $object->models) && isset($object['PDF'])) {
     module_load_include('inc', 'islandora_paged_content', 'includes/db');
     islandora_paged_content_cleanup_source_pdf($object->id);
   }
