@@ -58,6 +58,7 @@ function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
   $form['image_settings']['resolution'] = array(
     '#type' => 'radios',
     '#title' => t("Resolution (DPI)"),
+    '#description' => t('The higher the resolution selected, the more legible the text will be, but be aware it takes longer to process higher resolution images, and they will consume more space.'),
     '#options' => array_combine($dpi, $dpi),
     '#default_value' => '300',
   );
@@ -68,21 +69,21 @@ function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
     '#collapsible' => FALSE,
   );
   $ocr_options = array(
-    'do_not_perform' => t('Do not perform any OCR.'),
+    'do_not_perform' => t('Do not extract text.'),
   );
   $states = array();
   $languages = array();
   $default_value = 'do_not_perform';
   if (module_exists('islandora_ocr')) {
     module_load_include('inc', 'islandora_ocr', 'includes/utilities');
-    $ocr_options['tesseract'] = t('Extract text using tesseract.');
+    $ocr_options['tesseract'] = t('Perform OCR on the PDF.');
     $states[] = array('value' => 'tesseract');
     $languages = islandora_ocr_get_enabled_tesseract_languages();
     // Don't need the no OCR option.
     unset($languages['no_ocr']);
   }
   if (islandora_paged_content_pdftotext_availability()) {
-    $ocr_options['pdftotext'] = t('Extract text using pdftotext.');
+    $ocr_options['pdftotext'] = t('Extract text from the PDF.');
     $default_value = 'pdftotext';
     $states[] = array('value' => 'pdftotext');
     // Need to fallback if tesseract isn't available for future OCR.
@@ -102,6 +103,7 @@ function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
     '#title' => t('Extract Text'),
     '#options' => $ocr_options,
     '#default_value' => $default_value,
+    '#description' => t("Extracted text is used to aid in the discovery of this object when searching. If the uploaded PDF contains text and not just images of text, we recommend you try to extract it from the PDF. On the other hand if the uploaded PDF is composed of Images of text we and doesn't contain text we recommend you perform OCR."),
   );
   $form['text_settings']['language'] = array(
     '#type' => 'select',

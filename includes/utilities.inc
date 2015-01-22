@@ -901,16 +901,19 @@ function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = 
   $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
   $base_command = '!pdftotext_path !layout -f !offset -l !offset !pdf_uri !output_file';
   $output_file = file_create_filename('full.txt', file_directory_temp());
+  // Need to temporary copy the file because of UTF-8 encoding.
+  $copy = drupal_realpath(file_unmanaged_copy($file_path, 'temporary://pdftotextpdf.pdf'));
   $command = format_string($base_command, array(
     '!pdftotext_path' => $pdftotext,
     '!layout' => $layout ? '-layout' : '',
     '!offset' => $offset,
-    '!pdf_uri' => $file_path,
+    '!pdf_uri' => escapeshellarg($copy),
     '!output_file' => $output_file,
   ));
   $output = array();
   $ret = 0;
   exec(escapeshellcmd($command), $output, $ret);
+  file_unmanaged_delete($copy);
   // UNIX exit code is 0, so this succeeded.
   if (!$ret) {
     return $output_file;
@@ -934,10 +937,13 @@ function islandora_paged_content_length_of_pdf($uri) {
     return FALSE;
   }
   $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
-  $command = escapeshellarg($pdfinfo) . ' ' . escapeshellarg($file_path);
+  // Need to temporary copy the file because of UTF-8 encoding.
+  $copy = drupal_realpath(file_unmanaged_copy($file_path, 'temporary://pdfinfopdf.pdf'));
+  $command = escapeshellarg($pdfinfo) . ' ' . escapeshellarg($copy);
   $output = array();
   $ret = 0;
   exec(escapeshellcmd($command), $output, $ret);
+  file_unmanaged_delete($copy);
   // UNIX exit code is 0, so this succeeded.
   if (!$ret) {
     foreach ($output as $line) {
@@ -973,6 +979,8 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   $output_file = file_create_filename("page{$offset}.tif", file_directory_temp());
+  // Need to temporary copy the file because of UTF-8 encoding.
+  $copy = drupal_realpath(file_unmanaged_copy($file_path, 'temporary://pdforgs.pdf'));
   $base_command = '!gs_path -q -dNOPAUSE -sDEVICE=!device -sOutputFile=!output_file -sCompression=lzw -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   $command = format_string($base_command, array(
     '!gs_path' => escapeshellarg($gs),
@@ -980,11 +988,12 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
     '!offset' => $offset,
     '!output_file' => $output_file,
     '!resolution' => $resolution,
-    '!pdf_uri' => escapeshellarg($file_path),
+    '!pdf_uri' => escapeshellarg($copy),
   ));
   $output = array();
   $ret = 0;
   exec(escapeshellcmd($command), $output, $ret);
+  file_unmanaged_delete($copy);
   if (!$ret) {
     return $output_file;
   }
