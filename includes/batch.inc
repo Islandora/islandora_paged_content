@@ -503,6 +503,14 @@ function islandora_paged_content_create_page_from_pdf_batch_operation(array $pag
     else {
       $object->label = "$file->filename-$page";
     }
+    $pdf = islandora_paged_content_chop_pdf($file->uri, $page);
+    if ($pdf) {
+      $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $pdf, 'PDF', 'PDF', 'application/pdf', 'M');
+      $context['results']['files'][] = $pdf;
+    }
+    else {
+      $context['messages'][] = t('Unable to chop the PDF for page @page', array('@page' => $page));
+    }
     $tif = islandora_paged_content_extract_tiff_from_pdf($file->uri, $page, $options['image_format'], $options['resolution']);
     if ($tif) {
       $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $tif, 'OBJ', 'OBJ Datastream', 'image/tiff', 'M', FALSE);

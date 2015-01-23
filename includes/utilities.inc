@@ -1007,6 +1007,47 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
 }
 
 /**
+ * Helper function to split a PDF into an individual page.
+ *
+ * @param string $uri
+ *   The URI or path to the file that is being examined.
+ * @param string $offset
+ *   The page number to extract it will be used as the first and last page
+ *   value.
+ *
+ * @return bool|string
+ *   FALSE if it fails, the URI of the PDF otherwise.
+ */
+function islandora_paged_content_chop_pdf($uri, $offset) {
+  $file_path = drupal_realpath($uri);
+  // PDF doesn't exist or gs isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_can_combine_pdf()) {
+    return FALSE;
+  }
+  $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
+  $output_file = file_create_filename("page{$offset}.pdf", file_directory_temp());
+  // Need to link the file because of UTF-8 encoding.
+  $path = file_create_filename('pdfforgssplit.pdf', 'temporary://');
+  $copy = drupal_realpath($path);
+  link($file_path, $copy);
+  $base_command = '!gs_path -q -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -sOutputFile=!output_file -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+  $command = format_string($base_command, array(
+    '!gs_path' => escapeshellarg($gs),
+    '!offset' => $offset,
+    '!output_file' => $output_file,
+    '!pdf_uri' => escapeshellarg($copy),
+  ));
+  $output = array();
+  $ret = 0;
+  exec(escapeshellcmd($command), $output, $ret);
+  file_unmanaged_delete($copy);
+  if (!$ret) {
+    return $output_file;
+  }
+  return FALSE;
+}
+
+/**
  * Helper to determine whether all requirements are met to extract from PDF.
  *
  * @return bool
