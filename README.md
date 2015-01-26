@@ -23,7 +23,7 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 Set the path for `gs` (GhostScript), the externally accessible Djatoka URL, and the 'Solr page sequence number field' in Administration » Islandora » Paged Content Module (admin/islandora/paged_content).
 
-![Configuration](http://i.imgur.com/Xjoji6R.png)
+![Configuration](https://camo.githubusercontent.com/4c77e6b169000c28ab76eb6e1917701a7ac158cd/687474703a2f2f692e696d6775722e636f6d2f586a6f6a6936522e706e67)
 
 There is an option to set the page label to the page's sequence number. On ingest, each page's label will be set to its sequence number. When reordering pages, all of the page labels will be updated with the new sequence numbers.
 
