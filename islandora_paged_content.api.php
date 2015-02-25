@@ -14,17 +14,17 @@
  * @return array
  *   An array mapping the parent paged content model to an array of keyed
  *   content model arrays containing:
- *   -parent (Optional): A string specifying the content model of the parent.
- *   Not needed if it's belonging to a collection.
- *   -predicate: A string specifying the predicate of the relationship to
- *   the parent.
- *   -children: An array containing arrays of keyed content model children.
+ *   - parents: An associative array mapping applicable content models to
+ *     predicates by which the current entry might be related.
+ *     Not strictly needed if it belongs to a collection.
+ *   - children: An array containing arrays of keyed content model children.
  */
 function hook_islandora_paged_content_content_model_registry() {
   return array(
     'somecmodel' => array(
-      'parent' => 'islandora:bookCModel',
-      'predicate' => 'isMemberOfCollection',
+      'parents' => array(
+        'islandora:bookCModel' => 'isMemberOfCollection',
+      ),
       'children' => array(
         'somecmodel' => array(),
       ),
