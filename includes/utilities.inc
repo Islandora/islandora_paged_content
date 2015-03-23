@@ -764,7 +764,7 @@ function islandora_paged_content_page_derivatives($context) {
   $derive = islandora_paged_content_get_enabled_ingest_derivatives($context);
   $derivatives = array();
 
-  if ($derive['pdf']) {
+  if (isset($derive['pdf']) && $derive['pdf']) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'PDF',
@@ -773,7 +773,7 @@ function islandora_paged_content_page_derivatives($context) {
     );
   }
 
-  if ($derive['ocr']) {
+  if (isset($derive['ocr']) && $derive['ocr']) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'OCR',
@@ -789,7 +789,7 @@ function islandora_paged_content_page_derivatives($context) {
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
   }
-  if ($derive['image']) {
+  if (isset($derive['image']) && $derive['image']) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'JP2',
