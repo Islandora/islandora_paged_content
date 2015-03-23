@@ -136,7 +136,7 @@ function islandora_paged_content_create_pdf_batch(AbstractObject $paged_content,
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Creating PDF from @label ...', array('@label' => $paged_content->label)),
     'init_message' => t('Preparing to create PDF from @label ...', array('@label' => $paged_content->label)),
-    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
   );
@@ -220,7 +220,7 @@ function islandora_paged_content_create_ocr_batch(AbstractObject $paged_content,
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Performing OCR on @label ...', array('@label' => $paged_content->label)),
     'init_message' => t('Preparing to perform OCR on @label ...', array('@label' => $paged_content->label)),
-    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
   );
@@ -269,7 +269,7 @@ function islandora_paged_content_create_images_batch(AbstractObject $paged_conte
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Creating Images for @label ...', array('@label' => $paged_content->label)),
     'init_message' => t('Preparing to create images for @label ...', array('@label' => $paged_content->label)),
-    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
   );
@@ -279,7 +279,7 @@ function islandora_paged_content_create_images_batch(AbstractObject $paged_conte
  * Batch operation for creating the TN, JPG, JP2 datastreams.
  *
  * @param AbstractObject $paged_content_id
- *   The book the pages belong to.
+ *   The paged content the pages belong to.
  * @param array $pages
  *   All the pages to create images for.
  * @param array $context
@@ -324,7 +324,7 @@ function islandora_paged_content_sequence_pages_batch(AbstractObject $paged_cont
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t("Sequencing @label's pages ...", array('@label' => $paged_content->label)),
     'init_message' => t("Preparing to sequence @label's pages ...", array('@label' => $paged_content->label)),
-    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
   );
@@ -346,6 +346,11 @@ function islandora_paged_content_sequence_pages_batch_operation($paged_content_i
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
     $page = islandora_object_load($page);
+    // Change the label of the page to the sequence number if variable is set.
+    if (variable_get('islandora_paged_content_page_label', FALSE)) {
+      $page->label = $context['sandbox']['progress'] + 1;
+    }
+
     // Pages are offset from 1 rather than 0.
     islandora_paged_content_set_relationship($page->relationships, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', $context['sandbox']['progress'] + 1, TRUE);
     // Assume it worked.
@@ -380,7 +385,7 @@ function islandora_paged_content_delete_pages_batch(AbstractObject $paged_conten
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Deleting page(s) from @label ...', array('@label' => $paged_content->label)),
     'init_message' => t('Preparing to delete page(s) from @label ...', array('@label' => $paged_content->label)),
-    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaning @estimate.'),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining @estimate.'),
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
   );
@@ -419,4 +424,116 @@ function islandora_paged_content_delete_pages_batch_operation($paged_content_id,
 function islandora_paged_content_delete_parent_object_operation($pid) {
   $object = islandora_object_load($pid);
   islandora_delete_object($object);
+}
+
+/**
+ * Gets the batch definition for creating paged content from a PDF.
+ *
+ * This also updates each page object with the corresponding data.
+ *
+ * @param AbstractObject $paged_content
+ *   The paged_content the pages belong to.
+ * @param array $pages
+ *   All the pages to include in the PDF.
+ * @param array $options
+ *   An array of options to pass into the batch operations containing:
+ *   -image_format: A string specifying the device to be used when generating
+ *   images.
+ *   -resolution: A string specifying the DPI of the to be generated image.
+ *   -language: A string specifying the language of the OCR text.
+ *   -extract_text: An integer specifying whether to extract text from the PDF
+ *   page or to let tesseract work its magic for us.
+ *   -model: A string specifying the content model of the parent.
+ *   -pdf_file: A Drupal file object of the uploaded PDF to be processed.
+ *   -parent: A string specifying the parent pid of the to be ingested pages.
+ *
+ * @return array
+ *   The batch definition.
+ */
+function islandora_paged_content_create_paged_content_from_pdf_batch(AbstractObject $paged_content, array $pages, array $options) {
+  return array(
+    'operations' => array(
+      array('islandora_paged_content_create_page_from_pdf_batch_operation', array(
+        $pages, $options, $paged_content->id)),
+    ),
+    'finished' => 'islandora_paged_content_batch_finished',
+    'title' => t('Creating pages from @label ...', array('@label' => $paged_content->label)),
+    'init_message' => t('Preparing to extract pages from @label ...', array('@label' => $paged_content->label)),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining: @estimate.'),
+    'error_message' => t('An error has occurred.'),
+    'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
+  );
+}
+
+/**
+ * Batch operation for converting a PDF into a single page.
+ *
+ * @param array $pages
+ *   All the pages to create.
+ * @param array $options
+ *   An array of options to pass into ghostscript and pdftotext containing:
+ *   -image_format: A string specifying the device to be used when generating
+ *   images.
+ *   -resolution: A string specifying the DPI of the to be generated image.
+ *   -language: A string specifying the language of the OCR text.
+ *   -extract_text: An integer specifying whether to extract text from the PDF
+ *   page or to let tesseract or pdftext work their magic for us.
+ *   -model: A string specifying the content model of the parent.
+ *   -pdf_file: A Drupal file object of the uploaded PDF to be processed.
+ *   -parent: A string specifying the parent pid of the to be ingested pages.
+ * @param string $pid
+ *   The PID of the parent object.
+ * @param array $context
+ *   The context of this batch operation.
+ */
+function islandora_paged_content_create_page_from_pdf_batch_operation(array $pages, array $options, $pid, &$context) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  module_load_include('inc', 'islandora', 'includes/utilities');
+  $page = islandora_paged_content_start_batch_operation($pages, $context);
+  if ($page) {
+    $options['page_number'] = $page;
+    $file = $options['pdf_file'];
+    $tuque = islandora_get_tuque_connection();
+    // Go construct a new object for our page.
+    $object = $tuque->repository->constructObject(islandora_get_namespace($pid));
+    islandora_paged_content_add_relationships_to_child($object, $options);
+    if (variable_get('islandora_paged_content_page_label', FALSE)) {
+      $object->label = $page;
+    }
+    else {
+      $object->label = "$file->filename-$page";
+    }
+    $pdf = islandora_paged_content_chop_pdf($file->uri, $page);
+    if ($pdf) {
+      $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $pdf, 'PDF', 'PDF', 'application/pdf', 'M');
+      $context['results']['files'][] = $pdf;
+    }
+    else {
+      $context['messages'][] = t('Unable to chop the PDF for page @page', array('@page' => $page));
+    }
+    $tif = islandora_paged_content_extract_tiff_from_pdf($file->uri, $page, $options['image_format'], $options['resolution']);
+    if ($tif) {
+      $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $tif, 'OBJ', 'OBJ Datastream', 'image/tiff', 'M', FALSE);
+      $context['results']['files'][] = $tif;
+    }
+    else {
+      $context['messages'][] = t('Unable to extract a TIF for page @page', array('@page' => $page));
+    }
+    if ($options['extract_text'] == 'pdftotext') {
+      $full_text = islandora_paged_content_extract_text_from_pdf($file->uri, $page);
+      if ($full_text) {
+        $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $full_text, 'OCR', 'OCR', 'text/plain', 'M', FALSE);
+        $context['results']['files'][] = $full_text;
+      }
+      else {
+        $context['messages'][] = t('Unable to extract a OCR for page @page', array('@page' => $page));
+      }
+    }
+    $tuque->repository->ingestObject($object);
+    islandora_paged_content_end_batch_operation($context);
+    $context['message'] = t('Converting page @page of @total from a PDF ...', array(
+      '@page' => $context['sandbox']['progress'],
+      '@total' => $context['sandbox']['total']));
+
+  }
 }

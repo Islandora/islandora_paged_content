@@ -28,7 +28,8 @@ FROM <#ri>
 WHERE {
   ?pid <fedora-rels-ext:isMemberOf> <info:fedora/{$object->id}> ;
        <fedora-model:label> ?label ;
-       islandora-rels-ext:isSequenceNumber ?page .
+       islandora-rels-ext:isSequenceNumber ?page ;
+       <fedora-model:state> <fedora-model:Active> .
   OPTIONAL {
     ?pid <fedora-view:disseminates> ?dss .
     ?dss <fedora-view:disseminationType> <info:fedora/*/JP2> ;
@@ -155,7 +156,7 @@ function islandora_paged_content_update_datastream(AbstractObject $object, $file
  * Assumes only one relationship matches the given parameters.
  * Will return the given default if no relationship is found.
  *
- * @param FedoraRelationships $relationships
+ * @param object $relationships
  *   The Fedora relationships to check, either RELS-EXT or RELS-INT.
  * @param string $predicate_uri
  *   The predicate URI.
@@ -168,7 +169,7 @@ function islandora_paged_content_update_datastream(AbstractObject $object, $file
  *   The first matching relationships value if found, otherwise the given
  *   default it returned.
  */
-function islandora_paged_content_get_relationship(FedoraRelationships $relationships, $predicate_uri, $predicate, $default = NULL) {
+function islandora_paged_content_get_relationship($relationships, $predicate_uri, $predicate, $default = NULL) {
   $results = $relationships->get($predicate_uri, $predicate);
   return count($results) > 0 ? $results[0]['object']['value'] : $default;
 }
@@ -176,7 +177,7 @@ function islandora_paged_content_get_relationship(FedoraRelationships $relations
 /**
  * Sets a relationship removing any previous relationships.
  *
- * @param FedoraRelationships $relationships
+ * @param object $relationships
  *   The Fedora relationships to be modified, either RELS-EXT or RELS-INT.
  * @param string $predicate_uri
  *   The predicate URI.
@@ -187,7 +188,7 @@ function islandora_paged_content_get_relationship(FedoraRelationships $relations
  * @param bool $literal
  *   TRUE if the object is a literal, FALSE if it is an object.
  */
-function islandora_paged_content_set_relationship(FedoraRelationships $relationships, $predicate_uri, $predicate, $object, $literal = FALSE) {
+function islandora_paged_content_set_relationship($relationships, $predicate_uri, $predicate, $object, $literal = FALSE) {
   $relationships->remove($predicate_uri, $predicate, NULL, $literal);
   $relationships->add($predicate_uri, $predicate, $object, $literal);
 }
@@ -294,6 +295,8 @@ function islandora_paged_content_can_derive(AbstractObject $object, $dsid) {
     'islandora:pageCModel',
     'islandora:bookPageCModel',
     'islandora:newspaperPageCModel',
+    'islandora:manuscriptCModel',
+    'islandora:manuscriptPageCModel',
   );
   if (array_intersect($to_derive, $object->models)) {
     $check_function = array(
@@ -302,7 +305,7 @@ function islandora_paged_content_can_derive(AbstractObject $object, $dsid) {
       'HOCR' => 'islandora_ocr_can_derive_ocr',
       'TN' => 'islandora_paged_content_can_create_images',
       'JP2' => 'islandora_paged_content_can_create_images',
-      'JPEG' => 'islandora_paged_content_can_create_images',
+      'JPG' => 'islandora_paged_content_can_create_images',
     );
 
     if (isset($check_function[$dsid])) {
@@ -346,7 +349,7 @@ function islandora_paged_content_can_create_pdf() {
  *   TRUE if it is possible, FALSE otherwise.
  */
 function islandora_paged_content_can_combine_pdf() {
-  $gs = variable_get('islandora_book_gs', '/usr/bin/gs');
+  $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   return is_executable($gs);
 }
 
@@ -382,7 +385,7 @@ function islandora_paged_content_pdf_append($file, array $files) {
  *   TRUE on success, FALSE otherwise.
  */
 function islandora_paged_content_pdf_combine(array $files, $out) {
-  $gs = variable_get('islandora_book_gs', '/usr/bin/gs');
+  $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   $files = implode(' ', $files);
   $command = "{$gs} -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile={$out} {$files}";
   $output = array(); $ret = 0;
@@ -435,8 +438,7 @@ function islandora_paged_content_page_derive_pdf(AbstractObject $object, array $
   if (!islandora_paged_content_can_derive($object, 'PDF')) {
     return FALSE;
   }
-  $source_file
-    = islandora_paged_content_get_page_derivative_source($object, 'PDF');
+  $source_file = islandora_paged_content_get_page_derivative_source($object, 'PDF');
   $pdf_file = islandora_paged_content_convert_to_pdf($source_file, $options);
   file_unmanaged_delete($source_file);
   return $pdf_file;
@@ -501,7 +503,9 @@ function islandora_paged_content_page_derive_image_datastreams(AbstractObject $o
  * This makes the dimensions accessible when we query for the pages.
  *
  * @param AbstractObject $object
- *   Page Object
+ *   An AbstractObject representing an object within Fedora.
+ * @param bool $force
+ *   Whether we are forcing the creation of dimensions or not.
  */
 function islandora_paged_content_add_dimensions_relationships(AbstractObject $object, $force = FALSE) {
   $rels = $object['JP2']->relationships;
@@ -547,6 +551,7 @@ function islandora_paged_content_can_update_paged_content_thumbnail(AbstractObje
  *   TRUE on success, FALSE otherwise.
  */
 function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $object) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
   if (!islandora_paged_content_can_update_paged_content_thumbnail($object)) {
     return FALSE;
   }
@@ -555,7 +560,11 @@ function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $
   $page = islandora_object_load($page['pid']);
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($page['TN']->mimeType);
-  $file = drupal_realpath("temporary://{$page->id}_TN.{$ext}");
+  // Windows will likely store temp data in a temp directory
+  // rather than in memory. Since the colon is forbidden in
+  // filenames, replace it with an underscore instead.
+  $thumbnail_id = ((islandora_deployed_on_windows()) ? str_replace(':', '_', $page->id) : $page->id);
+  $file = drupal_realpath("temporary://{$thumbnail_id}_TN.{$ext}");
   $page['TN']->getContent($file);
   $ret = islandora_paged_content_update_datastream($object,
     $file,
@@ -643,13 +652,15 @@ function islandora_paged_content_get_technical_metadata(AbstractObject $object) 
     return FALSE;
   }
   $metadata = FALSE;
-  $file = file_create_filename("{object->id}_{$dsid}.xml", 'temporary://');
+  $file = file_create_filename("{$object->id}_{$dsid}.xml", 'temporary://');
   $file = drupal_realpath($file);
   if (strpos($object[$dsid]->mimetype, 'xml') !== FALSE && $object[$dsid]->getContent($file)) {
     $doc = simplexml_load_file($file);
     $doc->registerXPathNamespace('ns', 'http://hul.harvard.edu/ois/xml/ns/fits/fits_output');
-    $width = (int) array_pop($doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageWidth'));
-    $height = (int) array_pop($doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageHeight'));
+    $width_xpath = $doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageWidth');
+    $width = (int) array_pop($width_xpath);
+    $height_xpath = $doc->xpath('/ns:fits/ns:metadata/ns:image/ns:imageHeight');
+    $height = (int) array_pop($height_xpath);
     $metadata = array('width' => $width, 'height' => $height);
   }
   file_unmanaged_delete($file);
@@ -700,17 +711,53 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
 }
 
 /**
+ * Returns paged object derivatives.
+ *
+ * @param string $context
+ *   Indicator of which solution pack calling this function
+ *
+ * @return array
+ *   Structured array of paged object derivatives
+ */
+function islandora_paged_content_paged_object_derivatives($context) {
+  $derive = islandora_paged_content_get_enabled_ingest_derivatives($context);
+  $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
+  $derivatives = array();
+
+  if ($derive['image']) {
+    $derivatives[] = array(
+      'source_dsid' => NULL,
+      'destination_dsid' => 'TN',
+      'function' => array('islandora_paged_content_derive_thumbnail_of_parent'),
+      'file' => "$paged_content_module_path/includes/derivatives.inc",
+    );
+  }
+  if ($derive['pdf']) {
+    $derivatives = array_merge(
+      $derivatives,
+      array(
+        array(
+          'source_dsid' => NULL,
+          'destination_dsid' => 'PDF',
+          'function' => array('islandora_paged_content_aggregate_pdf_derivative'),
+          'file' => "$paged_content_module_path/includes/derivatives.inc",
+        ),
+      )
+    );
+  }
+  return $derivatives;
+}
+
+/**
  * Returns page derivatives.
  *
- * @param AbstractObject $object
- *   Object requiring derivatives
- * @param String  $context
+ * @param string $context
  *   Indicator of which solution pack calling this function
  *
  * @return array
  *   Structured array of page derivatives
  */
-function islandora_paged_content_page_derivatives(AbstractObject $object, $context) {
+function islandora_paged_content_page_derivatives($context) {
   $large_image_module_path = drupal_get_path('module', 'islandora_large_image');
   $paged_content_module_path = drupal_get_path('module', 'islandora_paged_content');
   $ocr_module_path = drupal_get_path('module', 'islandora_ocr');
@@ -730,12 +777,14 @@ function islandora_paged_content_page_derivatives(AbstractObject $object, $conte
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'OCR',
+      'weight' => 0,
       'function' => array('islandora_ocr_derive_ocr'),
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'HOCR',
+      'weight' => 0,
       'function' => array('islandora_ocr_derive_hocr'),
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
@@ -802,4 +851,275 @@ function islandora_paged_content_parse_pages_to_move($pages_to_move) {
   }
 
   return $page_numbers_to_move;
+}
+
+/**
+ * Helper function to determine whether or not pdftotext is available.
+ *
+ * @return bool
+ *   TRUE if it's available, FALSE if not.
+ */
+function islandora_paged_content_pdftotext_availability() {
+  $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
+  return is_executable($pdftotext);
+}
+
+
+/**
+ * Helper function to determine whether or not pdfinfo is available.
+ *
+ * @return bool
+ *   TRUE if it's available, FALSE if not.
+ */
+function islandora_paged_content_pdfinfo_availability() {
+  $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
+  return is_executable($pdfinfo);
+}
+
+/**
+ * Helper function to extract the text for a single page beginning at an offset.
+ *
+ * @param string $uri
+ *   The URI or path to the file that is being examined.
+ * @param string $offset
+ *   The page number to extract it will be used as the first and last page
+ *   value. Note that pdftotext won't complain about using an offset greater
+ *   than the number of allotted pages of a PDF.
+ *
+ * @param bool $layout
+ *   Whether we are retaining layout of the PDF or not.
+ *
+ * @return bool|string
+ *   FALSE if it fails, the URI of the text file otherwise.
+ */
+function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = TRUE) {
+  $file_path = drupal_realpath($uri);
+  // PDF doesn't exist or pdftotext isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_pdftotext_availability()) {
+    return FALSE;
+  }
+  $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
+  $base_command = '!pdftotext_path !layout -f !offset -l !offset !pdf_uri !output_file';
+  $output_file = file_create_filename('full.txt', file_directory_temp());
+  // Need to link the file because of UTF-8 encoding.
+  $path = file_create_filename('pdftotextpdf.pdf', 'temporary://');
+  $copy = drupal_realpath($path);
+  link($file_path, $copy);
+  $command = format_string($base_command, array(
+    '!pdftotext_path' => $pdftotext,
+    '!layout' => $layout ? '-layout' : '',
+    '!offset' => $offset,
+    '!pdf_uri' => escapeshellarg($copy),
+    '!output_file' => $output_file,
+  ));
+  $output = array();
+  $ret = 0;
+  exec(escapeshellcmd($command), $output, $ret);
+  file_unmanaged_delete($copy);
+  // UNIX exit code is 0, so this succeeded.
+  if (!$ret) {
+    return $output_file;
+  }
+  return FALSE;
+}
+
+/**
+ * Helper function to parse the number of pages in a supplied PDF.
+ *
+ * @param string $uri
+ *   The URI or path to the file that is being examined.
+ *
+ * @return bool|int
+ *   FALSE if it fails, the number of pages in the PDF.
+ */
+function islandora_paged_content_length_of_pdf($uri) {
+  $file_path = drupal_realpath($uri);
+  // PDF doesn't exist or pdfinfo isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_pdfinfo_availability()) {
+    return FALSE;
+  }
+  $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
+  // Need to link the file because of UTF-8 encoding.
+  $path = file_create_filename('pdfinfopdf.pdf', 'temporary://');
+  $copy = drupal_realpath($path);
+  link($file_path, $copy);
+  $command = escapeshellarg($pdfinfo) . ' ' . escapeshellarg($copy);
+  $output = array();
+  $ret = 0;
+  exec(escapeshellcmd($command), $output, $ret);
+  file_unmanaged_delete($copy);
+  // UNIX exit code is 0, so this succeeded.
+  if (!$ret) {
+    foreach ($output as $line) {
+      if (strpos($line, 'Pages:') === 0) {
+        return intval(str_replace('Pages:', '', $line));
+      }
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Helper function to extract a page of a PDF into a TIFF.
+ *
+ * @param string $uri
+ *   The URI or path to the file that is being examined.
+ * @param string $offset
+ *   The page number to extract it will be used as the first and last page
+ *   value.
+ * @param string $device
+ *   Selects an alternate initial output device, as described above.
+ * @param string $resolution
+ *   The DPI of the resolution to be used.
+ *
+ * @return bool|string
+ *   FALSE if it fails, the URI of the TIFF otherwise.
+ */
+function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $resolution) {
+  $file_path = drupal_realpath($uri);
+  // PDF doesn't exist or gs isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_can_combine_pdf()) {
+    return FALSE;
+  }
+  $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
+  $output_file = file_create_filename("page{$offset}.tif", file_directory_temp());
+  // Need to link the file because of UTF-8 encoding.
+  $path = file_create_filename('pdfforgs.pdf', 'temporary://');
+  $copy = drupal_realpath($path);
+  link($file_path, $copy);
+  $base_command = '!gs_path -q -dNOPAUSE -sDEVICE=!device -sOutputFile=!output_file -sCompression=lzw -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+  $command = format_string($base_command, array(
+    '!gs_path' => escapeshellarg($gs),
+    '!device' => $device,
+    '!offset' => $offset,
+    '!output_file' => $output_file,
+    '!resolution' => $resolution,
+    '!pdf_uri' => escapeshellarg($copy),
+  ));
+  $output = array();
+  $ret = 0;
+  exec(escapeshellcmd($command), $output, $ret);
+  file_unmanaged_delete($copy);
+  if (!$ret) {
+    return $output_file;
+  }
+  return FALSE;
+}
+
+/**
+ * Helper function to split a PDF into an individual page.
+ *
+ * @param string $uri
+ *   The URI or path to the file that is being examined.
+ * @param string $offset
+ *   The page number to extract it will be used as the first and last page
+ *   value.
+ *
+ * @return bool|string
+ *   FALSE if it fails, the URI of the PDF otherwise.
+ */
+function islandora_paged_content_chop_pdf($uri, $offset) {
+  $file_path = drupal_realpath($uri);
+  // PDF doesn't exist or gs isn't available, abort.
+  if (!file_exists($file_path) || !islandora_paged_content_can_combine_pdf()) {
+    return FALSE;
+  }
+  $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
+  $output_file = file_create_filename("page{$offset}.pdf", file_directory_temp());
+  // Need to link the file because of UTF-8 encoding.
+  $path = file_create_filename('pdfforgssplit.pdf', 'temporary://');
+  $copy = drupal_realpath($path);
+  link($file_path, $copy);
+  $base_command = '!gs_path -q -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -sOutputFile=!output_file -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+  $command = format_string($base_command, array(
+    '!gs_path' => escapeshellarg($gs),
+    '!offset' => $offset,
+    '!output_file' => $output_file,
+    '!pdf_uri' => escapeshellarg($copy),
+  ));
+  $output = array();
+  $ret = 0;
+  exec(escapeshellcmd($command), $output, $ret);
+  file_unmanaged_delete($copy);
+  if (!$ret) {
+    return $output_file;
+  }
+  return FALSE;
+}
+
+/**
+ * Helper to determine whether all requirements are met to extract from PDF.
+ *
+ * @return bool
+ *   TRUE if all requirements are present, FALSE otherwise.
+ */
+function islandora_paged_content_can_extract_from_pdf() {
+  return islandora_paged_content_can_combine_pdf() && islandora_paged_content_pdftotext_availability() && islandora_paged_content_pdfinfo_availability();
+}
+
+/**
+ * Helper function to add the PDF datastream to an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ * @param object $file_obj
+ *   The PDF file object that is being added.
+ * @param bool $batch
+ *   Whether we are adding this PDF in the batch context or not.
+ */
+function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file_obj, $batch = FALSE) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/db');
+  if (!isset($object['PDF'])) {
+    $pdf = $object->constructDatastream('PDF', 'M');
+  }
+  else {
+    $pdf = $object['PDF'];
+  }
+  $pdf->setContentFromFile(drupal_realpath($file_obj->uri), FALSE);
+  if ($pdf->label != $file_obj->filename) {
+    $pdf->label = $file_obj->filename;
+  }
+  if ($pdf->mimetype != $file_obj->filemime) {
+    $pdf->mimetype = $file_obj->filemime;
+  }
+  $object->ingestDatastream($pdf);
+  if (!$batch) {
+    islandora_paged_content_track_pdf_ingestion($object->id, $file_obj->fid);
+  }
+}
+
+/**
+ * Helper function to add all relationships to a paged content child.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ * @param array $params
+ *   An array of parameters to be added as relationships containing:
+ *   -model: A string representing the content model of the child.
+ *   -parent: A string representing the PID of the parent.
+ *   -page_number: A string representing the page number of the child.
+ *   -language: A string representing the language of the text.
+ */
+function islandora_paged_content_add_relationships_to_child(AbstractObject $object, $params) {
+  $rels_ext = $object->relationships;
+  $object->models = $params['model'];
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $params['parent']);
+  islandora_paged_content_set_relationship($rels_ext, FEDORA_RELS_EXT_URI, 'isMemberOf', $params['parent']);
+
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', $params['page_number'], TRUE);
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', $params['page_number'], TRUE);
+  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSection', '1', TRUE);
+  if ($params['extract_text'] == 'do_not_perform') {
+    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'FALSE', RELS_TYPE_PLAIN_LITERAL);
+  }
+  else {
+    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
+  }
+}
+
+/**
+ * Retrieves all applicable content models for paged content.
+ */
+function islandora_paged_content_retrieve_applicable_cmodels() {
+  return module_invoke_all('islandora_paged_content_content_model_registry');
 }
