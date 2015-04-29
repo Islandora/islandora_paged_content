@@ -103,7 +103,6 @@ function islandora_paged_content_get_page_progression(AbstractObject $object) {
   return 'lr';
 }
 
-
 /**
  * Sets page progression for an object.
  *
