@@ -58,6 +58,14 @@ function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       ),
+      'page_progression' => array(
+        '#access' => user_access(ISLANDORA_METADATA_EDIT),
+        '#title' => t('Page Progression'),
+        '#type' => 'fieldset',
+        'form' => drupal_get_form('islandora_paged_content_manage_page_progression_form', $object),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      ),
       'sequence' => array(
         '#access' => user_access(ISLANDORA_METADATA_EDIT),
         '#title' => t('Reorder Pages'),
@@ -812,4 +820,56 @@ function islandora_paged_content_insert_sequence_gap($page_to_reindex, $offset) 
  */
 function islandora_paged_content_zipped_upload_ingest_finished($success, $results, $operations) {
   file_unmanaged_delete_recursive($results['pages_directory']);
+}
+
+/**
+ * Creates a PDF of all the child pages.
+ *
+ * Generates a PDF file for each page and then combines them into a single PDF.
+ *
+ * @param array $form
+ *   The Drupal form.
+ * @param array $form_state
+ *   The Drupal form state.
+ * @param AbstractObject $object
+ *   The object to fetch the pages from.
+ *
+ * @return array
+ *   The Drupal form.
+ */
+function islandora_paged_content_manage_page_progression_form(array $form, array &$form_state, AbstractObject $object) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $page_progression = islandora_paged_content_get_page_progression($object);
+  $form_state['pid'] = $object->id;
+  return array(
+    'page_progression' => array(
+      '#type' => 'radios',
+      '#title' => t('Page Progression'),
+      '#options' => array(
+        'lr' => t('Left-to-Right'),
+        'rl' => t('Right-to-Left'),
+      ),
+      '#default_value' => $page_progression,
+    ),
+    'submit' => array(
+      '#type' => 'submit',
+      '#value' => t('Set page progression'),
+    ),
+  );
+}
+
+/**
+ * Submit handler to set page progression for a book.
+ *
+ * @param array $form
+ *   An array representing a form within Drupal.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
+function islandora_paged_content_manage_page_progression_form_submit($form, &$form_state) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $object = islandora_object_load($form_state['pid']);
+  $object->relationships->remove(FEDORA_RELS_EXT_URI, 'hasPageProgression');
+  islandora_paged_content_set_page_progression($object, $form_state['values']['page_progression']);
+  drupal_set_message(t('Page progression updated.'));
 }

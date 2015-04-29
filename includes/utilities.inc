@@ -100,7 +100,20 @@ function islandora_paged_content_get_page_progression(AbstractObject $object) {
   if (count($results) > 0) {
     return $results[0]['page_progression']['value'];
   }
-  return 'rl';
+  return 'lr';
+}
+
+/**
+ * Sets page progression for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @param string $progression
+ *   The page progression for the object.
+ */
+function islandora_paged_content_set_page_progression(AbstractObject $object, $progression) {
+  $object->relationships->add(FEDORA_RELS_EXT_URI, 'hasPageProgression', $progression);
 }
 
 /**
