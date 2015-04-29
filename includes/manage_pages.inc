@@ -857,7 +857,7 @@ function islandora_paged_content_manage_page_progression_form(array $form, array
 }
 
 /**
- * Submit handler to set page progression for a book.
+ * Submit handler to set page progression for paged content.
  *
  * @param array $form
  *   An array representing a form within Drupal.
