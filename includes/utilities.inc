@@ -92,15 +92,38 @@ EOQ;
  *   'lr' or right to left 'rl'.
  */
 function islandora_paged_content_get_page_progression(AbstractObject $object) {
-  $query = 'select $page_progression from <#ri> where <info:fedora/';
-  $query .= $object->id;
-  $query .= '><fedora-rels-ext:hasPageProgression> $page_progression';
-
-  $results = $object->repository->ri->query($query);
-  if (count($results) > 0) {
-    return $results[0]['page_progression']['value'];
+  $relationships = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasPageProgression');
+  if (!empty($relationships)) {
+    $progression = reset($relationships);
+    return $progression['object']['value'];
   }
-  return 'rl';
+  else {
+    return 'lr';
+  }
+}
+
+/**
+ * Sets page progression for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @param string $progression
+ *   The page progression for the object.
+ */
+function islandora_paged_content_set_page_progression(AbstractObject $object, $progression) {
+  islandora_paged_content_unset_page_progression($object);
+  $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'hasPageProgression', $progression, RELS_TYPE_PLAIN_LITERAL);
+}
+
+/**
+ * Unsets page progression for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ */
+function islandora_paged_content_unset_page_progression(AbstractObject $object) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'hasPageProgression');
 }
 
 /**
