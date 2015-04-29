@@ -823,9 +823,7 @@ function islandora_paged_content_zipped_upload_ingest_finished($success, $result
 }
 
 /**
- * Creates a PDF of all the child pages.
- *
- * Generates a PDF file for each page and then combines them into a single PDF.
+ * Sets the page progression for a paged content.
  *
  * @param array $form
  *   The Drupal form.
