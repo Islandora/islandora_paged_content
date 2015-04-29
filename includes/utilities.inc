@@ -103,6 +103,7 @@ function islandora_paged_content_get_page_progression(AbstractObject $object) {
   return 'lr';
 }
 
+
 /**
  * Sets page progression for an object.
  *
@@ -113,7 +114,18 @@ function islandora_paged_content_get_page_progression(AbstractObject $object) {
  *   The page progression for the object.
  */
 function islandora_paged_content_set_page_progression(AbstractObject $object, $progression) {
+  islandora_paged_content_unset_page_progression($object);
   $object->relationships->add(FEDORA_RELS_EXT_URI, 'hasPageProgression', $progression);
+}
+
+/**
+ * Unsets page progression for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ */
+function islandora_paged_content_unset_page_progression(AbstractObject $object) {
+  $object->relationships->remove(FEDORA_RELS_EXT_URI, 'hasPageProgression');
 }
 
 /**

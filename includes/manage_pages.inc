@@ -867,7 +867,6 @@ function islandora_paged_content_manage_page_progression_form(array $form, array
 function islandora_paged_content_manage_page_progression_form_submit($form, &$form_state) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $object = islandora_object_load($form_state['pid']);
-  $object->relationships->remove(FEDORA_RELS_EXT_URI, 'hasPageProgression');
   islandora_paged_content_set_page_progression($object, $form_state['values']['page_progression']);
   drupal_set_message(t('Page progression updated.'));
 }
