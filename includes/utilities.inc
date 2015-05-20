@@ -92,15 +92,38 @@ EOQ;
  *   'lr' or right to left 'rl'.
  */
 function islandora_paged_content_get_page_progression(AbstractObject $object) {
-  $query = 'select $page_progression from <#ri> where <info:fedora/';
-  $query .= $object->id;
-  $query .= '><fedora-rels-ext:hasPageProgression> $page_progression';
-
-  $results = $object->repository->ri->query($query);
-  if (count($results) > 0) {
-    return $results[0]['page_progression']['value'];
+  $relationships = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasPageProgression');
+  if (!empty($relationships)) {
+    $progression = reset($relationships);
+    return $progression['object']['value'];
   }
-  return 'rl';
+  else {
+    return 'lr';
+  }
+}
+
+/**
+ * Sets page progression for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @param string $progression
+ *   The page progression for the object.
+ */
+function islandora_paged_content_set_page_progression(AbstractObject $object, $progression) {
+  islandora_paged_content_unset_page_progression($object);
+  $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'hasPageProgression', $progression, RELS_TYPE_PLAIN_LITERAL);
+}
+
+/**
+ * Unsets page progression for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ */
+function islandora_paged_content_unset_page_progression(AbstractObject $object) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'hasPageProgression');
 }
 
 /**
@@ -764,7 +787,7 @@ function islandora_paged_content_page_derivatives($context) {
   $derive = islandora_paged_content_get_enabled_ingest_derivatives($context);
   $derivatives = array();
 
-  if ($derive['pdf']) {
+  if (isset($derive['pdf']) && $derive['pdf']) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'PDF',
@@ -773,7 +796,7 @@ function islandora_paged_content_page_derivatives($context) {
     );
   }
 
-  if ($derive['ocr']) {
+  if (isset($derive['ocr']) && $derive['ocr']) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'OCR',
@@ -789,7 +812,7 @@ function islandora_paged_content_page_derivatives($context) {
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
   }
-  if ($derive['image']) {
+  if (isset($derive['image']) && $derive['image']) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => 'JP2',
