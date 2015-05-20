@@ -640,9 +640,11 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
   $tuque = new IslandoraTuque();
   $repository = $tuque->repository;
   $pid = $form_state['values']['pid'];
+  $form_state['redirect'] = "islandora/object/$pid";
   $namespace = substr($pid, 0, strpos($pid, ":"));
   $tmp_dir = uniqid();
   $object = islandora_object_load($pid);
+  $book_label = $object->label;
   if (!$object) {
     drupal_set_message(t("This object does not exist in this repository"), 'warning');
     return;
@@ -724,13 +726,14 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
       'namespace' => $namespace,
       'language' => $form_state['values']['language'],
       'model' => $form_state['values']['model'],
+      'file_count' => $file_count,
+      'book_label' => $book_label,
     );
-    $offset = count($files_to_add);
     if (isset($pages_to_renumber[0])) {
       foreach ($pages_to_renumber as $page) {
         $batch['operations'][] = array(
           'islandora_paged_content_content_insert_sequence_gap',
-          array($page, $offset),
+          array($page, $file_count),
         );
       }
     }
@@ -746,7 +749,7 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
     batch_set($batch);
   }
   else {
-    drupal_set_message(t('No files were found to add, in the provided ZIP file.'), 'warning');
+    drupal_set_message(t('No files were found to add in the provided ZIP file.'), 'warning');
   }
 }
 
@@ -764,6 +767,8 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
 function islandora_paged_content_add_pages($repository, $config, $pages_directory, &$context) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $context['results']['pages_directory'] = $pages_directory;
+  $context['results']['file_count'] = $config['file_count'];
+  $context['results']['book_label'] = $config['book_label'];
 
   // Create object.
   $object = $repository->constructObject($config['namespace']);
@@ -820,6 +825,17 @@ function islandora_paged_content_insert_sequence_gap($page_to_reindex, $offset) 
  */
 function islandora_paged_content_zipped_upload_ingest_finished($success, $results, $operations) {
   file_unmanaged_delete_recursive($results['pages_directory']);
+  if ($success) {
+    drupal_set_message(t('Successfully added @pages pages to @label.', array(
+      '@pages' => $results['file_count'],
+      '@label' => $results['book_label'],
+    )));
+  }
+  else {
+    drupal_set_message(t('Problems were encountered while trying to add pages to @label. Please contact an administrator or check the logs for details.', array(
+      '@label' => $results['book_label'],
+    )));
+  }
 }
 
 /**
