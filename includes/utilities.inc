@@ -923,7 +923,9 @@ function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = 
   }
   $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
   $base_command = '!pdftotext_path !layout -f !offset -l !offset !pdf_uri !output_file';
-  $output_file = file_create_filename('full.txt', file_directory_temp());
+  $output_file = file_create_filename('full.txt', 'temporary://');
+  $output_file = drupal_realpath($output_file);
+
   // Need to link the file because of UTF-8 encoding.
   $path = file_create_filename('pdftotextpdf.pdf', 'temporary://');
   $copy = drupal_realpath($path);
