@@ -923,7 +923,9 @@ function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = 
   }
   $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
   $base_command = '!pdftotext_path !layout -f !offset -l !offset !pdf_uri !output_file';
-  $output_file = file_create_filename('full.txt', file_directory_temp());
+  $output_file = file_create_filename('full.txt', 'temporary://');
+  $output_file = drupal_realpath($output_file);
+
   // Need to link the file because of UTF-8 encoding.
   $path = file_create_filename('pdftotextpdf.pdf', 'temporary://');
   $copy = drupal_realpath($path);
@@ -1005,7 +1007,8 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
     return FALSE;
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
-  $output_file = file_create_filename("page{$offset}.tif", file_directory_temp());
+  $output_file = file_create_filename("page{$offset}.tif", 'temporary://');
+  $output_file = drupal_realpath($output_file);
   // Need to link the file because of UTF-8 encoding.
   $path = file_create_filename('pdfforgs.pdf', 'temporary://');
   $copy = drupal_realpath($path);
@@ -1048,7 +1051,8 @@ function islandora_paged_content_chop_pdf($uri, $offset) {
     return FALSE;
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
-  $output_file = file_create_filename("page{$offset}.pdf", file_directory_temp());
+  $output_file = file_create_filename("page{$offset}.pdf", 'temporary://');
+  $output_file = drupal_realpath($output_file);
   // Need to link the file because of UTF-8 encoding.
   $path = file_create_filename('pdfforgssplit.pdf', 'temporary://');
   $copy = drupal_realpath($path);
