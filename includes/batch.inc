@@ -519,7 +519,7 @@ function islandora_paged_content_create_page_from_pdf_batch_operation(array $pag
     else {
       $context['messages'][] = t('Unable to extract a TIF for page @page', array('@page' => $page));
     }
-    if ($options['extract_text'] == 'pdftotext') {
+    if ($options['extract_text'] == 'extract') {
       $full_text = islandora_paged_content_extract_text_from_pdf($file->uri, $page);
       if ($full_text) {
         $context['results']['successful'][] = islandora_paged_content_update_datastream($object, $full_text, 'OCR', 'OCR', 'text/plain', 'M', FALSE);
