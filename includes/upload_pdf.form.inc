@@ -69,23 +69,23 @@ function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
     '#collapsible' => FALSE,
   );
   $ocr_options = array(
-    'do_not_perform' => t('Do not extract text.'),
+    'none' => t('Do not extract text.'),
   );
   $states = array();
   $languages = array();
-  $default_value = 'do_not_perform';
+  $default_value = 'none';
   if (module_exists('islandora_ocr')) {
     module_load_include('inc', 'islandora_ocr', 'includes/utilities');
-    $ocr_options['tesseract'] = t('Perform OCR on the PDF.');
-    $states[] = array('value' => 'tesseract');
+    $ocr_options['ocr'] = t('Perform OCR on the PDF.');
+    $states[] = array('value' => 'ocr');
     $languages = islandora_ocr_get_enabled_tesseract_languages();
     // Don't need the no OCR option.
     unset($languages['no_ocr']);
   }
   if (islandora_paged_content_pdftotext_availability()) {
-    $ocr_options['pdftotext'] = t('Extract text from the PDF.');
-    $default_value = 'pdftotext';
-    $states[] = array('value' => 'pdftotext');
+    $ocr_options['extract'] = t('Extract text from the PDF.');
+    $default_value = 'extract';
+    $states[] = array('value' => 'extract');
     // Need to fallback if tesseract isn't available for future OCR.
     $languages = array(
       'eng' => t('English'),
