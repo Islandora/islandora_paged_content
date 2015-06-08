@@ -1011,7 +1011,7 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
   $path = file_create_filename('pdfforgs.pdf', 'temporary://');
   $copy = drupal_realpath($path);
   link($file_path, $copy);
-  $base_command = '!gs_path -q -dNOPAUSE -sDEVICE=!device -sOutputFile=!output_file -c 30000000 setvmthreshold -f -sCompression=lzw -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+  $base_command = '!gs_path -q -dNOPAUSE -sDEVICE=!device -sCompression=lzw -sOutputFile=!output_file -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   $command = format_string($base_command, array(
     '!gs_path' => escapeshellarg($gs),
     '!device' => $device,
