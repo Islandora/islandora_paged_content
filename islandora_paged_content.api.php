@@ -31,3 +31,31 @@ function hook_islandora_paged_content_content_model_registry() {
     ),
   );
 }
+
+/**
+ * Allows one to alter the page management tabs.
+ *
+ * @param array $manage_tabs
+ *   The renderable array of tabs to alter.
+ * @param array $context
+ *   An array containing the current object under the key 'object'.
+ *
+ * @see islandora_paged_content_manage_page_menu()
+ */
+function hook_islandora_paged_content_page_management_tabs_alter(&$manage_tabs, $context) {
+  unset($manage_tabs['manage_page']['pdf']);
+}
+
+/**
+ * Allows one to alter the paged content pages management tabs.
+ *
+ * @param array $manage_tabs
+ *   The renderable array of tabs to alter.
+ * @param array $context
+ *   An array containing the current object under the key 'object'.
+ *
+ * @see islandora_paged_content_manage_pages_menu()
+ */
+function hook_islandora_paged_content_pages_management_tabs_alter(&$manage_tabs, $context) {
+  unset($manage_tabs['manage_pages']['pdf']);
+}
