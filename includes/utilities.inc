@@ -1008,7 +1008,7 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   $pid = getmypid();
-  $output_file = file_create_filename("{$pid}page{$offset}.tif", 'temporary://');
+  $output_file = file_create_filename("{$pid}-page{$offset}.tif", 'temporary://');
   // Need to link the file because of UTF-8 encoding.
   $path = file_create_filename("$pid-pdfforgs.pdf", 'temporary://');
   $copy = drupal_realpath($path);
@@ -1052,7 +1052,7 @@ function islandora_paged_content_chop_pdf($uri, $offset) {
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   $pid = getmypid();
-  $output_file = file_create_filename("{$pid}page{$offset}.pdf", 'temporary://');
+  $output_file = file_create_filename("{$pid}-page{$offset}.pdf", 'temporary://');
   // Need to link the file because of UTF-8 encoding.
   $path = file_create_filename("$pid-pdfforgssplit.pdf", 'temporary://');
   $copy = drupal_realpath($path);
