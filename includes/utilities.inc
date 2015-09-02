@@ -923,12 +923,13 @@ function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = 
   }
   $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
   $base_command = '!pdftotext_path !layout -f !offset -l !offset !pdf_uri !output_file';
-  $output_file = file_create_filename('full.txt', 'temporary://');
+  $pid = getmypid();
+  $output_file = file_create_filename("$pid-full.txt", 'temporary://');
 
   // Need to link the file because of UTF-8 encoding.
-  $path = file_create_filename('pdftotextpdf.pdf', 'temporary://');
+  $path = file_create_filename("$pid-pdftotextpdf.pdf", 'temporary://');
   $copy = drupal_realpath($path);
-  link($file_path, $copy);
+  symlink($file_path, $copy);
   $command = format_string($base_command, array(
     '!pdftotext_path' => $pdftotext,
     '!layout' => $layout ? '-layout' : '',
@@ -964,9 +965,9 @@ function islandora_paged_content_length_of_pdf($uri) {
   }
   $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
   // Need to link the file because of UTF-8 encoding.
-  $path = file_create_filename('pdfinfopdf.pdf', 'temporary://');
+  $path = file_create_filename(getmypid() . '-pdfinfopdf.pdf', 'temporary://');
   $copy = drupal_realpath($path);
-  link($file_path, $copy);
+  symlink($file_path, $copy);
   $command = escapeshellarg($pdfinfo) . ' ' . escapeshellarg($copy);
   $output = array();
   $ret = 0;
@@ -1006,11 +1007,12 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
     return FALSE;
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
-  $output_file = file_create_filename("page{$offset}.tif", 'temporary://');
+  $pid = getmypid();
+  $output_file = file_create_filename("{$pid}page{$offset}.tif", 'temporary://');
   // Need to link the file because of UTF-8 encoding.
-  $path = file_create_filename('pdfforgs.pdf', 'temporary://');
+  $path = file_create_filename("$pid-pdfforgs.pdf", 'temporary://');
   $copy = drupal_realpath($path);
-  link($file_path, $copy);
+  symlink($file_path, $copy);
   $base_command = '!gs_path -q -dNOPAUSE -sDEVICE=!device -sCompression=lzw -sOutputFile=!output_file -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   $command = format_string($base_command, array(
     '!gs_path' => escapeshellarg($gs),
@@ -1049,11 +1051,12 @@ function islandora_paged_content_chop_pdf($uri, $offset) {
     return FALSE;
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
-  $output_file = file_create_filename("page{$offset}.pdf", 'temporary://');
+  $pid = getmypid();
+  $output_file = file_create_filename("{$pid}page{$offset}.pdf", 'temporary://');
   // Need to link the file because of UTF-8 encoding.
-  $path = file_create_filename('pdfforgssplit.pdf', 'temporary://');
+  $path = file_create_filename("$pid-pdfforgssplit.pdf", 'temporary://');
   $copy = drupal_realpath($path);
-  link($file_path, $copy);
+  symlink($file_path, $copy);
   $base_command = '!gs_path -q -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -sOutputFile=!output_file -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   $command = format_string($base_command, array(
     '!gs_path' => escapeshellarg($gs),
