@@ -1151,17 +1151,19 @@ function islandora_paged_content_retrieve_applicable_cmodels() {
  * @param string $prefix
  *   The prefix with which the link will be created, as per
  *   drupal_tempnam().
+ * @param string $dest
+ *   The destination in which to create the link.
  *
  * @return string|bool
- *   A string containing the link path on success; otherwise, boolean FALSE if
- *   we could not create the link.
+ *   When successful, a string containing the path to either the new link or
+ *   copy of the file if a link could not be created; otherwise, boolean FALSE.
  */
-function islandora_paged_content_create_clean_link($uri, $prefix = 'clean') {
+function islandora_paged_content_create_clean_link($uri, $prefix = 'clean', $dest = 'temporary://') {
   $path = drupal_realpath($uri);
   $attempts = 3;
 
   do {
-    $clean = drupal_tempnam('temporary://', $prefix);
+    $clean = drupal_tempnam($dest, $prefix);
     // XXX: drupal_tempnam() creates the (empty) file, but we need to overwrite
     // it with a link, so drupal_unlink it out of place.
     drupal_unlink($clean);
@@ -1171,7 +1173,14 @@ function islandora_paged_content_create_clean_link($uri, $prefix = 'clean') {
     $created = @link($path, drupal_realpath($clean));
   } while (--$attempts > 0 && !$created);
 
-  return $created ?
-    $clean :
-    FALSE;
+  if ($created) {
+    return $clean;
+  }
+  else {
+    watchdog('islandora_paged_content', 'Unable to create link in @dest to "@uri"; copying "@uri" to @dest.', array(
+      '@dest' => $dest,
+      '@uri' => $uri,
+    ));
+    return file_unmanaged_copy($uri, $dest);
+  }
 }
