@@ -1144,7 +1144,8 @@ function islandora_paged_content_retrieve_applicable_cmodels() {
  * Helper to create a filesystem link to the file at the given URI.
  *
  * Some utilities do not like working with UTF-8 paths, so we create a link
- * without any special characters to satisfy them.
+ * without any special characters to satisfy them. This may be associated with
+ * the environment PHP uses to start subprocesses via exec() and the like.
  *
  * @param string $uri
  *   A URI which resolves to a locally-mounted filesystem.
