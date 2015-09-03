@@ -1169,8 +1169,7 @@ function islandora_paged_content_create_clean_link($uri, $prefix = 'clean') {
     // boundaries, but it seems like there are some checks which look for files
     // explicitly (do not allow for symlinks).
     $created = @link($path, drupal_realpath($clean));
-  }
-  while (--$attempts > 0 && !$created);
+  } while (--$attempts > 0 && !$created);
 
   return $created ?
     $clean :
