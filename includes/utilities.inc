@@ -923,24 +923,21 @@ function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = 
   }
   $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
   $base_command = '!pdftotext_path !layout -f !offset -l !offset !pdf_uri !output_file';
-  $pid = getmypid();
-  $output_file = file_create_filename("$pid-full.txt", 'temporary://');
+  $output_file = drupal_tempnam('temporary://', 'full');
 
   // Need to link the file because of UTF-8 encoding.
-  $path = file_create_filename("$pid-pdftotextpdf.pdf", 'temporary://');
-  $copy = drupal_realpath($path);
-  symlink($file_path, $copy);
+  $copy = islandora_paged_content_create_clean_link($uri, 'full');
   $command = format_string($base_command, array(
     '!pdftotext_path' => $pdftotext,
     '!layout' => $layout ? '-layout' : '',
     '!offset' => $offset,
-    '!pdf_uri' => escapeshellarg($copy),
+    '!pdf_uri' => escapeshellarg(drupal_realpath($copy)),
     '!output_file' => drupal_realpath($output_file),
   ));
   $output = array();
   $ret = 0;
   exec(escapeshellcmd($command), $output, $ret);
-  file_unmanaged_delete($copy);
+  drupal_unlink($copy);
   // UNIX exit code is 0, so this succeeded.
   if (!$ret) {
     return $output_file;
@@ -965,14 +962,12 @@ function islandora_paged_content_length_of_pdf($uri) {
   }
   $pdfinfo = variable_get('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
   // Need to link the file because of UTF-8 encoding.
-  $path = file_create_filename(getmypid() . '-pdfinfopdf.pdf', 'temporary://');
-  $copy = drupal_realpath($path);
-  symlink($file_path, $copy);
-  $command = escapeshellarg($pdfinfo) . ' ' . escapeshellarg($copy);
+  $copy = islandora_paged_content_create_clean_link($uri, 'length');
+  $command = escapeshellarg($pdfinfo) . ' ' . escapeshellarg(drupal_realpath($copy));
   $output = array();
   $ret = 0;
   exec(escapeshellcmd($command), $output, $ret);
-  file_unmanaged_delete($copy);
+  drupal_unlink($copy);
   // UNIX exit code is 0, so this succeeded.
   if (!$ret) {
     foreach ($output as $line) {
@@ -1007,12 +1002,9 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
     return FALSE;
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
-  $pid = getmypid();
-  $output_file = file_create_filename("{$pid}-page{$offset}.tif", 'temporary://');
+  $output_file = drupal_tempnam('temporary://', "page{$offset}.tif");
   // Need to link the file because of UTF-8 encoding.
-  $path = file_create_filename("$pid-pdfforgs.pdf", 'temporary://');
-  $copy = drupal_realpath($path);
-  symlink($file_path, $copy);
+  $copy = islandora_paged_content_create_clean_link($uri, 'pdfforgs');
   $base_command = '!gs_path -q -dNOPAUSE -sDEVICE=!device -sCompression=lzw -sOutputFile=!output_file -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   $command = format_string($base_command, array(
     '!gs_path' => escapeshellarg($gs),
@@ -1020,12 +1012,12 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
     '!offset' => $offset,
     '!output_file' => drupal_realpath($output_file),
     '!resolution' => $resolution,
-    '!pdf_uri' => escapeshellarg($copy),
+    '!pdf_uri' => escapeshellarg(drupal_realpath($copy)),
   ));
   $output = array();
   $ret = 0;
   exec(escapeshellcmd($command), $output, $ret);
-  file_unmanaged_delete($copy);
+  drupal_unlink($copy);
   if (!$ret) {
     return $output_file;
   }
@@ -1051,23 +1043,20 @@ function islandora_paged_content_chop_pdf($uri, $offset) {
     return FALSE;
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
-  $pid = getmypid();
-  $output_file = file_create_filename("{$pid}-page{$offset}.pdf", 'temporary://');
+  $output_file = drupal_tempnam('temporary://', "page{$offset}.pdf");
   // Need to link the file because of UTF-8 encoding.
-  $path = file_create_filename("$pid-pdfforgssplit.pdf", 'temporary://');
-  $copy = drupal_realpath($path);
-  symlink($file_path, $copy);
+  $copy = islandora_paged_content_create_clean_link($uri, 'pdfforgschop');
   $base_command = '!gs_path -q -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -sOutputFile=!output_file -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   $command = format_string($base_command, array(
     '!gs_path' => escapeshellarg($gs),
     '!offset' => $offset,
     '!output_file' => drupal_realpath($output_file),
-    '!pdf_uri' => escapeshellarg($copy),
+    '!pdf_uri' => escapeshellarg(drupal_realpath($copy)),
   ));
   $output = array();
   $ret = 0;
   exec(escapeshellcmd($command), $output, $ret);
-  file_unmanaged_delete($copy);
+  drupal_unlink($copy);
   if (!$ret) {
     return $output_file;
   }
@@ -1149,4 +1138,41 @@ function islandora_paged_content_add_relationships_to_child(AbstractObject $obje
  */
 function islandora_paged_content_retrieve_applicable_cmodels() {
   return module_invoke_all('islandora_paged_content_content_model_registry');
+}
+
+/**
+ * Helper to create a filesystem link to the file at the given URI.
+ *
+ * Some utilities do not like working with UTF-8 paths, so we create a link
+ * without any special characters to satisfy them.
+ *
+ * @param string $uri
+ *   A URI which resolves to a locally-mounted filesystem.
+ * @param string $prefix
+ *   The prefix with which the link will be created, as per
+ *   drupal_tempnam().
+ *
+ * @return string|bool
+ *   A string containing the link path on success; otherwise, boolean FALSE if
+ *   we could not create the link.
+ */
+function islandora_paged_content_create_clean_link($uri, $prefix = 'clean') {
+  $path = drupal_realpath($uri);
+  $attempts = 3;
+
+  do {
+    $clean = drupal_tempnam('temporary://', $prefix);
+    // XXX: drupal_tempnam() creates the (empty) file, but we need to overwrite
+    // it with a link, so drupal_unlink it out of place.
+    drupal_unlink($clean);
+    // XXX: Ideally, we could create symlinks to safely cross filesystem
+    // boundaries, but it seems like there are some checks which look for files
+    // explicitly (do not allow for symlinks).
+    $created = @link($path, drupal_realpath($clean));
+  }
+  while (--$attempts > 0 && !$created);
+
+  return $created ?
+    $clean :
+    FALSE;
 }
