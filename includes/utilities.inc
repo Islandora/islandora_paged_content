@@ -1005,7 +1005,7 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
   $output_file = drupal_tempnam('temporary://', "page{$offset}.tif");
   // Need to link the file because of UTF-8 encoding.
   $copy = islandora_paged_content_create_clean_link($uri, 'pdfforgs');
-  $base_command = '!gs_path -q -dNOPAUSE -sDEVICE=!device -sCompression=lzw -sOutputFile=!output_file -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+  $base_command = '!gs_path -q -dNOPAUSE -dBATCH -sDEVICE=!device -sCompression=lzw -sOutputFile=!output_file -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   $command = format_string($base_command, array(
     '!gs_path' => escapeshellarg($gs),
     '!device' => $device,
