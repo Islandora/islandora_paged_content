@@ -117,6 +117,26 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
       '#description' => t('The sequence number of each page will be used to set its label.'),
       '#default_value' => $get_default_value('islandora_paged_content_page_label', FALSE),
     ),
+    'islandora_paged_content_solr_results_alter' => array(
+      '#type' => 'fieldset',
+      '#title' => t('Solr Results Altering'),
+      'islandora_paged_content_hide_pages_solr' => array(
+        '#type' => 'checkbox',
+        '#title' => t('Hide page objects from search results?'),
+        '#default_value' => $get_default_value('islandora_paged_content_hide_pages_solr', FALSE),
+      ),
+      'islandora_paged_content_solr_fq' => array(
+        '#type' => 'textfield',
+        '#title' => t('Paged Content Solr Filter Query'),
+        '#description' => t('Enter a string representing a query to use to filter pages from Solr results.'),
+        '#default_value' => $get_default_value('islandora_paged_content_solr_fq', '-RELS_EXT_isPageOf_uri_ms:[* TO *]'),
+        '#states' => array(
+          'invisible' => array(
+            ':input[name="islandora_paged_content_hide_pages_solr"]' => array('checked' => FALSE),
+          ),
+        ),
+      ),
+    ),
   );
   return system_settings_form($form);
 }

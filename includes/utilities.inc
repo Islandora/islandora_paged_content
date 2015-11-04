@@ -426,6 +426,53 @@ function islandora_paged_content_pdf_combine(array $files, $out) {
 }
 
 /**
+ * Appends a series of OCR files to a consolidated OCR file.
+ *
+ * @param string $consolidated_ocr
+ *   The consolidated OCR path.
+ * @param array $files
+ *   The files to be appended to the OCR.
+ *
+ * @return bool
+ *   TRUE on success, FALSE on failure.
+ */
+function islandora_paged_content_ocr_append($consolidated_ocr, array $files) {
+  $temp_file = "$consolidated_ocr.temp.txt";
+  copy($file, $temp_file);
+  array_unshift($files, $temp_file);
+  $ret = islandora_paged_content_ocr_combine($files, $file);
+  file_unmanaged_delete($temp_file);
+  return $ret;
+}
+
+/**
+ * Combines the given OCR files into one output file.
+ *
+ * @param array $files
+ *   The OCR files to be combined, in order.
+ * @param string $out
+ *   The absolute path to the consolidated OCR file.
+ *
+ * @return bool
+ *   TRUE on success, FALSE on fail.
+ */
+function islandora_paged_content_ocr_combine(array $files, $out) {
+  $success = TRUE;
+  $combined_ocr = '';
+  foreach ($files as $file) {
+    $ocr = file_get_contents($file);
+    if ($ocr == FALSE) {
+      $success = FALSE;
+    }
+    else {
+      $combined_ocr .= "$ocr\n\n";
+    }
+  }
+  $result = file_put_contents($out, rtrim($combined_ocr), FILE_APPEND);
+  return $success && ($result !== FALSE);
+}
+
+/**
  * Creates a PDF derivative for the given Page object.
  *
  * @param AbstractObject $object
@@ -604,11 +651,16 @@ function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $
  *   The page object that the derivatives will be generated for.
  * @param array $options
  *   The options for tesseract/gimp.
+ * @param bool $ingest
+ *   Whether or not to ingest immediately or simply return references to files.
  *
- * @return bool
- *   TRUE on success, FALSE otherwise.
+ * @return bool|array
+ *   If $ingest is TRUE, returns TRUE on success, FALSE otherwise. If $ingest
+ *   is false, returns an associative array containing 'OCR' and 'HOCR', each
+ *   paired with a string representing the path to the derived file on success,
+ *   or FALSE on failure.
  */
-function islandora_paged_content_page_derive_ocr_datastreams(AbstractObject $object, array $options = NULL) {
+function islandora_paged_content_page_derive_ocr_datastreams(AbstractObject $object, array $options = NULL, $ingest = TRUE) {
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $rels_ext = $object->relationships;
   $options = isset($options) ? $options : array(
@@ -619,10 +671,8 @@ function islandora_paged_content_page_derive_ocr_datastreams(AbstractObject $obj
   );
 
   module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
-  $ret = islandora_ocr_derive_datastreams($object['OBJ'], $options);
+  $ret = islandora_ocr_derive_datastreams($object['OBJ'], $options, $ingest);
 
-  // Check the depth of the image, to see if it can be processed with Tesseract.
-  // If it can not, reduce the depth and grayscale it...
   $language = $options['language'];
   islandora_paged_content_set_relationship($rels_ext,
     ISLANDORA_RELS_EXT_URI,
@@ -763,6 +813,19 @@ function islandora_paged_content_paged_object_derivatives($context) {
           'source_dsid' => NULL,
           'destination_dsid' => 'PDF',
           'function' => array('islandora_paged_content_aggregate_pdf_derivative'),
+          'file' => "$paged_content_module_path/includes/derivatives.inc",
+        ),
+      )
+    );
+  }
+  if ($derive['ocr']) {
+    $derivatives = array_merge(
+      $derivatives,
+      array(
+        array(
+          'source_dsid' => NULL,
+          'destination_dsid' => 'OCR',
+          'function' => array('islandora_paged_content_aggregate_ocr_derivative'),
           'file' => "$paged_content_module_path/includes/derivatives.inc",
         ),
       )

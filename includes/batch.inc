@@ -212,10 +212,11 @@ function islandora_paged_content_create_pdf_paged_content_batch_operation($paged
  *   The batch definition.
  */
 function islandora_paged_content_create_ocr_batch(AbstractObject $paged_content, array $pages, array $options) {
-  return array(
+  $return = array(
     'operations' => array(
       array('islandora_paged_content_create_ocr_batch_operation', array(
-          $pages, $options)),
+        $pages, $options)),
+      array('islandora_paged_content_create_ocr_paged_content_batch_operation', array($paged_content->id)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Performing OCR on @label ...', array('@label' => $paged_content->label)),
@@ -224,15 +225,19 @@ function islandora_paged_content_create_ocr_batch(AbstractObject $paged_content,
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
   );
+  if ($options['aggregate_ocr']) {
+    $return['operations'][] = array('islandora_paged_content_create_ocr_paged_content_batch_operation', array($paged_content->id));
+  }
+  return $return;
 }
 
 /**
- * Batch operation for createing the OCR and HOCR.
+ * Batch operation for creating the OCR and HOCR.
  *
  * @param array $pages
  *   All the pages to perform OCR on.
  * @param array $options
- *   Options to pass into tesseract/gimp.
+ *   Options to pass into tesseract/
  * @param array $context
  *   The context of this batch operation.
  */
@@ -241,13 +246,55 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
     $page = islandora_object_load($page);
-    $context['results']['successful'][] = islandora_paged_content_page_derive_ocr_datastreams($page, $options);
-    islandora_paged_content_end_batch_operation($context, 1, array('Performed OCR on @successful of @total pages.'));
+    $ocr = islandora_paged_content_page_derive_ocr_datastreams($page, $options, FALSE);
+    foreach ($ocr as $dsid => $result) {
+      if ($result !== FALSE) {
+        $context['results']['files'][] = $result;
+        // OCR files will be required for concatenation.
+        if ($dsid == 'OCR') {
+          $context['results']['pages'][] = $result;
+        }
+        $context['results']['successful'][] = islandora_paged_content_update_datastream($page, $result, $dsid);
+      }
+    }
+    islandora_paged_content_end_batch_operation($context, 1, array('Derived @successful of @total OCR/HOCR datastreams.'));
     $context['message'] = t('Performing OCR on page @page of @total ...', array(
                             '@page' => $context['sandbox']['progress'],
                             '@total' => $context['sandbox']['total']));
   }
 }
+
+/**
+ * Batch operation for consolidating OCR.
+ *
+ * @param string $paged_content_id
+ *   The paged content identifier to store the OCR.
+ * @param array $context
+ *   The context of this batch operation.
+ */
+function islandora_paged_content_create_ocr_paged_content_batch_operation($paged_content_id, &$context) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $paged_content = islandora_object_load($paged_content_id);
+  if (empty($context['results']['pages'])) {
+    return;
+  }
+  islandora_paged_content_start_batch_operation($context['results']['pages'], $context);
+  // Opting to write the consolidated OCR to the filesystem to avoid issues with
+  // PHP's memory limit on massive books.
+  $consolidated_ocr = drupal_realpath("temporary://{$paged_content->id}_OCR.txt");
+  $files = array_slice($context['results']['pages'], $context['sandbox']['progress'], 10);
+  $append = $context['sandbox']['progress'] != 0;
+  $context['results']['successful'][] = $append ? islandora_paged_content_ocr_append($consolidated_ocr, $files) : islandora_paged_content_ocr_combine($files, $consolidated_ocr);
+  $finished_message = array('Created OCR with @pages pages.', array('@pages' => count($context['results']['pages'])));
+  if (islandora_paged_content_end_batch_operation($context, count($files), $finished_message)) {
+    islandora_paged_content_update_datastream($paged_content, $consolidated_ocr, 'OCR');
+    $context['results']['files'][] = $consolidated_ocr;
+  }
+  $context['message'] = t('Adding page @page of @total to the OCR ...', array(
+                          '@page' => $context['sandbox']['progress'],
+                          '@total' => $context['sandbox']['total']));
+}
+
 
 /**
  * Gets the batch definition for creating TN, JPG, JP2 datastreams.

@@ -118,7 +118,11 @@ function islandora_paged_content_manage_page_ocr_form_submit(array $form, array 
     'language' => $form_state['values']['language'],
     'preprocess' => FALSE,
   );
-  if (islandora_paged_content_page_derive_ocr_datastreams($object, $options)) {
+  $ocr = islandora_paged_content_page_derive_ocr_datastreams($object, $options);
+  if ($ocr !== FALSE) {
+    foreach ($ocr as $dsid => $file) {
+      islandora_paged_content_update_datastream($object, $file, $dsid);
+    }
     drupal_set_message(t('Successfully performed OCR.'), 'status');
   }
   else {
