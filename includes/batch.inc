@@ -584,3 +584,99 @@ function islandora_paged_content_create_page_from_pdf_batch_operation(array $pag
 
   }
 }
+
+/**
+ * Batch definition for consolidating missing OCR.
+ */
+function islandora_paged_content_consolidate_missing_ocr_batch() {
+  return array(
+    'title' => t('Batch Consolidate Missing OCR'),
+    'init_message' => t('Preparing to consolidate missing OCR ...'),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining: @estimate.'),
+    'error_message' => t('An error has occured.'),
+    'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
+    'operations' => array(
+      array('islandora_paged_content_consolidate_missing_ocr_batch_operation', array()),
+    ),
+  );
+}
+
+/**
+ * Batch operation for consolidating missing OCR.
+ */
+function islandora_paged_content_consolidate_missing_ocr_batch_operation(&$context) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $connection = islandora_get_tuque_connection();
+  $repository = $connection->repository;
+  $sandbox = &$context['sandbox'];
+  if (empty($sandbox)) {
+    $context['finished'] = 0;
+    $sandbox['objects_completed'] = 0;
+    $sandbox['objects'] = islandora_paged_content_get_missing_ocr_paged_content_objects();
+    $sandbox['total'] = count($sandbox['objects']);
+  }
+
+  if (!empty($sandbox['objects'])) {
+    // If no pages are left to consolidate, append and move on to the next page.
+    if (empty($sandbox['current_pages'])) {
+      // Skip this step for the first object.
+      if (isset($sandbox['current_object'])) {
+        $object = islandora_object_load($sandbox['current_object']);
+        $datastream = $object->constructDatastream('OCR');
+        $datastream->label = 'Consolidated OCR';
+        $datastream->mimetype = 'text/plain';
+        $datastream->setContentFromString(rtrim($sandbox['consolidated_ocr']));
+        $object->ingestDatastream($datastream);
+        $sandbox['objects_completed']++;
+        $context['message'] = "{$sandbox['objects_completed']}/{$sandbox['total']}: Consolidated OCR datastream for {$object->label} ({$object->id}, {$object->models[0]}).";
+      }
+      if (isset($sandbox['objects'][$sandbox['objects_completed']])) {
+        $sandbox['current_object'] = $sandbox['objects'][$sandbox['objects_completed']];
+        $sandbox['current_pages'] = islandora_paged_content_get_pages(islandora_object_load($sandbox['current_object']));
+        $sandbox['consolidated_ocr'] = '';
+      }
+    }
+    // Otherwise splice off 10 at most, and append them to the consolidated OCR.
+    foreach (array_splice($sandbox['current_pages'], 0, min(10, count($sandbox['current_pages']))) as $pid => $page) {
+      $page_ocr = islandora_datastream_load('OCR', $pid);
+      if (!is_null($page_ocr)) {
+        $sandbox['consolidated_ocr'] .= "{$page_ocr->content}\n\n";
+      }
+    }
+  }
+  else {
+    $context['message'] = "No missing OCR found on paged content objects.";
+    $context['finished'] = 1;
+  }
+  $context['finished'] = $sandbox['objects_completed'] / $sandbox['total'];
+}
+
+/**
+ * Gets paged content objects with no OCR datastream from the repository.
+ */
+function islandora_paged_content_get_missing_ocr_paged_content_objects() {
+  // Base query.
+  $query = <<<EOQ
+PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
+SELECT DISTINCT ?pid
+FROM <#ri>
+WHERE {
+  ?page islandora-rels-ext:isPageOf ?pid
+  OPTIONAL {
+    ?ds <fedora-view:disseminationType> <info:fedora/*/OCR> .
+    ?pid <info:fedora/fedora-system:def/view#disseminates> ?ds
+  }
+  FILTER(!BOUND(?ds))
+}
+EOQ;
+
+
+  // Make the query.
+  $connection = islandora_get_tuque_connection();
+  $results = $connection->repository->ri->sparqlQuery($query);
+  $return = array();
+  foreach ($results as $result) {
+    $return[] = $result['pid']['value'];
+  }
+  return $return;
+}
