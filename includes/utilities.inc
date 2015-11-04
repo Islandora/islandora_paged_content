@@ -465,11 +465,10 @@ function islandora_paged_content_ocr_combine(array $files, $out) {
       $success = FALSE;
     }
     else {
-      $combined_ocr .= "$ocr\n\n";
+      $success = file_put_contents($out, $ocr, FILE_APPEND) == FALSE ? FALSE : $success;
     }
   }
-  $result = file_put_contents($out, rtrim($combined_ocr), FILE_APPEND);
-  return $success && ($result !== FALSE);
+  return $success;
 }
 
 /**

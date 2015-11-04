@@ -237,7 +237,7 @@ function islandora_paged_content_create_ocr_batch(AbstractObject $paged_content,
  * @param array $pages
  *   All the pages to perform OCR on.
  * @param array $options
- *   Options to pass into tesseract/
+ *   Options to pass into tesseract/gimp.
  * @param array $context
  *   The context of this batch operation.
  */
@@ -281,7 +281,7 @@ function islandora_paged_content_create_ocr_paged_content_batch_operation($paged
   islandora_paged_content_start_batch_operation($context['results']['pages'], $context);
   // Opting to write the consolidated OCR to the filesystem to avoid issues with
   // PHP's memory limit on massive books.
-  $consolidated_ocr = drupal_realpath("temporary://{$paged_content->id}_OCR.txt");
+  $consolidated_ocr = "temporary://{$paged_content->id}_OCR.txt";
   $files = array_slice($context['results']['pages'], $context['sandbox']['progress'], 10);
   $append = $context['sandbox']['progress'] != 0;
   $context['results']['successful'][] = $append ? islandora_paged_content_ocr_append($consolidated_ocr, $files) : islandora_paged_content_ocr_combine($files, $consolidated_ocr);
@@ -652,7 +652,7 @@ function islandora_paged_content_consolidate_missing_ocr_batch_operation(&$conte
 }
 
 /**
- * Gets paged content objects with no OCR datastream from the repository.
+ * Gets PIDS of paged content objects with no OCR datastream.
  */
 function islandora_paged_content_get_missing_ocr_paged_content_objects() {
   // Base query.
