@@ -670,7 +670,6 @@ WHERE {
 }
 EOQ;
 
-
   // Make the query.
   $connection = islandora_get_tuque_connection();
   $results = $connection->repository->ri->sparqlQuery($query);
