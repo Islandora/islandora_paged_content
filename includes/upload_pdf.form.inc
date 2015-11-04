@@ -105,6 +105,20 @@ function islandora_paged_content_upload_pdf_form($form, &$form_state, $model) {
     '#default_value' => $default_value,
     '#description' => t("Extracted text is used to aid in the discovery of this object when searching. If the uploaded PDF contains text and not just images of text, we recommend you try to extract it from the PDF. On the other hand if the uploaded PDF is composed of Images of text we and doesn't contain text we recommend you perform OCR."),
   );
+  $form['text_settings']['rawtext'] = array(
+    '#type' => 'radios',
+    '#title' => t('Use the raw text of the PDF'),
+    '#options' => array(
+      'yes' => t('Yes'),
+      'no' => t('No'),
+    ),
+    '#default_value' => 'no',
+    '#states' => array(
+      'visible' => array(
+        'input[name="extract_text"]' => array('value' => 'extract'),
+      ),
+    ),
+  );
   $form['text_settings']['language'] = array(
     '#type' => 'select',
     '#title' => t('Language'),
@@ -174,6 +188,7 @@ function islandora_paged_content_upload_pdf_form_submit($form, $form_state) {
       'extract_text',
       'model',
     ))) + array('pdf_file' => $file_obj, 'parent' => $object->id);
+    $options['rawtext'] = $form_state['values']['rawtext'] == 'yes' ? TRUE : FALSE;
     $batch = islandora_paged_content_create_paged_content_from_pdf_batch($object, $pages, $options);
     batch_set($batch);
   }

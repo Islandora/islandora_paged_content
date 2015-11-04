@@ -908,21 +908,22 @@ function islandora_paged_content_pdfinfo_availability() {
  *   The page number to extract it will be used as the first and last page
  *   value. Note that pdftotext won't complain about using an offset greater
  *   than the number of allotted pages of a PDF.
- *
+ * @param bool $raw_text
+ *   Whether to extract the raw text from the PDF or not.
  * @param bool $layout
  *   Whether we are retaining layout of the PDF or not.
  *
  * @return bool|string
  *   FALSE if it fails, the URI of the text file otherwise.
  */
-function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = TRUE) {
+function islandora_paged_content_extract_text_from_pdf($uri, $offset, $raw_text = FALSE, $layout = TRUE) {
   $file_path = drupal_realpath($uri);
   // PDF doesn't exist or pdftotext isn't available, abort.
   if (!file_exists($file_path) || !islandora_paged_content_pdftotext_availability()) {
     return FALSE;
   }
   $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
-  $base_command = '!pdftotext_path !layout -f !offset -l !offset !pdf_uri !output_file';
+  $base_command = '!pdftotext_path !raw !layout -f !offset -l !offset !pdf_uri !output_file';
   $output_file = drupal_tempnam('temporary://', 'full');
 
   // Need to link the file because of UTF-8 encoding.
@@ -933,6 +934,7 @@ function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = 
     '!offset' => $offset,
     '!pdf_uri' => escapeshellarg(drupal_realpath($copy)),
     '!output_file' => drupal_realpath($output_file),
+    '!raw' => $raw_text ? '-raw' : '',
   ));
   $output = array();
   $ret = 0;
