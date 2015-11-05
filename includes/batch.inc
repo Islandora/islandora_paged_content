@@ -631,7 +631,7 @@ function islandora_paged_content_consolidate_missing_ocr_batch_operation(&$conte
       if (isset($sandbox['objects'][$sandbox['objects_completed']])) {
         $sandbox['current_object'] = $sandbox['objects'][$sandbox['objects_completed']];
         $sandbox['current_pages'] = islandora_paged_content_get_pages(islandora_object_load($sandbox['current_object']));
-        $sandbox['consolidated_ocr'] = "temporary://{$sandbox['current_object']}_OCR.txt";
+        $sandbox['consolidated_ocr'] = drupal_tempnam("temporary://{$sandbox['current_object']}_OCR.txt", 'tmp');
       }
     }
     // Otherwise splice off 10 at most, and append them to the consolidated OCR.
