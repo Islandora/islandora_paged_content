@@ -644,41 +644,78 @@ function islandora_paged_content_update_paged_content_thumbnail(AbstractObject $
 }
 
 /**
- * Creates and adds the OCR, HOCR datastreams.
+ * Creates OCR and HOCR derivatives and ingests them.
  *
  * @param AbstractObject $object
  *   The page object that the derivatives will be generated for.
  * @param array $options
  *   The options for tesseract/gimp.
- * @param bool $ingest
- *   Whether or not to ingest immediately or simply return references to files.
  *
- * @return bool|array
- *   If $ingest is TRUE, returns TRUE on success, FALSE otherwise. If $ingest
- *   is false, returns an associative array containing 'OCR' and 'HOCR', each
- *   paired with a string representing the path to the derived file on success,
- *   or FALSE on failure.
+ * @return bool
+ *   TRUE on success or FALSE on failure.
  */
-function islandora_paged_content_page_derive_ocr_datastreams(AbstractObject $object, array $options = NULL, $ingest = TRUE) {
-  module_load_include('inc', 'islandora_ocr', 'includes/utilities');
-  $rels_ext = $object->relationships;
-  $options = isset($options) ? $options : array(
-    'language' => islandora_paged_content_get_relationship($rels_ext,
+function islandora_paged_content_page_derive_ocr_datastreams(AbstractObject $object, array $options = NULL) {
+  $options = islandora_paged_content_apply_language_relationship_to_options($object, $options);
+
+  module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
+  $ret = islandora_ocr_derive_datastreams($object['OBJ'], $options);
+
+  islandora_paged_content_set_relationship($object->relationships,
+    ISLANDORA_RELS_EXT_URI,
+    'hasLanguage',
+    $options['language'],
+    TRUE);
+  return $ret;
+}
+
+/**
+ * Creates OCR and HOCR derivatives and returns references to them.
+ *
+ * @param AbstractObject $object
+ *   The page object that the derivatives will be generated for.
+ * @param array $options
+ *   The options for tesseract/gimp.
+ *
+ * @return array
+ *   An associative array containing 'OCR' and 'HOCR', each of which either
+ *   contain the path to the generated output from tesseract, or FALSE on
+ *   failure.
+ */
+function islandora_paged_content_page_generate_ocr_datastreams(AbstractObject $object, array $options = NULL) {
+  $options = islandora_paged_content_apply_language_relationship_to_options($object, $options);
+
+  module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
+  $ret = islandora_ocr_generate_datastreams($object['OBJ'], $options);
+
+  islandora_paged_content_set_relationship($object->relationships,
+    ISLANDORA_RELS_EXT_URI,
+    'hasLanguage',
+    $options['language'],
+    TRUE);
+  return $ret;
+}
+
+/**
+ * Helper function to create generation options from a language relationship.
+ *
+ * Applies them only in the case where the passed-in options are NULL.
+ *
+ * @param AbstractObject $object
+ *   The object to check relationships for.
+ * @param array|null $options
+ *   The current tesseract/gimp generation options.
+ *
+ * @return array
+ *   The old set of options if an array was passed in, or an array containing
+ *   'language' as the hasLanguage relationship if NULL was passed in.
+ */
+function islandora_paged_content_apply_language_relationship_to_options(AbstractObject $object, array $options = NULL) {
+  return isset($options) ? $options : array(
+    'language' => islandora_paged_content_get_relationship($object->relationships,
       ISLANDORA_RELS_EXT_URI,
       'hasLanguage',
       'eng'),
   );
-
-  module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
-  $ret = islandora_ocr_derive_datastreams($object['OBJ'], $options, $ingest);
-
-  $language = $options['language'];
-  islandora_paged_content_set_relationship($rels_ext,
-    ISLANDORA_RELS_EXT_URI,
-    'hasLanguage',
-    $language,
-    TRUE);
-  return $ret;
 }
 
 /**
@@ -1191,7 +1228,7 @@ function islandora_paged_content_add_relationships_to_child(AbstractObject $obje
     $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'FALSE', RELS_TYPE_PLAIN_LITERAL);
   }
   else {
-    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
+    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'nasLanguage', $params['language'], TRUE);
   }
 }
 

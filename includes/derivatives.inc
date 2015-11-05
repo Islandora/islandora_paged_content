@@ -137,7 +137,7 @@ function islandora_paged_content_aggregate_ocr_derivative(AbstractObject $object
     $batch = islandora_paged_content_create_ocr_batch(
       $object,
       array_keys(islandora_paged_content_get_pages($object)),
-      array()
+      array('aggregate_ocr' => TRUE)
     );
   }
 
