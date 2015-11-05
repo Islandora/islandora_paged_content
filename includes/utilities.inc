@@ -437,7 +437,7 @@ function islandora_paged_content_pdf_combine(array $files, $out) {
  *   TRUE on success, FALSE on failure.
  */
 function islandora_paged_content_ocr_append($consolidated_ocr, array $files) {
-  $temp_file = drupal_tempnam("temporary://$consolidated_ocr.temp.txt", 'tmp');
+  $temp_file = drupal_tempnam("temporary://", "$consolidated_ocr.temp.txt");
   copy($file, $temp_file);
   array_unshift($files, $temp_file);
   $ret = islandora_paged_content_ocr_combine($files, $file);

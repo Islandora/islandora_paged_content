@@ -121,7 +121,7 @@ function islandora_paged_content_manage_page_ocr_form_submit(array $form, array 
   $ocr = islandora_paged_content_page_derive_ocr_datastreams($object, $options);
   $message = $ocr ? 'Successfully performed OCR.' : 'Failed to perform OCR.';
   $type = $ocr ? 'status' : 'error';
-  drupal_set_message(t('%message', array('%messge' => $message)), $type);
+  drupal_set_message(t('%message', array('%message' => $message)), $type);
 }
 
 /**
