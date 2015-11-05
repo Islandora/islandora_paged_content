@@ -88,6 +88,12 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
           'event' => 'change',
         ),
       ),
+      'islandora_paged_content_pdftotext_use_raw' => array(
+        '#type' => 'checkbox',
+        '#title' => t('Allow user to specify option of extracting raw text'),
+        '#description' => t('This will pass the -raw parameter off to pdftotext when extracting text. By default, pdftotext extracts text in natural reading order. In edge case documents, where PDF creation tools have made blocks in errorneous order, text extraction will yield unexpected results. As such, this parameter will pull out text in the order that the PDF creation tool wrote it (layout ignored). This is not a valid default option to have due to that PDF creation tools are not constrained to writing blocks in the order they appear and it is up to the PDF reader to render them correctly.'),
+        '#default_value' => variable_get('islandora_paged_content_pdftotext_use_raw', FALSE),
+      ),
     ),
     'islandora_paged_content_djatoka_url' => array(
       '#type' => 'textfield',

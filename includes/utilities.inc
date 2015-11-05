@@ -908,15 +908,15 @@ function islandora_paged_content_pdfinfo_availability() {
  *   The page number to extract it will be used as the first and last page
  *   value. Note that pdftotext won't complain about using an offset greater
  *   than the number of allotted pages of a PDF.
- * @param bool $raw_text
- *   Whether to extract the raw text from the PDF or not.
  * @param bool $layout
  *   Whether we are retaining layout of the PDF or not.
+ * @param bool $raw_text
+ *   Whether to extract the raw text from the PDF or not.
  *
  * @return bool|string
  *   FALSE if it fails, the URI of the text file otherwise.
  */
-function islandora_paged_content_extract_text_from_pdf($uri, $offset, $raw_text = FALSE, $layout = TRUE) {
+function islandora_paged_content_extract_text_from_pdf($uri, $offset, $layout = TRUE, $raw_text = FALSE) {
   $file_path = drupal_realpath($uri);
   // PDF doesn't exist or pdftotext isn't available, abort.
   if (!file_exists($file_path) || !islandora_paged_content_pdftotext_availability()) {
