@@ -122,7 +122,7 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
       '#title' => t('Solr Results Altering'),
       'islandora_paged_content_hide_pages_solr' => array(
         '#type' => 'checkbox',
-        '#title' => t('Hide page objects from search results'),
+        '#title' => t('Hide Page Objects From Search Results'),
         '#default_value' => $get_default_value('islandora_paged_content_hide_pages_solr', FALSE),
       ),
       'islandora_paged_content_solr_fq' => array(

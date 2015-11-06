@@ -186,7 +186,7 @@ function islandora_paged_content_manage_pages_ocr_form(array $form, array &$form
     'aggregate_ocr' => array(
       '#access' => $can_derive,
       '#type' => 'checkbox',
-      '#title' => t('Aggregate OCR to the parent'),
+      '#title' => t('Aggregate OCR to the Parent'),
       '#description' => t('Check this to aggregate a consolidated OCR datastream generated from each page and append it to the current object.'),
       '#default_value' => FALSE,
     ),
