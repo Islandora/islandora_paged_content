@@ -685,7 +685,7 @@ function islandora_paged_content_page_generate_ocr_datastreams(AbstractObject $o
   $options = islandora_paged_content_apply_language_relationship_to_options($object, $options);
 
   module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
-  $ret = islandora_ocr_generate_datastreams($object['OBJ'], $options);
+  $ret = islandora_ocr_generate_derivatives($object['OBJ'], $options);
 
   islandora_paged_content_set_relationship($object->relationships,
     ISLANDORA_RELS_EXT_URI,
