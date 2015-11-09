@@ -1228,7 +1228,7 @@ function islandora_paged_content_add_relationships_to_child(AbstractObject $obje
     $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'FALSE', RELS_TYPE_PLAIN_LITERAL);
   }
   else {
-    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'nasLanguage', $params['language'], TRUE);
+    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
   }
 }
 
