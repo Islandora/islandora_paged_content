@@ -698,24 +698,24 @@ function islandora_paged_content_page_generate_ocr_datastreams(AbstractObject $o
 /**
  * Helper function to create generation options from a language relationship.
  *
- * Applies them only in the case where the passed-in options are NULL.
- *
  * @param AbstractObject $object
  *   The object to check relationships for.
  * @param array|null $options
  *   The current tesseract/gimp generation options.
  *
  * @return array
- *   The old set of options if an array was passed in, or an array containing
- *   'language' as the hasLanguage relationship if NULL was passed in.
+ *   An array that at least contains a 'language' option matching the object's
+ *   hasLanguage relationship, or 'eng' if there wasn't one.
  */
 function islandora_paged_content_apply_language_relationship_to_options(AbstractObject $object, array $options = NULL) {
-  return isset($options) ? $options : array(
-    'language' => islandora_paged_content_get_relationship($object->relationships,
+  $options = (array) $options;
+  if (!isset($options['language'])) {
+    $options['language'] = islandora_paged_content_get_relationship($object->relationships,
       ISLANDORA_RELS_EXT_URI,
       'hasLanguage',
-      'eng'),
-  );
+      'eng');
+  }
+  return $options;
 }
 
 /**

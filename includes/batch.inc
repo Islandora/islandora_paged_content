@@ -277,7 +277,7 @@ function islandora_paged_content_create_ocr_paged_content_batch_operation($paged
   if (empty($context['results']['pages'])) {
     return;
   }
-  if ($context['sandbox']['progress'] == 0) {
+  if (isset($context['sandbox']['progress']) && $context['sandbox']['progress'] == 0) {
     // Opting to write the consolidated OCR to the filesystem to avoid issues
     // with PHP's memory limit on massive books.
     $context['sandbox']['consolidated_ocr'] = drupal_tempnam("temporary://", "{$paged_content->id}_OCR.txt");
