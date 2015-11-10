@@ -276,7 +276,7 @@ function islandora_paged_content_create_ocr_paged_content_batch_operation($paged
   $paged_content = islandora_object_load($paged_content_id);
   if (empty($context['results']['pages'])) {
     return;
-  } 
+  }
   $page = islandora_paged_content_start_batch_operation($context['results']['pages'], $context);
   $append = FALSE;
   if ($context['sandbox']['progress'] == 0) {
