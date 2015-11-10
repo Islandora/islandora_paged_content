@@ -458,7 +458,6 @@ function islandora_paged_content_ocr_append($consolidated_ocr, array $files) {
  */
 function islandora_paged_content_ocr_combine(array $files, $out) {
   $success = TRUE;
-  $combined_ocr = '';
   foreach ($files as $file) {
     $ocr = file_get_contents($file);
     if ($ocr == FALSE) {

@@ -276,18 +276,19 @@ function islandora_paged_content_create_ocr_paged_content_batch_operation($paged
   $paged_content = islandora_object_load($paged_content_id);
   if (empty($context['results']['pages'])) {
     return;
-  }
-  if (isset($context['sandbox']['progress']) && $context['sandbox']['progress'] == 0) {
+  } 
+  $page = islandora_paged_content_start_batch_operation($context['results']['pages'], $context);
+  $append = FALSE;
+  if ($context['sandbox']['progress'] == 0) {
     // Opting to write the consolidated OCR to the filesystem to avoid issues
     // with PHP's memory limit on massive books.
     $context['sandbox']['consolidated_ocr'] = drupal_tempnam("temporary://", "{$paged_content->id}_OCR.txt");
+    $append = TRUE;
   }
-  $page = islandora_paged_content_start_batch_operation($context['results']['pages'], $context);
-  $append = $context['sandbox']['progress'] != 0;
   $context['results']['successful'][] = $append ? islandora_paged_content_ocr_append($context['sandbox']['consolidated_ocr'], array($page)) : islandora_paged_content_ocr_combine(array($page), $context['sandbox']['consolidated_ocr']);
   $finished_message = array('Created OCR with @pages pages.', array('@pages' => count($context['results']['pages'])));
   if (islandora_paged_content_end_batch_operation($context, 1, $finished_message)) {
-    islandora_paged_content_update_datastream($paged_content, $context['sandbox']['consolidated_ocr'], 'OCR');
+    islandora_paged_content_update_datastream($paged_content, $context['sandbox']['consolidated_ocr'], 'OCR', 'Consolidated OCR', 'text/plain');
     $context['results']['files'][] = $context['sandbox']['consolidated_ocr'];
   }
   $context['message'] = t('Adding page @page of @total to the OCR ...', array(
@@ -625,7 +626,7 @@ function islandora_paged_content_consolidate_missing_ocr_batch_operation(&$conte
         $datastream = $object->constructDatastream('OCR');
         $datastream->label = 'Consolidated OCR';
         $datastream->mimetype = 'text/plain';
-        $datastream->setContentFromString(rtrim($sandbox['consolidated_ocr']));
+        $datastream->setContentFromFile($sandbox['consolidated_ocr']);
         $object->ingestDatastream($datastream);
         $sandbox['objects_completed']++;
         $context['message'] = "{$sandbox['objects_completed']}/{$sandbox['total']}: Consolidated OCR datastream for {$object->label} ({$object->id}, {$object->models[0]}).";

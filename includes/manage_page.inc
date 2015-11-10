@@ -118,10 +118,12 @@ function islandora_paged_content_manage_page_ocr_form_submit(array $form, array 
     'language' => $form_state['values']['language'],
     'preprocess' => FALSE,
   );
-  $ocr = islandora_paged_content_page_derive_ocr_datastreams($object, $options);
-  $message = $ocr ? 'Successfully performed OCR.' : 'Failed to perform OCR.';
-  $type = $ocr ? 'status' : 'error';
-  drupal_set_message(t('%message', array('%message' => $message)), $type);
+  if (islandora_paged_content_page_derive_ocr_datastreams($object, $options)) {
+    drupal_set_message(t('Successfully performed OCR.'), 'status');
+  }
+  else {
+    drupal_set_message(t('Failed to perform OCR.'), 'error');
+  }
 }
 
 /**
