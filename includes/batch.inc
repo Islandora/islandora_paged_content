@@ -256,7 +256,12 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
         $context['results']['successful'][] = islandora_paged_content_update_datastream($page, $result, $dsid);
       }
     }
-    islandora_paged_content_end_batch_operation($context, 1, array('Derived @successful of @total OCR/HOCR datastreams.'));
+    islandora_paged_content_end_batch_operation($context, 1, array(
+      'Derived @generated of @attempted OCR/HOCR datastreams.',
+      array(
+        '@attempted' => count($context['results']['successful']),
+        '@generated' => count(array_filter($context['results']['successful'])),
+      )));
     $context['message'] = t('Performing OCR on page @page of @total ...', array(
                             '@page' => $context['sandbox']['progress'],
                             '@total' => $context['sandbox']['total']));
