@@ -78,6 +78,7 @@ class PDFToTextTestCase extends DrupalUnitTestCase {
     $this->assertEqual(file_get_contents($test_mcmaster_text_uri), file_get_contents($fixture_text_mcmaster), 'The extracted text matches the contents of the McMaster fixture.');
     file_unmanaged_delete($test_mcmaster_text_uri);
   }
+
   /**
    * Test that a non-valid URI returns FALSE.
    */
