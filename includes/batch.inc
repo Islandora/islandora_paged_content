@@ -257,10 +257,10 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
       }
     }
     islandora_paged_content_end_batch_operation($context, 1, array(
-      'Derived @generated of @attempted OCR/HOCR datastreams.',
+      'Derived @successful of @total OCR/HOCR datastreams.',
       array(
-        '@attempted' => count($context['results']['successful']),
-        '@generated' => count(array_filter($context['results']['successful'])),
+        '@total' => count($context['results']['successful']),
+        '@successful' => count(array_filter($context['results']['successful'])),
       )));
     $context['message'] = t('Performing OCR on page @page of @total ...', array(
                             '@page' => $context['sandbox']['progress'],
@@ -658,8 +658,9 @@ function islandora_paged_content_consolidate_missing_ocr_batch_operation(&$conte
     }
   }
   else {
-    $context['message'] = "No missing OCR found on paged content objects.";
+    $context['message'] = t("No missing OCR found on paged content objects.");
     $context['finished'] = 1;
+    return;
   }
   $context['finished'] = $sandbox['objects_completed'] / $sandbox['total'];
 }
