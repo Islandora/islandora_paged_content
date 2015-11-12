@@ -139,7 +139,6 @@ function islandora_paged_content_aggregate_ocr_derivative(AbstractObject $object
       array_keys(islandora_paged_content_get_pages($object)),
       array('aggregate_ocr' => TRUE)
     );
-    $batch['operations'][] = array('islandora_paged_content_remove_ocr_flag', array($object));
     batch_set($batch);
   }
 }

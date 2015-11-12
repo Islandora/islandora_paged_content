@@ -257,10 +257,10 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
       }
     }
     islandora_paged_content_end_batch_operation($context, 1, array(
-      'Derived @successful of @total OCR/HOCR datastreams.',
+      'Derived @derived of @set_size OCR/HOCR datastreams.',
       array(
-        '@total' => count($context['results']['successful']),
-        '@successful' => count(array_filter($context['results']['successful'])),
+        '@set_size' => count($context['results']['successful']),
+        '@derived' => count(array_filter($context['results']['successful'])),
       )));
     $context['message'] = t('Performing OCR on page @page of @total ...', array(
                             '@page' => $context['sandbox']['progress'],
@@ -293,8 +293,10 @@ function islandora_paged_content_create_ocr_paged_content_batch_operation($paged
   $context['results']['successful'][] = $append ? islandora_paged_content_ocr_append($context['sandbox']['consolidated_ocr'], array($page)) : islandora_paged_content_ocr_combine(array($page), $context['sandbox']['consolidated_ocr']);
   $finished_message = array('Created OCR with @pages pages.', array('@pages' => count($context['results']['pages'])));
   if (islandora_paged_content_end_batch_operation($context, 1, $finished_message)) {
+    module_load_include('inc', 'islandora_paged_content', 'includes/derivatives');
     islandora_paged_content_update_datastream($paged_content, $context['sandbox']['consolidated_ocr'], 'OCR', 'Consolidated OCR', 'text/plain');
     $context['results']['files'][] = $context['sandbox']['consolidated_ocr'];
+    islandora_paged_content_remove_ocr_flag($paged_content);
   }
   $context['message'] = t('Adding page @page of @total to the OCR ...', array(
                           '@page' => $context['sandbox']['progress'],
