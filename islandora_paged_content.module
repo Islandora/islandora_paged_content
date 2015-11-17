@@ -251,3 +251,15 @@ function islandora_paged_content_islandora_object_ingested(AbstractObject $objec
     islandora_paged_content_cleanup_source_pdf($object->id);
   }
 }
+
+/**
+ * Implements hook_islandora_solr_query().
+ */
+function islandora_paged_content_islandora_solr_query($islandora_solr_query) {
+  if (variable_get('islandora_paged_content_hide_pages_solr', FALSE)) {
+    $fq = variable_get('islandora_paged_content_solr_fq', '-RELS_EXT_isPageOf_uri_ms:[* TO *]');
+    if (!empty($fq)) {
+      $islandora_solr_query->solrParams['fq'][] = $fq;
+    }
+  }
+}

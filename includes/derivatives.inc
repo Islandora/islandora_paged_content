@@ -128,6 +128,22 @@ function islandora_paged_content_aggregate_pdf_derivative(AbstractObject $object
 }
 
 /**
+ * Creates an OCR file of all the pages on a paged content object.
+ */
+function islandora_paged_content_aggregate_ocr_derivative(AbstractObject $object, $force = TRUE) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  module_load_include('inc', 'islandora_paged_content', 'includes/batch');
+  if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'create_ocr', 'true', TRUE) || $force) {
+    $batch = islandora_paged_content_create_ocr_batch(
+      $object,
+      array_keys(islandora_paged_content_get_pages($object)),
+      array('aggregate_ocr' => TRUE)
+    );
+    batch_set($batch);
+  }
+}
+
+/**
  * Removes the PDF derivative creation flag.
  *
  * @param AbstractObject $object
@@ -145,4 +161,24 @@ function islandora_paged_content_remove_pdf_flag(AbstractObject $object) {
  */
 function islandora_paged_content_set_pdf_flag(AbstractObject $object) {
   $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'create_pdf', 'true', RELS_TYPE_PLAIN_LITERAL);
+}
+
+/**
+ * Removes the OCR derivative creation flag.
+ *
+ * @param AbstractObject $object
+ *   The object to remove the relationship from.
+ */
+function islandora_paged_content_remove_ocr_flag(AbstractObject $object) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'create_ocr', 'true', RELS_TYPE_PLAIN_LITERAL);
+}
+
+/**
+ * Sets the OCR derivative creation flag.
+ *
+ * @param AbstractObject $object
+ *   The object to set the relationship on.
+ */
+function islandora_paged_content_set_ocr_flag(AbstractObject $object) {
+  $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'create_ocr', 'true', RELS_TYPE_PLAIN_LITERAL);
 }

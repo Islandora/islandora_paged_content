@@ -183,6 +183,13 @@ function islandora_paged_content_manage_pages_ocr_form(array $form, array &$form
       '#description' => t('Please select the language the pages are written in.'),
       '#options' => $languages,
     ),
+    'aggregate_ocr' => array(
+      '#access' => $can_derive,
+      '#type' => 'checkbox',
+      '#title' => t('Aggregate OCR to the Parent'),
+      '#description' => t('Check this to aggregate a consolidated OCR datastream generated from each page and append it to the current object.'),
+      '#default_value' => FALSE,
+    ),
     'submit' => array(
       '#disabled' => !$can_derive,
       '#type' => 'submit',
@@ -205,6 +212,7 @@ function islandora_paged_content_manage_pages_ocr_form_submit(array $form, array
   $options = array(
     'language' => $form_state['values']['language'],
     'preprocess' => FALSE,
+    'aggregate_ocr' => $form_state['values']['aggregate_ocr'],
   );
   $batch = islandora_paged_content_create_ocr_batch($object, $pages, $options);
   batch_set($batch);

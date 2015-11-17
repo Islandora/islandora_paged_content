@@ -212,10 +212,10 @@ function islandora_paged_content_create_pdf_paged_content_batch_operation($paged
  *   The batch definition.
  */
 function islandora_paged_content_create_ocr_batch(AbstractObject $paged_content, array $pages, array $options) {
-  return array(
+  $return = array(
     'operations' => array(
       array('islandora_paged_content_create_ocr_batch_operation', array(
-          $pages, $options)),
+        $pages, $options)),
     ),
     'finished' => 'islandora_paged_content_batch_finished',
     'title' => t('Performing OCR on @label ...', array('@label' => $paged_content->label)),
@@ -224,10 +224,14 @@ function islandora_paged_content_create_ocr_batch(AbstractObject $paged_content,
     'error_message' => t('An error has occurred.'),
     'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
   );
+  if ($options['aggregate_ocr']) {
+    $return['operations'][] = array('islandora_paged_content_create_ocr_paged_content_batch_operation', array($paged_content->id));
+  }
+  return $return;
 }
 
 /**
- * Batch operation for createing the OCR and HOCR.
+ * Batch operation for creating the OCR and HOCR.
  *
  * @param array $pages
  *   All the pages to perform OCR on.
@@ -241,13 +245,64 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
   $page = islandora_paged_content_start_batch_operation($pages, $context);
   if ($page) {
     $page = islandora_object_load($page);
-    $context['results']['successful'][] = islandora_paged_content_page_derive_ocr_datastreams($page, $options);
-    islandora_paged_content_end_batch_operation($context, 1, array('Performed OCR on @successful of @total pages.'));
+    $ocr = islandora_paged_content_page_generate_ocr_datastreams($page, $options, FALSE);
+    foreach ($ocr as $dsid => $result) {
+      if ($result !== FALSE) {
+        $context['results']['files'][] = $result;
+        // OCR files will be required for concatenation.
+        if ($dsid == 'OCR') {
+          $context['results']['pages'][] = $result;
+        }
+        $context['results']['successful'][] = islandora_paged_content_update_datastream($page, $result, $dsid);
+      }
+    }
+    islandora_paged_content_end_batch_operation($context, 1, array(
+      'Derived @derived of @set_size OCR/HOCR datastreams.',
+      array(
+        '@set_size' => count($context['results']['successful']),
+        '@derived' => count(array_filter($context['results']['successful'])),
+      )));
     $context['message'] = t('Performing OCR on page @page of @total ...', array(
                             '@page' => $context['sandbox']['progress'],
                             '@total' => $context['sandbox']['total']));
   }
 }
+
+/**
+ * Batch operation for consolidating OCR.
+ *
+ * @param string $paged_content_id
+ *   The paged content identifier to store the OCR.
+ * @param array $context
+ *   The context of this batch operation.
+ */
+function islandora_paged_content_create_ocr_paged_content_batch_operation($paged_content_id, &$context) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $paged_content = islandora_object_load($paged_content_id);
+  if (empty($context['results']['pages'])) {
+    return;
+  }
+  $page = islandora_paged_content_start_batch_operation($context['results']['pages'], $context);
+  $append = FALSE;
+  if ($context['sandbox']['progress'] == 0) {
+    // Opting to write the consolidated OCR to the filesystem to avoid issues
+    // with PHP's memory limit on massive books.
+    $context['sandbox']['consolidated_ocr'] = drupal_tempnam("temporary://", "{$paged_content->id}_OCR.txt");
+    $append = TRUE;
+  }
+  $context['results']['successful'][] = $append ? islandora_paged_content_ocr_append($context['sandbox']['consolidated_ocr'], array($page)) : islandora_paged_content_ocr_combine(array($page), $context['sandbox']['consolidated_ocr']);
+  $finished_message = array('Created OCR with @pages pages.', array('@pages' => count($context['results']['pages'])));
+  if (islandora_paged_content_end_batch_operation($context, 1, $finished_message)) {
+    module_load_include('inc', 'islandora_paged_content', 'includes/derivatives');
+    islandora_paged_content_update_datastream($paged_content, $context['sandbox']['consolidated_ocr'], 'OCR', 'Consolidated OCR', 'text/plain');
+    $context['results']['files'][] = $context['sandbox']['consolidated_ocr'];
+    islandora_paged_content_remove_ocr_flag($paged_content);
+  }
+  $context['message'] = t('Adding page @page of @total to the OCR ...', array(
+                          '@page' => $context['sandbox']['progress'],
+                          '@total' => $context['sandbox']['total']));
+}
+
 
 /**
  * Gets the batch definition for creating TN, JPG, JP2 datastreams.
@@ -536,4 +591,107 @@ function islandora_paged_content_create_page_from_pdf_batch_operation(array $pag
       '@total' => $context['sandbox']['total']));
 
   }
+}
+
+/**
+ * Batch definition for consolidating missing OCR.
+ */
+function islandora_paged_content_consolidate_missing_ocr_batch() {
+  return array(
+    'title' => t('Batch Consolidate Missing OCR'),
+    'init_message' => t('Preparing to consolidate missing OCR ...'),
+    'progress_message' => t('Time elapsed: @elapsed <br/>Estimated time remaining: @estimate.'),
+    'error_message' => t('An error has occured.'),
+    'file' => drupal_get_path('module', 'islandora_paged_content') . '/includes/batch.inc',
+    'operations' => array(
+      array('islandora_paged_content_consolidate_missing_ocr_batch_operation', array()),
+    ),
+  );
+}
+
+/**
+ * Batch operation for consolidating missing OCR.
+ */
+function islandora_paged_content_consolidate_missing_ocr_batch_operation(&$context) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $connection = islandora_get_tuque_connection();
+  $repository = $connection->repository;
+  $sandbox = &$context['sandbox'];
+  if (empty($sandbox)) {
+    $context['finished'] = 0;
+    $sandbox['objects_completed'] = 0;
+    $sandbox['objects'] = islandora_paged_content_get_missing_ocr_paged_content_objects();
+    $sandbox['total'] = count($sandbox['objects']);
+  }
+
+  if (!empty($sandbox['objects'])) {
+    // If no pages are left to consolidate, append and move on to the next page.
+    if (empty($sandbox['current_pages'])) {
+      // Skip this step for the first object.
+      if (isset($sandbox['current_object'])) {
+        $object = islandora_object_load($sandbox['current_object']);
+        $datastream = $object->constructDatastream('OCR');
+        $datastream->label = 'Consolidated OCR';
+        $datastream->mimetype = 'text/plain';
+        $datastream->setContentFromFile($sandbox['consolidated_ocr']);
+        $object->ingestDatastream($datastream);
+        $sandbox['objects_completed']++;
+        $context['message'] = "{$sandbox['objects_completed']}/{$sandbox['total']}: Consolidated OCR datastream for {$object->label} ({$object->id}, {$object->models[0]}).";
+      }
+      if (isset($sandbox['objects'][$sandbox['objects_completed']])) {
+        $sandbox['current_object'] = $sandbox['objects'][$sandbox['objects_completed']];
+        $sandbox['current_pages'] = islandora_paged_content_get_pages(islandora_object_load($sandbox['current_object']));
+        $sandbox['consolidated_ocr'] = drupal_tempnam("temporary://", "{$sandbox['current_object']}_OCR.txt");
+      }
+    }
+    // Otherwise splice off 10 at most, and append them to the consolidated OCR.
+    foreach (array_splice($sandbox['current_pages'], 0, min(10, count($sandbox['current_pages']))) as $pid => $page) {
+      $page_ocr = islandora_datastream_load('OCR', $pid);
+      if (!is_null($page_ocr)) {
+        file_put_contents($sandbox['consolidated_ocr'], $page_ocr->content, FILE_APPEND);
+      }
+      else {
+        watchdog('islandora_paged_content',
+          'Failed to load OCR datastream from @page; skipping.',
+          array('@page' => $pid),
+          WATCHDOG_WARNING
+        );
+      }
+    }
+  }
+  else {
+    $context['message'] = t("No missing OCR found on paged content objects.");
+    $context['finished'] = 1;
+    return;
+  }
+  $context['finished'] = $sandbox['objects_completed'] / $sandbox['total'];
+}
+
+/**
+ * Gets PIDS of paged content objects with no OCR datastream.
+ */
+function islandora_paged_content_get_missing_ocr_paged_content_objects() {
+  // Base query.
+  $query = <<<EOQ
+PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
+SELECT DISTINCT ?pid
+FROM <#ri>
+WHERE {
+  ?page islandora-rels-ext:isPageOf ?pid
+  OPTIONAL {
+    ?ds <fedora-view:disseminationType> <info:fedora/*/OCR> .
+    ?pid <info:fedora/fedora-system:def/view#disseminates> ?ds
+  }
+  FILTER(!BOUND(?ds))
+}
+EOQ;
+
+  // Make the query.
+  $connection = islandora_get_tuque_connection();
+  $results = $connection->repository->ri->sparqlQuery($query);
+  $return = array();
+  foreach ($results as $result) {
+    $return[] = $result['pid']['value'];
+  }
+  return $return;
 }
