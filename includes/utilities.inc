@@ -21,23 +21,59 @@
  *   number. Each an array containing info.
  */
 function islandora_paged_content_get_pages(AbstractObject $object) {
-  $query = <<<EOQ
-PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
-SELECT ?pid ?page ?label ?width ?height
-FROM <#ri>
-WHERE {
-  ?pid <fedora-rels-ext:isMemberOf> <info:fedora/{$object->id}> ;
-       <fedora-model:label> ?label ;
-       islandora-rels-ext:isSequenceNumber ?page ;
-       <fedora-model:state> <fedora-model:Active> .
-  OPTIONAL {
-    ?pid <fedora-view:disseminates> ?dss .
-    ?dss <fedora-view:disseminationType> <info:fedora/*/JP2> ;
-         islandora-rels-ext:width ?width ;
-         islandora-rels-ext:height ?height .
- }
+  $pages = array();
+  // Try to use Solr first if enabled, or default to the RI if the Solr query
+  // fails for some reason.
+  if (variable_get('islandora_paged_content_use_solr_for_dimensions', FALSE)) {
+    $pages = islandora_paged_content_get_pages_solr($object);
+    if (empty($pages)) {
+      $pages = islandora_paged_content_get_pages_ri($object);
+    }
+  }
+  else {
+    $pages = islandora_paged_content_get_pages_ri($object);
+  }
+  // Sort the pages into their proper order.
+  $sort = function($a, $b) {
+    $a = (is_array($a) && isset($a['page'])) ? $a['page'] : 0;
+    $b = (is_array($b) && isset($b['page'])) ? $b['page'] : 0;
+    if ($a == $b) {
+      return 0;
+    }
+    return ($a < $b) ? -1 : 1;
+  };
+  uasort($pages, $sort);
+  return $pages;
 }
-ORDER BY ?page
+
+/**
+ * Helper function to retrieve the pages and dimensions from the RI.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing a book.
+ *
+ * @return array
+ *   All the pages in the given paged content object. Ordered by sequence
+ *   number. Each an array containing info.
+ */
+function islandora_paged_content_get_pages_ri($object) {
+  $query = <<<EOQ
+  PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
+  SELECT ?pid ?page ?label ?width ?height
+  FROM <#ri>
+  WHERE {
+    ?pid <fedora-rels-ext:isMemberOf> <info:fedora/{$object->id}> ;
+         <fedora-model:label> ?label ;
+         islandora-rels-ext:isSequenceNumber ?page ;
+         <fedora-model:state> <fedora-model:Active> .
+    OPTIONAL {
+      ?pid <fedora-view:disseminates> ?dss .
+      ?dss <fedora-view:disseminationType> <info:fedora/*/JP2> ;
+           islandora-rels-ext:width ?width ;
+           islandora-rels-ext:height ?height .
+   }
+  }
+  ORDER BY ?page
 EOQ;
 
   $results = $object->repository->ri->sparqlQuery($query);
@@ -63,18 +99,53 @@ EOQ;
   // If we have some pages, combine our remapped results to produce an array
   // mapping pids to the values for that pid.
   $pages = count($pids) ? array_combine($pids, $pages) : array();
+  return $pages;
+}
 
-  // Sort the pages into their proper order.
-  $sort = function($a, $b) {
-    $a = (is_array($a) && isset($a['page'])) ? $a['page'] : 0;
-    $b = (is_array($b) && isset($b['page'])) ? $b['page'] : 0;
-    if ($a == $b) {
-      return 0;
+/**
+ * Helper function to retrieve the pages and dimensions from Solr.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing a book.
+ *
+ * @return array
+ *   All the pages in the given paged content object. Ordered by sequence
+ *   number. Each an array containing info.
+ */
+function islandora_paged_content_get_pages_solr(AbstractObject $object) {
+  $pages = array();
+  $qp = new islandoraSolrQueryProcessor();
+  $qp->buildQuery(format_string('@field:"@pid"', array(
+      '@field' => variable_get('islandora_solr_member_of_field', 'RELS_EXT_isMemberOf_uri_ms'),
+      '@pid' => "info:fedora/{$object->id}")
+  ));
+  $label_field = variable_get('islandora_solr_object_label_field', 'fgs_label_s');
+  $sequence_field = variable_get('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms');
+  $height_field = variable_get('islandora_paged_content_solr_height_field', 'RELS_INT_height_literal_s');
+  $width_field = variable_get('islandora_paged_content_solr_width_field', 'RELS_INT_width_literal_s');
+  $qp->solrParams['fl'] = implode(', ', array(
+    'PID',
+    $label_field,
+    $sequence_field,
+    $height_field,
+    $width_field,
+  ));
+  $qp->executeQuery(FALSE);
+  if ($qp->islandoraSolrResult['response']['numFound'] > 0) {
+    foreach ($qp->islandoraSolrResult['response']['objects'] as $page) {
+      $pages[$page['PID']] = array(
+        'pid' => $page['PID'],
+        'page' => (string) reset($page['solr_doc'][$sequence_field]),
+        'label' => $page['object_label'],
+      );
+      if (isset($page['solr_doc'][$width_field])) {
+        $pages[$page['PID']]['width'] = $page['solr_doc'][$width_field];
+      }
+      if (isset($page['solr_doc'][$height_field])) {
+        $pages[$page['PID']]['height'] = $page['solr_doc'][$height_field];
+      }
     }
-    return ($a < $b) ? -1 : 1;
-  };
-  uasort($pages, $sort);
-
+  }
   return $pages;
 }
 

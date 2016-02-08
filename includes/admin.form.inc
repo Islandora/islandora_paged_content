@@ -116,7 +116,34 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
       '#description' => t('The page or sequence number of each page or image.'),
       '#default_value' => $get_default_value('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms'),
     ),
-
+    'islandora_paged_content_use_solr_for_dimensions' => array(
+      '#access' => $solr_enabled,
+      '#type' => 'checkbox',
+      '#title' => t('Use Solr to derive pages and sequence numbers'),
+      '#default_value' => $get_default_value('islandora_paged_content_use_solr_for_dimensions', FALSE),
+    ),
+    'islandora_paged_content_solr_width_field' => array(
+      '#access' => $solr_enabled,
+      '#type' => 'textfield',
+      '#title' => t('Solr width dimension field'),
+      '#default_value' => $get_default_value('islandora_paged_content_solr_width_field', 'RELS_INT_width_literal_s'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="islandora_paged_content_use_solr_for_dimensions"]' => array('checked' => TRUE),
+        ),
+      ),
+    ),
+    'islandora_paged_content_solr_height_field' => array(
+      '#access' => $solr_enabled,
+      '#type' => 'textfield',
+      '#title' => t('Solr height dimension field'),
+      '#default_value' => $get_default_value('islandora_paged_content_solr_height_field', 'RELS_INT_height_literal_s'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="islandora_paged_content_use_solr_for_dimensions"]' => array('checked' => TRUE),
+        ),
+      ),
+    ),
     'islandora_paged_content_page_label' => array(
       '#type' => 'checkbox',
       '#title' => t('Set page labels to sequence numbers'),
