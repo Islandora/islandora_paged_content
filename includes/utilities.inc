@@ -24,7 +24,7 @@ function islandora_paged_content_get_pages(AbstractObject $object) {
   $pages = array();
   // Try to use Solr first if enabled, or default to the RI if the Solr query
   // fails for some reason.
-  if (variable_get('islandora_paged_content_use_solr_for_dimensions', FALSE)) {
+  if (module_exists('islandora_solr') && variable_get('islandora_paged_content_use_solr_for_dimensions', FALSE)) {
     $pages = islandora_paged_content_get_pages_solr($object);
     if (empty($pages)) {
       $pages = islandora_paged_content_get_pages_ri($object);
@@ -56,7 +56,7 @@ function islandora_paged_content_get_pages(AbstractObject $object) {
  *   All the pages in the given paged content object. Ordered by sequence
  *   number. Each an array containing info.
  */
-function islandora_paged_content_get_pages_ri($object) {
+function islandora_paged_content_get_pages_ri(AbstractObject $object) {
   $query = <<<EOQ
   PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
   SELECT ?pid ?page ?label ?width ?height
