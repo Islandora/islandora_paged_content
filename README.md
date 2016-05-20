@@ -23,9 +23,12 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 Set the path for `gs` (GhostScript), the externally accessible Djatoka URL, and the 'Solr page sequence number field' in Administration » Islandora » Solution pack configuration » Paged Content Module (admin/islandora/solution_pack_config/paged_content).
 
-![Configuration](https://camo.githubusercontent.com/4c77e6b169000c28ab76eb6e1917701a7ac158cd/687474703a2f2f692e696d6775722e636f6d2f586a6f6a6936522e706e67)
+![Configuration](https://camo.githubusercontent.com/3dc4302d5d459ecf9d6b253be397d446243afde9/687474703a2f2f692e696d6775722e636f6d2f545a65423973772e706e67)
 
 There is an option to set the page label to the page's sequence number. On ingest, each page's label will be set to its sequence number. When reordering pages, all of the page labels will be updated with the new sequence numbers.
+
+You can also hide pages contained in a book the search results, so that only the parent object is returned.  If you use this option, make sure that you check the "Aggregate OCR?" box when ingesting your books.  
+Otherwise, the book object will not receive an OCR datastream, and will not be returned in search results. 
 
 ## Documentation
 
