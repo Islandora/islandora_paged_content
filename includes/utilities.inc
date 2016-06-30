@@ -130,6 +130,7 @@ function islandora_paged_content_get_pages_solr(AbstractObject $object) {
     $height_field,
     $width_field,
   ));
+  $qp->solrStart = 0;
   $qp->solrLimit = 100000;
   $qp->executeQuery(FALSE);
   if ($qp->islandoraSolrResult['response']['numFound'] > 0) {
