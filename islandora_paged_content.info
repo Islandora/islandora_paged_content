@@ -6,5 +6,5 @@ files[] = tests/pdfinfo.test
 files[] = tests/pdftotext.test
 files[] = tests/ghostscript.test
 package = Islandora Solution Packs
-version = 7.x-dev
+version = 7.x-1.8
 core = 7.x
