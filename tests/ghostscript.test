@@ -5,7 +5,7 @@
  * Unit tests for tools extracting PDF into paged content and individual pages.
  */
 
-class GhostscriptTestCase extends DrupalUnitTestCase {
+class GhostscriptTestCase extends DrupalWebTestCase {
 
   /**
    * Gets info to display to describe this test.

@@ -5,7 +5,7 @@
  * Unit tests for tools extracting a PDF's text for use in OCR.
  */
 
-class PDFToTextTestCase extends DrupalUnitTestCase {
+class PDFToTextTestCase extends DrupalWebTestCase {
 
   /**
    * Gets info to display to describe this test.
