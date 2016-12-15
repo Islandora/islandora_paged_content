@@ -5,7 +5,7 @@
  * Unit tests for tools extracting PDF into paged content and individual pages.
  */
 
-class PDFInfoTestCase extends DrupalUnitTestCase {
+class PDFInfoTestCase extends DrupalWebTestCase {
 
   /**
    * Gets info to display to describe this test.
