@@ -595,7 +595,7 @@ function islandora_paged_content_zipped_upload_form(array $form, array &$form_st
       '#type' => 'textfield',
       '#title' => t('Last sequence number'),
       '#default_value' => $last_page_number,
-      '#description' => check_plain($message),
+      '#description' => $message,
       '#size' => 5,
     );
   }
