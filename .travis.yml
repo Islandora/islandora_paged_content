@@ -25,6 +25,10 @@ before_install:
   - sudo sh $TRAVIS_BUILD_DIR/tests/scripts/poppler-utils-install.sh
   - sudo sh $TRAVIS_BUILD_DIR/tests/scripts/ghostscript-install.sh
   - drush en --yes islandora_paged_content
+before_script:
+
+  # Mysql might time out for long tests, increase the wait timeout.
+  - mysql -e 'SET @@GLOBAL.wait_timeout=1200'
 script:
   - ant -buildfile sites/all/modules/islandora_paged_content/build.xml lint
   - $ISLANDORA_DIR/tests/scripts/line_endings.sh sites/all/modules/islandora_paged_content
