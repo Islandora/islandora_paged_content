@@ -996,7 +996,7 @@ function islandora_paged_content_manage_hascover_form(array $form, array &$form_
     'has_cover' => array(
       '#type' => 'radios',
       '#title' => t('Book cover?'),
-      '#description' => t('This affects how Viewers display first page in a sequence. If set to \'Without Cover\', first page will be showed on the left side for a Left-to-Right progression, basically starting with a full 2 page spread if using a \'Paged\' view mode hint.'),
+      '#description' => t('This affects how Paged CMODEL Viewers display first page in a sequence. If set to \'Without Cover\', the first page will be showed on the left side for a Left-to-Right progression, which means starting with a full 2 page spread when using a \'Paged\' Wiew mode hint.'),
       '#options' => array(
         'true' => t('Has Cover or first recto (default)'),
         'false' => t('Without Cover'),
