@@ -947,11 +947,6 @@ function islandora_paged_content_manage_viewing_hint_form(array $form, array &$f
     'submit' => array(
       '#type' => 'submit',
       '#value' => t('Set Viewing Mode hint'),
-      '#states' => array(
-        'invisible' => array(
-         ':input[name="viewing_hint"]' => array('value' => 'notset'),
-        ),
-      ),
     ),
   );
 }
@@ -1003,11 +998,6 @@ function islandora_paged_content_manage_hascover_form(array $form, array &$form_
     'submit' => array(
       '#type' => 'submit',
       '#value' => t('Set Book Cover presence'),
-      '#states' => array(
-      'invisible' => array(
-         ':input[name="has_cover"]' => array('value' => 'true'),
-        ),
-      ),
     ),
   );
 }
