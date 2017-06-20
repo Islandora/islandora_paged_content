@@ -990,6 +990,7 @@ function islandora_paged_content_manage_hascover_form(array $form, array &$form_
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $hascover = islandora_paged_content_get_hascover($object);
   $hascover = isset($hascover) ? 'true' : 'false';
+  dpm($hascover);
   $form_state['pid'] = $object->id;
   return array(
     'has_cover' => array(
