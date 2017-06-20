@@ -1420,8 +1420,8 @@ function islandora_paged_content_unset_viewing_hint(AbstractObject $object) {
  * @param AbstractObject $object
  *   The paged content object to fetch the hasCover property from.
  *
- * @return boolean 
-*   False if the book starts with a 2 page spread.
+ * @return string 
+*   'false' if the book starts with a 2 page spread.
  */
 function islandora_paged_content_get_hascover(AbstractObject $object) {
   $relationships = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasCover');
@@ -1432,7 +1432,7 @@ function islandora_paged_content_get_hascover(AbstractObject $object) {
   else {
     // default will be true since most books have covers or at
     // least a first recto.
-    return true;
+    return 'true';
   }
 }
 
@@ -1445,7 +1445,7 @@ function islandora_paged_content_get_hascover(AbstractObject $object) {
  * @param string $hascover
  *   If the book has or nor a cover or first recto.
  */
-function islandora_paged_content_set_hascover(AbstractObject $object, $hascover = true) {
+function islandora_paged_content_set_hascover(AbstractObject $object, $hascover = 'true') {
   $existing_relationship = islandora_paged_content_get_hascover($object);
   if ($existing_relationship != $hascover) {
     islandora_paged_content_unset_hascover($object);
