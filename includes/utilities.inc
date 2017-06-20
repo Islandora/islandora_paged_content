@@ -1452,6 +1452,7 @@ function islandora_paged_content_set_hascover(AbstractObject $object, $hascover 
   $existing_relationship = islandora_paged_content_get_hascover($object);
   if ($existing_relationship != $hascover) {
     islandora_paged_content_unset_hascover($object);
+    dpm($hascover);
     $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'hasCover', $hascover, RELS_TYPE_PLAIN_LITERAL);
   }
 }
