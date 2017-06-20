@@ -968,7 +968,7 @@ function islandora_paged_content_manage_viewing_hint_form_submit($form, &$form_s
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $object = islandora_object_load($form_state['pid']);
   $viewing_hint = $form_state['values']['viewing_hint'] == 'notset' ? null : $form_state['values']['viewing_hint'];
-  islandora_paged_content_set_viewing_hiny($object, $viewing_hint);
+  islandora_paged_content_set_viewing_hint($object, $viewing_hint);
   drupal_set_message(t('Viewing Mode hint updated.'));
 }
 
