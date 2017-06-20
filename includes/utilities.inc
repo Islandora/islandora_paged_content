@@ -1428,6 +1428,7 @@ function islandora_paged_content_unset_viewing_hint(AbstractObject $object) {
  */
 function islandora_paged_content_get_hascover(AbstractObject $object) {
   $relationships = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasCover');
+  dpm($relationships);
   if (!empty($relationships)) {
     $hascover = reset($relationships);
     return $hascover['object']['value'];
