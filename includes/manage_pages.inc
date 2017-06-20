@@ -1003,7 +1003,7 @@ function islandora_paged_content_manage_hascover_form(array $form, array &$form_
     ),
     'submit' => array(
       '#type' => 'submit',
-      '#value' => t('Set Book cover presence'),
+      '#value' => t('Set Book Cover presence'),
       '#states' => array(
         'disabled' => array(
          ':input[name="has_cover"]' => array('value' => 'true'),
@@ -1025,6 +1025,6 @@ function islandora_paged_content_manage_hascover_form_submit($form, &$form_state
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $object = islandora_object_load($form_state['pid']);
   $hascover = $form_state['values']['has_cover'] == 'true' ? true : false;
-  islandora_paged_content_set_hascover($object, $viewing_hint);
+  islandora_paged_content_set_hascover($object, $hascover);
   drupal_set_message(t('Book Cover presence set.'));
 }
