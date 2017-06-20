@@ -1394,7 +1394,7 @@ function islandora_paged_content_get_viewing_hint(AbstractObject $object) {
  */
 function islandora_paged_content_set_viewing_hint(AbstractObject $object, $newhint = 'paged') {
   $existing_relationship = islandora_paged_content_get_viewing_hint($object);
-  if ((isset($existing_relationship) && ($existing_relationship != $newhint)) {
+  if (isset($existing_relationship) && ($existing_relationship != $newhint)) {
     islandora_paged_content_unset_viewing_hint($object);
     $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'viewingHint', $newhint, RELS_TYPE_PLAIN_LITERAL);
   }
