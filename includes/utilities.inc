@@ -1358,3 +1358,107 @@ function islandora_paged_content_create_clean_link($uri, $prefix = 'clean', $des
     return file_unmanaged_copy($uri, $dest);
   }
 }
+
+/**
+ * Gets the viewing hint mode to be used by a viewer from the given paged
+ * content object.
+ *
+ * @param AbstractObject $object
+ *   The paged content object to fetch the page progression from.
+ *
+ * @return mixed
+ *   The viewing hint string @see http://iiif.io/api/presentation/2.1/#viewinghint
+ *   or null if not set.
+ */
+function islandora_paged_content_get_viewing_hint(AbstractObject $object) {
+  $relationships = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'viewingHint');
+  if (!empty($relationships)) {
+    $hint = reset($relationships);
+    return $hint['object']['value'];
+  }
+  else {
+    return null;
+  }
+}
+
+/**
+ * Sets viewing hint mode for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @param string $newhint
+ *   The viewing hint mode: 'paged' and 'individual' are the IA
+ *   bookreader equivalents to 2-up and 1-up.
+ *   @see http://iiif.io/api/presentation/2.1/#viewinghint
+ */
+function islandora_paged_content_set_viewing_hint(AbstractObject $object, $newhint = 'paged') {
+  $existing_relationship = islandora_paged_content_get_viewing_hint($object);
+  if ((isset($existing_relationship) && ($existing_relationship != $newhint)) {
+    islandora_paged_content_unset_viewing_hint($object);
+    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'viewingHint', $newhint, RELS_TYPE_PLAIN_LITERAL);
+  }
+  else if (!isset($newhint) && ($existing_relationship != $newhint)) {
+    // This clears an existing one
+    islandora_paged_content_unset_viewing_hint($object);
+  }
+}
+
+/**
+ * Unsets viewing hint mode for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ */
+function islandora_paged_content_unset_viewing_hint(AbstractObject $object) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'viewingHint');
+}
+
+/**
+ * Gets if the book has a cover or a first recto.
+ *
+ * @param AbstractObject $object
+ *   The paged content object to fetch the hasCover property from.
+ *
+ * @return boolean 
+*   False if the book starts with a 2 page spread.
+ */
+function islandora_paged_content_get_hascover(AbstractObject $object) {
+  $relationships = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasCover');
+  if (!empty($relationships)) {
+    $hascover = reset($relationships);
+    return $hascover['object']['value'];
+  }
+  else {
+    // default will be true since most books have covers or at
+    // least a first recto.
+    return true;
+  }
+}
+
+/**
+ * Marks a book as coverless.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @param string $hascover
+ *   If the book has or nor a cover or first recto.
+ */
+function islandora_paged_content_set_hascover(AbstractObject $object, $hascover = true) {
+  $existing_relationship = islandora_paged_content_get_hascover($object);
+  if ($existing_relationship != $hascover) {
+    islandora_paged_content_unset_hascover($object);
+    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'hasCover', $hascover, RELS_TYPE_PLAIN_LITERAL);
+  }
+}
+
+/**
+ * Unsets hasCover property for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ */
+function islandora_paged_content_unset_hascover(AbstractObject $object) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'hasCover');
+}

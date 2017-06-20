@@ -58,6 +58,22 @@ function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       ),
+      'viewinghint' => array(
+        '#access' => user_access(ISLANDORA_METADATA_EDIT),
+        '#title' => t('Page Progression'),
+        '#type' => 'fieldset',
+        'form' => drupal_get_form('islandora_paged_content_manage_viewing_hint_form', $object),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      ),
+      'hascover' => array(
+        '#access' => user_access(ISLANDORA_METADATA_EDIT),
+        '#title' => t('Book Cover?'),
+        '#type' => 'fieldset',
+        'form' => drupal_get_form('islandora_paged_content_manage_hascover_form', $object),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      ),
       'page_progression' => array(
         '#access' => user_access(ISLANDORA_METADATA_EDIT),
         '#title' => t('Page Progression'),
@@ -896,4 +912,119 @@ function islandora_paged_content_manage_page_progression_form_submit($form, &$fo
   $object = islandora_object_load($form_state['pid']);
   islandora_paged_content_set_page_progression($object, $form_state['values']['page_progression']);
   drupal_set_message(t('Page progression updated.'));
+}
+
+/**
+ * Form handler for setting the Viewing mode hint for a paged content.
+ *
+ * @param array $form
+ *   The Drupal form.
+ * @param array $form_state
+ *   The Drupal form state.
+ * @param AbstractObject $object
+ *   The object to fetch the pages from.
+ *
+ * @return array
+ *   The Drupal form.
+ */
+function islandora_paged_content_manage_viewing_hint_form(array $form, array &$form_state, AbstractObject $object) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $viewing_hint = islandora_paged_content_get_viewing_hint($object);
+  $viewing_hint = isset($viewing_hint) ? $viewing_hint : 'notset';
+  $form_state['pid'] = $object->id;
+  return array(
+    'viewing_hint' => array(
+      '#type' => 'radios',
+      '#title' => t('Viewing Mode hint'),
+      '#Description' => t('This affects how Viewers display pages. E.g \'Paged\' is the equivalent to 2-up Mode in IA Book Reader. If left as \'Not set\', the global option of each viewer will be respected.'),
+      '#options' => array(
+        'notset' => t('Not set'),
+        'paged' => t('Paged'),
+        'individual' => t('Individual'),
+      ),
+      '#default_value' => $viewing_hint,
+    ),
+    'submit' => array(
+      '#type' => 'submit',
+      '#value' => t('Set Viewing Mode hint'),
+      '#states' => array(
+        'disabled' => array(
+         ':input[name="viewing_hint"]' => array('value' => 'notset'),
+        ),
+      ),
+    ),
+  );
+}
+
+/**
+ * Submit handler for setting the Viewing mode hint for paged content.
+ *
+ * @param array $form
+ *   An array representing a form within Drupal.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
+function islandora_paged_content_manage_viewing_hint_form_submit($form, &$form_state) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $object = islandora_object_load($form_state['pid']);
+  $viewing_hint = $form_state['values']['viewing_hint'] == 'notset' ? null : $form_state['values']['viewing_hint'];
+  islandora_paged_content_set_viewing_hiny($object, $viewing_hint);
+  drupal_set_message(t('Viewing Mode hint updated.'));
+}
+
+/**
+ * Form handler for setting the hasCover property flag.
+ *
+ * @param array $form
+ *   The Drupal form.
+ * @param array $form_state
+ *   The Drupal form state.
+ * @param AbstractObject $object
+ *   The object to fetch the pages from.
+ *
+ * @return array
+ *   The Drupal form.
+ */
+function islandora_paged_content_manage_hascover_form(array $form, array &$form_state, AbstractObject $object) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $hascover = islandora_paged_content_get_hascover($object);
+  $hascover = isset($viewing_hint) ? 'true' : 'false';
+  $form_state['pid'] = $object->id;
+  return array(
+    'has_cover' => array(
+      '#type' => 'radios',
+      '#title' => t('Book cover?'),
+      '#Description' => t('This affects how Viewers display first page in a sequence. If set to \'Without cover\', first page will be showed on the left side for a Left-to-Right progression, basically starting with a full 2 page spread if using a \'Paged\' view mode hint.'),
+      '#options' => array(
+        'true' => t('Has cover or first recto.'),
+        'false' => t('Without cover.'),
+      ),
+      '#default_value' => $hascover,
+    ),
+    'submit' => array(
+      '#type' => 'submit',
+      '#value' => t('Set Book cover presence'),
+      '#states' => array(
+        'disabled' => array(
+         ':input[name="has_cover"]' => array('value' => 'true'),
+        ),
+      ),
+    ),
+  );
+}
+
+/**
+ * Submit handler for setting the Viewing mode hint for paged content.
+ *
+ * @param array $form
+ *   An array representing a form within Drupal.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
+function islandora_paged_content_manage_hascover_form_submit($form, &$form_state) {
+  module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+  $object = islandora_object_load($form_state['pid']);
+  $hascover = $form_state['values']['has_cover'] == 'true' ? true : false;
+  islandora_paged_content_set_hascover($object, $viewing_hint);
+  drupal_set_message(t('Book Cover presence set.'));
 }
