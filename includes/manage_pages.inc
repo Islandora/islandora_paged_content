@@ -937,7 +937,7 @@ function islandora_paged_content_manage_viewing_hint_form(array $form, array &$f
     'viewing_hint' => array(
       '#type' => 'radios',
       '#title' => t('Viewing Mode hint'),
-      '#Description' => t('This affects how Viewers display pages. E.g \'Paged\' is the equivalent to 2-up Mode in IA Book Reader. If left as \'Not set\', the global option of each viewer will be respected.'),
+      '#description' => t('This affects how Viewers display pages. E.g \'Paged\' is the equivalent to 2-up Mode in IA Book Reader. If left as \'Not set\', the global option of each viewer will be respected.'),
       '#options' => array(
         'notset' => t('Not set'),
         'paged' => t('Paged'),
@@ -949,7 +949,7 @@ function islandora_paged_content_manage_viewing_hint_form(array $form, array &$f
       '#type' => 'submit',
       '#value' => t('Set Viewing Mode hint'),
       '#states' => array(
-        'disabled' => array(
+        'invisible' => array(
          ':input[name="viewing_hint"]' => array('value' => 'notset'),
         ),
       ),
@@ -996,10 +996,10 @@ function islandora_paged_content_manage_hascover_form(array $form, array &$form_
     'has_cover' => array(
       '#type' => 'radios',
       '#title' => t('Book cover?'),
-      '#Description' => t('This affects how Viewers display first page in a sequence. If set to \'Without cover\', first page will be showed on the left side for a Left-to-Right progression, basically starting with a full 2 page spread if using a \'Paged\' view mode hint.'),
+      '#description' => t('This affects how Viewers display first page in a sequence. If set to \'Without Cover\', first page will be showed on the left side for a Left-to-Right progression, basically starting with a full 2 page spread if using a \'Paged\' view mode hint.'),
       '#options' => array(
-        'true' => t('Has cover or first recto'),
-        'false' => t('Without cover'),
+        'true' => t('Has Cover or first recto (default)'),
+        'false' => t('Without Cover'),
       ),
       '#default_value' => $hascover,
     ),
@@ -1007,10 +1007,7 @@ function islandora_paged_content_manage_hascover_form(array $form, array &$form_
       '#type' => 'submit',
       '#value' => t('Set Book Cover presence'),
       '#states' => array(
-        'hidden' => array(
-         ':input[name="has_cover"]' => array('value' => 'true'),
-        ),
-        'disabled' => array(
+      'invisible' => array(
          ':input[name="has_cover"]' => array('value' => 'true'),
         ),
       ),
@@ -1030,7 +1027,6 @@ function islandora_paged_content_manage_hascover_form_submit($form, &$form_state
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $object = islandora_object_load($form_state['pid']);
   $hascover = $form_state['values']['has_cover'];
-  dpm(array('has_copver_submit', $hascover));
   islandora_paged_content_set_hascover($object, $hascover);
   drupal_set_message(t('Book Cover presence set.'));
 }
