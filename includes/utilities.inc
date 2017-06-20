@@ -1402,6 +1402,9 @@ function islandora_paged_content_set_viewing_hint(AbstractObject $object, $newhi
     // This clears an existing one
     islandora_paged_content_unset_viewing_hint($object);
   }
+  else {
+    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'viewingHint', $newhint, RELS_TYPE_PLAIN_LITERAL);
+  }
 }
 
 /**
