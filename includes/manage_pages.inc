@@ -988,7 +988,6 @@ function islandora_paged_content_manage_viewing_hint_form_submit($form, &$form_s
 function islandora_paged_content_manage_hascover_form(array $form, array &$form_state, AbstractObject $object) {
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $hascover = islandora_paged_content_get_hascover($object);
-  $hascover = isset($hascover) ? 'true' : 'false';
   $form_state['pid'] = $object->id;
   return array(
     'has_cover' => array(
