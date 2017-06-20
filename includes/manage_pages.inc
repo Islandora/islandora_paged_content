@@ -1030,6 +1030,7 @@ function islandora_paged_content_manage_hascover_form_submit($form, &$form_state
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $object = islandora_object_load($form_state['pid']);
   $hascover = $form_state['values']['has_cover'];
+  dpm(array('has_copver_submit', $hascover));
   islandora_paged_content_set_hascover($object, $hascover);
   drupal_set_message(t('Book Cover presence set.'));
 }
