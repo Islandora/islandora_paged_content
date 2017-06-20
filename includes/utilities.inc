@@ -1431,6 +1431,7 @@ function islandora_paged_content_get_hascover(AbstractObject $object) {
   dpm($relationships);
   if (!empty($relationships)) {
     $hascover = reset($relationships);
+    dpm($hascover);
     return $hascover['object']['value'];
   }
   else {
