@@ -1258,7 +1258,8 @@ function islandora_paged_content_can_extract_from_pdf() {
  */
 function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file_obj, $batch = FALSE) {
   module_load_include('inc', 'islandora_paged_content', 'includes/db');
-  if (!isset($object['PDF'])) {
+  $ingest = !isset($object['PDF']);
+  if ($ingest) {
     $pdf = $object->constructDatastream('PDF', 'M');
   }
   else {
@@ -1271,7 +1272,9 @@ function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file
   if ($pdf->mimetype != $file_obj->filemime) {
     $pdf->mimetype = $file_obj->filemime;
   }
-  $object->ingestDatastream($pdf);
+  if ($ingest) {
+    $object->ingestDatastream($pdf);
+  }
   if (!$batch) {
     islandora_paged_content_track_pdf_ingestion($object->id, $file_obj->fid);
   }
