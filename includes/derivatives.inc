@@ -182,3 +182,23 @@ function islandora_paged_content_remove_ocr_flag(AbstractObject $object) {
 function islandora_paged_content_set_ocr_flag(AbstractObject $object) {
   $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'create_ocr', 'true', RELS_TYPE_PLAIN_LITERAL);
 }
+
+/**
+ * Removes the HOCR derivative creation flag.
+ *
+ * @param AbstractObject $object
+ *   The object to remove the relationship from.
+ */
+function islandora_paged_content_remove_hocr_flag(AbstractObject $object) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'create_hocr', 'true', RELS_TYPE_PLAIN_LITERAL);
+}
+
+/**
+ * Sets the HOCR derivative creation flag.
+ *
+ * @param AbstractObject $object
+ *   The object to set the relationship on.
+ */
+function islandora_paged_content_set_hocr_flag(AbstractObject $object) {
+  $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'create_hocr', 'true', RELS_TYPE_PLAIN_LITERAL);
+}
