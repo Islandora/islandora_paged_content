@@ -935,8 +935,8 @@ function islandora_paged_content_manage_viewing_hint_form(array $form, array &$f
   return array(
     'viewing_hint' => array(
       '#type' => 'radios',
-      '#title' => t('Viewing Mode hint'),
-      '#description' => t('This affects how Viewers display pages. E.g \'Paged\' is the equivalent to 2-up Mode in IA Book Reader. If left as \'Not set\', the global option of each viewer will be respected.'),
+      '#title' => t('Viewing Mode Hint'),
+      '#description' => t('This affects how Islandora viewers display page sequences. \'Paged\' here is equivalent to the \'2-up\' mode in IA Book Reader. If left as \'Not set\', global option for each viewer will be respected.'),
       '#options' => array(
         'notset' => t('Not set'),
         'paged' => t('Paged'),
@@ -946,7 +946,7 @@ function islandora_paged_content_manage_viewing_hint_form(array $form, array &$f
     ),
     'submit' => array(
       '#type' => 'submit',
-      '#value' => t('Set Viewing Mode hint'),
+      '#value' => t('Set Viewing Mode Hint'),
     ),
   );
 }
@@ -964,7 +964,7 @@ function islandora_paged_content_manage_viewing_hint_form_submit($form, &$form_s
   $object = islandora_object_load($form_state['pid']);
   $viewing_hint = $form_state['values']['viewing_hint'] == 'notset' ? null : $form_state['values']['viewing_hint'];
   islandora_paged_content_set_viewing_hint($object, $viewing_hint);
-  drupal_set_message(t('Viewing Mode hint updated.'));
+  drupal_set_message(t('Viewing Mode Hint updated.'));
 }
 
 /**
@@ -987,17 +987,17 @@ function islandora_paged_content_manage_hascover_form(array $form, array &$form_
   return array(
     'has_cover' => array(
       '#type' => 'radios',
-      '#title' => t('Book cover?'),
-      '#description' => t('This affects how Paged CMODEL Viewers display first page in a sequence. If set to \'Without Cover\', the first page will be showed on the left side for a Left-to-Right progression, which means starting with a full 2 page spread when using a \'Paged\' Wiew mode hint.'),
+      '#title' => t('Book Cover?'),
+      '#description' => t('This affects how Paged CMODEL Viewers display their first page in a sequence. If set to \'Without Cover\', the first page will be displayed on the left side, for a Left-to-Right progression, which means the display will start with a full 2 page spread. Needs to be used in conjuction with a \'Paged\' View mode hint or the global \'2-up\' setting for the IA Book Reader viewer'),
       '#options' => array(
-        'true' => t('Has Cover or first recto (default)'),
+        'true' => t('Has Cover or First Recto (default)'),
         'false' => t('Without Cover'),
       ),
       '#default_value' => $hascover,
     ),
     'submit' => array(
       '#type' => 'submit',
-      '#value' => t('Set Book Cover presence'),
+      '#value' => t('Set Book Cover Presence'),
     ),
   );
 }
@@ -1015,5 +1015,5 @@ function islandora_paged_content_manage_hascover_form_submit($form, &$form_state
   $object = islandora_object_load($form_state['pid']);
   $hascover = $form_state['values']['has_cover'];
   islandora_paged_content_set_hascover($object, $hascover);
-  drupal_set_message(t('Book Cover presence set.'));
+  drupal_set_message(t('Book Cover Presence set.'));
 }
