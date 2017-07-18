@@ -731,7 +731,6 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
     );
     $file_count = count($files_to_add);
     $config = array(
-      'language' => $language,
       'pid' => $pid,
       'destination_dir' => $destination_dir,
       'namespace' => $namespace,
@@ -739,9 +738,10 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
       'model' => $form_state['values']['model'],
       'file_count' => $file_count,
       'book_label' => $book_label,
+      'language' => isset($form_state['values']['language']) ? $form_state['values']['language'] : 'English',
       'ignored_derivs' => array(
-        'ocr' => $form_state['values']['ignore_ocr'],
-        'hocr' => $form_state['values']['ignore_hocr'],
+        'ocr' => isset($form_state['values']['ignore_ocr']) ? $form_state['values']['ignore_ocr'] : FALSE,
+        'hocr' => isset($form_state['values']['ignore_hocr']) ? $form_state['values']['ignore_hocr'] : FALSE,
       ),
     );
     if (isset($pages_to_renumber[0])) {
