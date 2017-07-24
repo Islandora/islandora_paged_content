@@ -464,7 +464,9 @@ function islandora_paged_content_ocr_combine(array $files, $out) {
       $success = FALSE;
     }
     else {
-      $success = file_put_contents($out, $ocr, FILE_APPEND) == FALSE ? FALSE : $success;
+      if ($ocr) {
+        $success = file_put_contents($out, $ocr, FILE_APPEND) == FALSE ? FALSE : $success;
+      }
     }
   }
   return $success;
