@@ -256,6 +256,9 @@ function islandora_paged_content_create_ocr_batch_operation(array $pages, array 
         $context['results']['successful'][] = islandora_paged_content_update_datastream($page, $result, $dsid);
       }
     }
+    // Add this orphan file reference for cleanup during the callback_batch_finished.
+    $context['results']['files'][] = 'temporary://' . str_replace(":", "_", $page) . '_OBJ.tif';
+
     islandora_paged_content_end_batch_operation($context, 1, array(
       'Derived @derived of @set_size OCR/HOCR datastreams.',
       array(
