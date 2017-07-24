@@ -802,8 +802,8 @@ function islandora_paged_content_add_pages($repository, $config, $pages_director
   // somewhere other than the form.
   if (module_exists('islandora_ocr')) {
     module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
-    $generate_ocr = isset($config['ignored_derivs']['ocr'] ? FALSE : NULL;
-    $generate_hocr = isset($config['ignored_derivs']['hocr'] ? FALSE : NULL;
+    $generate_ocr = isset($config['ignored_derivs']['ocr']) ? FALSE : NULL;
+    $generate_hocr = isset($config['ignored_derivs']['hocr']) ? FALSE : NULL;
     islandora_ocr_set_generating_rels_ext_statements($object, $generate_ocr, $generate_hocr);
   }
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $config['language'], TRUE);
