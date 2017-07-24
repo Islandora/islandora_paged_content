@@ -798,11 +798,13 @@ function islandora_paged_content_add_pages($repository, $config, $pages_director
   $parent = $config['pid'];
   $object->relationships->add(FEDORA_MODEL_URI, 'hasModel', $config['model']);
 
-  if ($config['ignored_derivs']['ocr']) {
-    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'FALSE', TRUE);
-  }
-  if ($config['ignored_derivs']['hocr']) {
-    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'generate_hocr', 'FALSE', TRUE);
+  // Re-checking module existence here in case this batch op is called from
+  // somewhere other than the form.
+  if (module_exists('islandora_ocr')) {
+    module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
+    $generate_ocr = isset($config['ignored_derivs']['ocr'] ? FALSE : NULL;
+    $generate_hocr = isset($config['ignored_derivs']['hocr'] ? FALSE : NULL;
+    islandora_ocr_set_generating_rels_ext_statements($object, $generate_ocr, $generate_hocr);
   }
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $config['language'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $parent);
