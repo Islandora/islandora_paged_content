@@ -83,11 +83,9 @@ function islandora_paged_content_upload_page_form_submit(array $form, array &$fo
   $object->label = $label;
 
   // Add the OCR creation flags before the datastream is updated.
-  if (isset($form_state['values']['ignore_ocr']) && $form_state['values']['ignore_ocr']) {
-    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'FALSE', TRUE);
-  }
-  if (isset($form_state['values']['ignore_hocr']) && $form_state['values']['ignore_hocr']) {
-    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'generate_hocr', 'FALSE', TRUE);
+  if (module_exists('islandora_ocr')) {
+    module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
+    islandora_ocr_set_generating_rels_ext_statements($object, !$form_state['values']['generate_ocr'], !$form_state['values']['generate_hocr']);
   }
   islandora_paged_content_update_datastream($object, drupal_realpath($file->uri), 'OBJ', NULL, NULL, 'M', FALSE);
   // Update RELS-EXT properties, page/sequence/etc, and append the page at the

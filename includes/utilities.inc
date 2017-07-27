@@ -1301,9 +1301,9 @@ function islandora_paged_content_add_relationships_to_child(AbstractObject $obje
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', $params['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', $params['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSection', '1', TRUE);
-  if ($params['extract_text'] == 'none') {
-    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'FALSE', RELS_TYPE_PLAIN_LITERAL);
-    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_hocr', 'FALSE', RELS_TYPE_PLAIN_LITERAL);
+  if ($params['extract_text'] == 'none' && module_exists('islandora_ocr')) {
+    module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
+    islandora_ocr_set_generating_rels_ext_statements($object, FALSE, FALSE);
   }
   else {
     islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
