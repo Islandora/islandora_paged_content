@@ -67,7 +67,6 @@ function islandora_paged_content_upload_page_form(array $form, array &$form_stat
  *   The Drupal form state.
  */
 function islandora_paged_content_upload_page_form_submit(array $form, array &$form_state) {
-  dpm($form_state);
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   $object = islandora_ingest_form_get_object($form_state);
   $file = file_load($form_state['values']['file']);
