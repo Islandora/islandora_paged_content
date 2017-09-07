@@ -48,7 +48,7 @@ class GhostscriptTestCase extends DrupalWebTestCase {
    */
   public function testGhostscriptOutputValidity() {
     $mcgill_pdf = drupal_get_path('module', 'islandora_paged_content') . '/tests/fixtures/2010.08.25_McGill_Librarians.pdf';
-    $output = islandora_paged_content_extract_tiff_from_pdf($mcgill_pdf, 1, 'tiff64nc', '300', 'Ghostscript ran successfully.');
+    $output = islandora_paged_content_extract_tiff_from_pdf($mcgill_pdf, 1, 'tiff32nc', '300', 'Ghostscript ran successfully.');
     if ($output) {
       if (filesize($output)) {
         $this->pass('Ghostscript returned valid output for TIF extraction.');
