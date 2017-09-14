@@ -1180,10 +1180,10 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
   $copy = islandora_paged_content_create_clean_link($uri, 'pdfforgs');
   // For all arguments see https://ghostscript.com/doc/current/Devices.htm#TIFF.
   if ($device == 'tiff64nc' || $device == 'tiff48nc') {
-    // Will fail anyway in gs 9.10
     // Both are 16bits per channel. No compression possible.
-    // Was fixed in:
-    // http://git.ghostscript.com/?p=ghostpdl.git;a=commitdiff;h=f8e77523.
+    // Before GhostScript v9.19 the use of this devices will fail
+    // independent of other parameters passed.
+    // @see http://git.ghostscript.com/?p=ghostpdl.git;a=commitdiff;h=f8e77523.
     $base_command = '!gs_path -q -dNOPAUSE -dBATCH -sDEVICE=!device -sCompression=none -sOutputFile=!output_file -r!resolution -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   }
   else {
