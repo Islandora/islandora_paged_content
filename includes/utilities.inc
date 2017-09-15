@@ -1178,13 +1178,23 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
   $output_file = drupal_tempnam('temporary://', "page{$offset}.tif");
   // Need to link the file because of UTF-8 encoding.
   $copy = islandora_paged_content_create_clean_link($uri, 'pdfforgs');
-  $base_command = '!gs_path -q -dNOPAUSE -dBATCH -sDEVICE=!device -sCompression=lzw -sOutputFile=!output_file -r!resolution, -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+  // For all arguments see https://ghostscript.com/doc/current/Devices.htm#TIFF.
+  if ($device == 'tiff64nc' || $device == 'tiff48nc') {
+    // Both are 16bits per channel. No compression possible.
+    // GhostScript versions 9.10 through 9.18 seem affected by a Bug
+    // making this devices fail always.
+    // @see http://git.ghostscript.com/?p=ghostpdl.git;a=commitdiff;h=f8e77523.
+    $base_command = '!gs_path -q -dNOPAUSE -dBATCH -sDEVICE=!device -sCompression=none -sOutputFile=!output_file -r!resolution -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+  }
+  else {
+    $base_command = '!gs_path -q -dNOPAUSE -dBATCH -sDEVICE=!device -sCompression=lzw -sOutputFile=!output_file -r!resolution -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+  }
   $command = format_string($base_command, array(
     '!gs_path' => escapeshellarg($gs),
     '!device' => $device,
     '!offset' => $offset,
     '!output_file' => drupal_realpath($output_file),
-    '!resolution' => $resolution,
+    '!resolution' => (int) $resolution,
     '!pdf_uri' => escapeshellarg(drupal_realpath($copy)),
   ));
   $output = array();
