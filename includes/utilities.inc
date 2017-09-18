@@ -982,6 +982,13 @@ function islandora_paged_content_page_derivatives($context) {
       'function' => array('islandora_ocr_derive_hocr'),
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
+    $derivatives[] = array(
+      'source_dsid' => NULL,
+      'destination_dsid' => NULL,
+      'weight' => -1,
+      'function' => array('islandora_ocr_remove_generating_rels_ext_statements'),
+      'file' => "$ocr_module_path/includes/derivatives.inc",
+    );
   }
   if (isset($derive['image']) && $derive['image']) {
     $derivatives[] = array(
