@@ -580,13 +580,16 @@ function islandora_paged_content_zipped_upload_form(array $form, array &$form_st
 
   if (module_exists('islandora_ocr') && in_array('ocr', $derivatives)) {
     module_load_include('inc', 'islandora_ocr', 'includes/utilities');
+    $languages = islandora_ocr_get_enabled_tesseract_languages();
     $form['language'] = array(
       '#title' => t('Language'),
       '#type' => 'select',
       '#description' => t('Please select the language the page is written in.'),
-      '#options' => islandora_ocr_get_enabled_tesseract_languages(),
-      '#default_value' => 'English',
+      '#options' => $languages,
     );
+    if (in_array('English', $languages)) {
+      $form['language']['#default_value'] = 'eng';
+    }
     $form['ignored_ocr_derivatives'] = islandora_ocr_get_ignored_derivatives_fieldset();
   }
 
