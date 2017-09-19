@@ -985,7 +985,7 @@ function islandora_paged_content_page_derivatives($context) {
     $derivatives[] = array(
       'source_dsid' => 'OBJ',
       'destination_dsid' => NULL,
-      'weight' => -1,
+      'weight' => 1,
       'function' => array('islandora_ocr_remove_generating_rels_ext_statements'),
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
