@@ -23,7 +23,7 @@ function islandora_paged_content_manage_page_menu(AbstractObject $object) {
     'manage_page' => array(
       '#type' => 'vertical_tabs',
       'pdf' => array(
-        '#access' => user_access(ISLANDORA_ADD_DS),
+        '#access' => islandora_object_access(ISLANDORA_ADD_DS, $object),
         '#title' => t('Create a PDF'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_page_pdf_form', $object),
@@ -31,7 +31,7 @@ function islandora_paged_content_manage_page_menu(AbstractObject $object) {
         '#collapsed' => TRUE,
       ),
       'ocr' => array(
-        '#access' => user_access(ISLANDORA_ADD_DS),
+        '#access' => islandora_object_access(ISLANDORA_ADD_DS, $object),
         '#title' => t('Perform OCR'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_page_ocr_form', $object),
@@ -39,7 +39,7 @@ function islandora_paged_content_manage_page_menu(AbstractObject $object) {
         '#collapsed' => FALSE,
       ),
       'images' => array(
-        '#access' => user_access(ISLANDORA_ADD_DS),
+        '#access' => islandora_object_access(ISLANDORA_ADD_DS, $object),
         '#title' => t('Create Images'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_page_images_form', $object),
@@ -47,7 +47,7 @@ function islandora_paged_content_manage_page_menu(AbstractObject $object) {
         '#collapsed' => TRUE,
       ),
       'edit_ocr' => array(
-        '#access' => user_access(ISLANDORA_PAGED_CONTENT_EDIT_OCR) && isset($object['OCR']) && isset($object['JPG']),
+        '#access' => isset($object['OCR']) && isset($object['JPG']) && islandora_datastream_access(ISLANDORA_PAGED_CONTENT_EDIT_OCR, $object['OCR']),
         '#title' => t('Edit OCR'),
         '#type' => 'fieldset',
         'form' => isset($object['OCR']) && isset($object['JPG']) ? drupal_get_form('islandora_paged_content_manage_page_edit_ocr_form', $object) : NULL,

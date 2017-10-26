@@ -34,7 +34,7 @@ function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
     'manage_pages' => array(
       '#type' => 'vertical_tabs',
       'pdf' => array(
-        '#access' => user_access(ISLANDORA_ADD_DS),
+        '#access' => islandora_object_access(ISLANDORA_ADD_DS, $object),
         '#title' => t('Create PDF'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_pages_pdf_form', $object),
@@ -42,7 +42,7 @@ function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
         '#collapsed' => FALSE,
       ),
       'ocr' => array(
-        '#access' => user_access(ISLANDORA_ADD_DS),
+        '#access' => islandora_object_access(ISLANDORA_ADD_DS, $object),
         '#title' => t('Perform OCR'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_pages_ocr_form', $object),
@@ -50,7 +50,7 @@ function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
         '#collapsed' => TRUE,
       ),
       'images' => array(
-        '#access' => user_access(ISLANDORA_ADD_DS),
+        '#access' => islandora_object_access(ISLANDORA_ADD_DS, $object),
         '#title' => t('Create Images'),
         '#type' => 'fieldset',
         'form_1' => drupal_get_form('islandora_paged_content_manage_pages_thumbnail_form', $object),
@@ -59,7 +59,7 @@ function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
         '#collapsed' => TRUE,
       ),
       'page_progression' => array(
-        '#access' => user_access(ISLANDORA_METADATA_EDIT),
+        '#access' => islandora_datastream_access(ISLANDORA_METADATA_EDIT, $object['RELS-EXT']),
         '#title' => t('Page Progression'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_page_progression_form', $object),
@@ -67,7 +67,7 @@ function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
         '#collapsed' => TRUE,
       ),
       'sequence' => array(
-        '#access' => user_access(ISLANDORA_METADATA_EDIT),
+        '#access' => islandora_datastream_access(ISLANDORA_METADATA_EDIT, $object['RELS-EXT']),
         '#title' => t('Reorder Pages'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_pages_sequences_form', $object),
@@ -75,7 +75,7 @@ function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
         '#collapsed' => TRUE,
       ),
       'delete' => array(
-        '#access' => user_access(ISLANDORA_PURGE),
+        '#access' => islandora_object_access(ISLANDORA_PURGE, $object),
         '#title' => t('Delete Pages'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_pages_delete_form', $object),
