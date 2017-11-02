@@ -27,6 +27,7 @@ function islandora_paged_content_upload_page_form(array $form, array &$form_stat
   $upload_size = min((int) ini_get('post_max_size'), (int) ini_get('upload_max_filesize'));
   $extensions = array('tiff tif jp2 jpg jpeg');
   $languages = module_exists('islandora_ocr') ? islandora_ocr_get_enabled_tesseract_languages() : array();
+  $default_language = in_array('English', $languages) ? 'eng' : NULL;
 
   $upload_form = array(
     'file' => array(
@@ -50,7 +51,7 @@ function islandora_paged_content_upload_page_form(array $form, array &$form_stat
       '#type' => 'select',
       '#description' => t('Please select the language the page is written in.'),
       '#options' => $languages,
-      '#default_value' => $get_default_value('language', NULL),
+      '#default_value' => $get_default_value('language', $default_language),
     );
     $upload_form['ocr_ignored_derivatives'] = islandora_ocr_get_ignored_derivatives_fieldset();
   }
@@ -85,15 +86,12 @@ function islandora_paged_content_upload_page_form_submit(array $form, array &$fo
   // Add the OCR creation flags before the datastream is updated.
   if (module_exists('islandora_ocr')) {
     module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
-    islandora_ocr_set_generating_rels_ext_statements($object, !$form_state['values']['ignore_ocr'], !$form_state['values']['ignore_hocr']);
+    $language = isset($form_state['values']['language']) ? $form_state['values']['language'] : NULL;
+    islandora_ocr_set_generating_rels_ext_statements($object, !$form_state['values']['ignore_ocr'], !$form_state['values']['ignore_hocr'], $language);
   }
   islandora_paged_content_update_datastream($object, drupal_realpath($file->uri), 'OBJ', NULL, NULL, 'M', FALSE);
   // Update RELS-EXT properties, page/sequence/etc, and append the page at the
   // end of the book.
-  if (isset($form_state['values']['language'])) {
-    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $form_state['values']['language'], TRUE);
-  }
-
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $parent->id);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', (string) $num_pages, TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', (string) $num_pages, TRUE);

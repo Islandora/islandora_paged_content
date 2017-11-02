@@ -741,7 +741,7 @@ function islandora_paged_content_zipped_upload_form_submit(array $form, array &$
       'model' => $form_state['values']['model'],
       'file_count' => $file_count,
       'book_label' => $book_label,
-      'language' => isset($form_state['values']['language']) ? $form_state['values']['language'] : 'English',
+      'language' => isset($form_state['values']['language']) ? $form_state['values']['language'] : 'eng',
       'ignored_derivs' => array(
         'ocr' => isset($form_state['values']['ignore_ocr']) ? $form_state['values']['ignore_ocr'] : FALSE,
         'hocr' => isset($form_state['values']['ignore_hocr']) ? $form_state['values']['ignore_hocr'] : FALSE,
@@ -805,9 +805,8 @@ function islandora_paged_content_add_pages($repository, $config, $pages_director
   // somewhere other than the form.
   if (module_exists('islandora_ocr')) {
     module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
-    islandora_ocr_set_generating_rels_ext_statements($object, !$config['ignored_derivs']['ocr'], !$config['ignored_derivs']['hocr']);
+    islandora_ocr_set_generating_rels_ext_statements($object, !$config['ignored_derivs']['ocr'], !$config['ignored_derivs']['hocr'], $config['language']);
   }
-  islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $config['language'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $parent);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', (string) $config['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', (string) $config['page_number'], TRUE);
