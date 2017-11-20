@@ -982,6 +982,13 @@ function islandora_paged_content_page_derivatives($context) {
       'function' => array('islandora_ocr_derive_hocr'),
       'file' => "$ocr_module_path/includes/derivatives.inc",
     );
+    $derivatives[] = array(
+      'source_dsid' => 'OBJ',
+      'destination_dsid' => NULL,
+      'weight' => 1,
+      'function' => array('islandora_ocr_remove_generating_rels_ext_statements'),
+      'file' => "$ocr_module_path/includes/derivatives.inc",
+    );
   }
   if (isset($derive['image']) && $derive['image']) {
     $derivatives[] = array(
@@ -1311,8 +1318,9 @@ function islandora_paged_content_add_relationships_to_child(AbstractObject $obje
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', $params['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', $params['page_number'], TRUE);
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSection', '1', TRUE);
-  if ($params['extract_text'] == 'none') {
-    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'FALSE', RELS_TYPE_PLAIN_LITERAL);
+  if ($params['extract_text'] == 'none' && module_exists('islandora_ocr')) {
+    module_load_include('inc', 'islandora_ocr', 'includes/derivatives');
+    islandora_ocr_set_generating_rels_ext_statements($object, FALSE, FALSE);
   }
   else {
     islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'hasLanguage', $params['language'], TRUE);
