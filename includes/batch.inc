@@ -674,15 +674,18 @@ function islandora_paged_content_get_missing_ocr_paged_content_objects() {
   // Base query.
   $query = <<<EOQ
 PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
+PREFIX fedora-model: <info:fedora/fedora-system:def/model#>
+PREFIX fedora-view: <info:fedora/fedora-system:def/view#>
 SELECT DISTINCT ?pid
 FROM <#ri>
 WHERE {
-  ?page islandora-rels-ext:isPageOf ?pid
+  ?page islandora-rels-ext:isPageOf ?pid .
+  ?pid fedora-model:label ?label .
   OPTIONAL {
-    ?ds <fedora-view:disseminationType> <info:fedora/*/OCR> .
-    ?pid <info:fedora/fedora-system:def/view#disseminates> ?ds
+    ?ds fedora-view:disseminationType <info:fedora/*/OCR> .
+    ?pid fedora-view:disseminates ?ds .
   }
-  FILTER(!BOUND(?ds))
+  FILTER(!BOUND(?ds) && BOUND(?label))
 }
 EOQ;
 
