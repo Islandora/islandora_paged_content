@@ -34,6 +34,15 @@ Otherwise, the book object will not receive an OCR datastream, and will not be r
 
 Further documentation for this module is available at [our wiki](https://wiki.duraspace.org/display/ISLANDORA/Islandora+Paged+Content).
 
+### Drush scripts
+
+`paged-content-consolidate-missing-ocr`
+
+This drush command finds all page objects whose parent does not have a 
+OCR datastream, generates it by combining the OCR datastreams from the children
+and adds that datastream to the parent.
+
+
 ## Troubleshooting/Issues
 
 Having problems or solved a problem? Check out the Islandora google groups for a solution.
