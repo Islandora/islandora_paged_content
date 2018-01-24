@@ -59,6 +59,7 @@ function islandora_paged_content_get_pages(AbstractObject $object) {
 function islandora_paged_content_get_pages_ri(AbstractObject $object) {
   $query = <<<EOQ
   PREFIX islandora-rels-ext: <http://islandora.ca/ontology/relsext#>
+  PREFIX islandora-rels-int: <http://islandora.ca/ontology/relsint#>
   SELECT ?pid ?page ?label ?width ?height
   FROM <#ri>
   WHERE {
@@ -71,7 +72,13 @@ function islandora_paged_content_get_pages_ri(AbstractObject $object) {
       ?dss <fedora-view:disseminationType> <info:fedora/*/JP2> ;
            islandora-rels-ext:width ?width ;
            islandora-rels-ext:height ?height .
-   }
+    }
+    OPTIONAL {
+      ?pid <fedora-view:disseminates> ?dss .
+      ?dss <fedora-view:disseminationType> <info:fedora/*/JP2> ;
+           islandora-rels-int:width ?width ;
+           islandora-rels-int:height ?height .
+    }
   }
   ORDER BY ?page
 EOQ;
