@@ -68,7 +68,7 @@ function islandora_paged_content_manage_pages_menu(AbstractObject $object) {
       ),
       'viewinghint' => array(
         '#access' => user_access(ISLANDORA_METADATA_EDIT),
-        '#title' => t('View Mode hint'),
+        '#title' => t('Page display mode'),
         '#type' => 'fieldset',
         'form' => drupal_get_form('islandora_paged_content_manage_viewing_hint_form', $object),
         '#collapsible' => TRUE,
@@ -935,10 +935,10 @@ function islandora_paged_content_manage_viewing_hint_form(array $form, array &$f
   return array(
     'viewing_hint' => array(
       '#type' => 'radios',
-      '#title' => t('Viewing Mode Hint'),
-      '#description' => t("This affects how Islandora viewers display page sequences. 'Paged' here is equivalent to the '2-up' mode in IA Book Reader. If left as 'Not set', global option for each viewer will be respected."),
+      '#title' => t('Page display mode'),
+      '#description' => t("This affects how Islandora viewers display page sequences. 'Paged' here is equivalent to the '2-up' mode in IA Book Reader. If left as 'System Default', global option for each viewer will be respected."),
       '#options' => array(
-        'notset' => t('Not set'),
+        'notset' => t('System Default'),
         'paged' => t('Paged'),
         'individual' => t('Individual'),
       ),
@@ -946,7 +946,7 @@ function islandora_paged_content_manage_viewing_hint_form(array $form, array &$f
     ),
     'submit' => array(
       '#type' => 'submit',
-      '#value' => t('Set Viewing Mode Hint'),
+      '#value' => t('Set Page display mode'),
     ),
   );
 }
