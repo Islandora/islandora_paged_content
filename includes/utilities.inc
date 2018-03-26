@@ -3,11 +3,12 @@
 /**
  * @file
  * This file contains all the utility functions for paged content.
+ *
  * There are functions for:
  *   Getting pages for a paged content object
  *   Generating pdfs
  *   Generating image derivatives
- *   Generating OCR and HOCR
+ *   Generating OCR and HOCR.
  */
 
 /**
@@ -34,7 +35,7 @@ function islandora_paged_content_get_pages(AbstractObject $object) {
     $pages = islandora_paged_content_get_pages_ri($object);
   }
   // Sort the pages into their proper order.
-  $sort = function($a, $b) {
+  $sort = function ($a, $b) {
     $a = (is_array($a) && isset($a['page'])) ? $a['page'] : 0;
     $b = (is_array($b) && isset($b['page'])) ? $b['page'] : 0;
     if ($a == $b) {
@@ -79,7 +80,7 @@ EOQ;
   $results = $object->repository->ri->sparqlQuery($query);
 
   // Get rid of the "extra" info...
-  $map = function($o) {
+  $map = function ($o) {
     foreach ($o as $key => &$info) {
       $info = $info['value'];
     }
@@ -91,7 +92,7 @@ EOQ;
   $pages = array_map($map, $results);
 
   // Grab the PIDs...
-  $get_pid = function($o) {
+  $get_pid = function ($o) {
     return $o['pid'];
   };
   $pids = array_map($get_pid, $pages);
@@ -116,8 +117,9 @@ function islandora_paged_content_get_pages_solr(AbstractObject $object) {
   $pages = array();
   $qp = new islandoraSolrQueryProcessor();
   $qp->buildQuery(format_string('@field:"@pid"', array(
-      '@field' => variable_get('islandora_solr_member_of_field', 'RELS_EXT_isMemberOf_uri_ms'),
-      '@pid' => "info:fedora/{$object->id}")
+    '@field' => variable_get('islandora_solr_member_of_field', 'RELS_EXT_isMemberOf_uri_ms'),
+    '@pid' => "info:fedora/{$object->id}",
+  )
   ));
   $label_field = variable_get('islandora_solr_object_label_field', 'fgs_label_s');
   $sequence_field = variable_get('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms');
@@ -180,7 +182,6 @@ function islandora_paged_content_get_page_progression(AbstractObject $object) {
  *
  * @param AbstractObject $object
  *   An AbstractObject representing an object within Fedora.
- *
  * @param string $progression
  *   The page progression for the object.
  */
@@ -295,7 +296,7 @@ function islandora_paged_content_set_relationship($relationships, $predicate_uri
  * As defined by the user in the admin form.
  *
  * @param string $namespace
- *   The solution pack namespace whose admin form we're checking
+ *   The solution pack namespace whose admin form we're checking.
  *
  * @return array
  *   The enabled ingest derivatives.
@@ -460,7 +461,7 @@ function islandora_paged_content_can_combine_pdf() {
  * @return bool
  *   TRUE if successful, FALSE otherwise.
  */
-function islandora_paged_content_pdf_append($file, array $files) {
+function islandora_paged_content_pdf_append(array $file, array $files) {
   $temp_file = "$file.temp.pdf";
   copy($file, $temp_file);
   array_unshift($files, $temp_file);
@@ -598,7 +599,7 @@ function islandora_paged_content_page_derive_pdf(AbstractObject $object, array $
  */
 function islandora_paged_content_convert_to_pdf($image_file, array $options) {
   // Convert options into a string.
-  $to_string = function(&$o, $k) {
+  $to_string = function (&$o, $k) {
     $o = "$k $o";
   };
   array_walk($options, $to_string);
@@ -895,7 +896,7 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
  * Returns paged object derivatives.
  *
  * @param string $context
- *   Indicator of which solution pack calling this function
+ *   Indicator of which solution pack calling this function.
  *
  * @return array
  *   Structured array of paged object derivatives
@@ -946,7 +947,7 @@ function islandora_paged_content_paged_object_derivatives($context) {
  * Returns page derivatives.
  *
  * @param string $context
- *   Indicator of which solution pack calling this function
+ *   Indicator of which solution pack calling this function.
  *
  * @return array
  *   Structured array of page derivatives
@@ -1064,7 +1065,6 @@ function islandora_paged_content_pdftotext_availability() {
   $pdftotext = variable_get('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
   return is_executable($pdftotext);
 }
-
 
 /**
  * Helper function to determine whether or not pdfinfo is available.
@@ -1309,7 +1309,7 @@ function islandora_paged_content_add_pdf_to_object(AbstractObject $object, $file
  *   -page_number: A string representing the page number of the child.
  *   -language: A string representing the language of the text.
  */
-function islandora_paged_content_add_relationships_to_child(AbstractObject $object, $params) {
+function islandora_paged_content_add_relationships_to_child(AbstractObject $object, array $params) {
   $rels_ext = $object->relationships;
   $object->models = $params['model'];
   islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $params['parent']);
@@ -1378,4 +1378,110 @@ function islandora_paged_content_create_clean_link($uri, $prefix = 'clean', $des
     ));
     return file_unmanaged_copy($uri, $dest);
   }
+}
+
+/**
+ * Gets the viewing hint mode from the given paged content object.
+ *
+ * @param AbstractObject $object
+ *   The paged content object to fetch the page progression from.
+ *
+ * @return mixed
+ *   The viewing hint string or null if not set.
+ *
+ * @see http://iiif.io/api/presentation/2.1/#viewinghint
+ */
+function islandora_paged_content_get_viewing_hint(AbstractObject $object) {
+  $relationships = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'viewingHint');
+  if (!empty($relationships)) {
+    $hint = reset($relationships);
+    return $hint['object']['value'];
+  }
+  else {
+    return NULL;
+  }
+}
+
+/**
+ * Sets viewing hint mode for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ * @param string $newhint
+ *   The viewing hint mode: 'paged' and 'individual' are the IA
+ *   bookreader equivalents to 2-up and 1-up.
+ *
+ * @see http://iiif.io/api/presentation/2.1/#viewinghint
+ */
+function islandora_paged_content_set_viewing_hint(AbstractObject $object, $newhint = 'paged') {
+  $existing_relationship = islandora_paged_content_get_viewing_hint($object);
+  if (isset($existing_relationship) && ($existing_relationship != $newhint)) {
+    islandora_paged_content_unset_viewing_hint($object);
+    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'viewingHint', $newhint, RELS_TYPE_PLAIN_LITERAL);
+  }
+  elseif (!isset($newhint)) {
+    // This clears an existing one.
+    islandora_paged_content_unset_viewing_hint($object);
+  }
+  else {
+    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'viewingHint', $newhint, RELS_TYPE_PLAIN_LITERAL);
+  }
+}
+
+/**
+ * Unsets viewing hint mode for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ */
+function islandora_paged_content_unset_viewing_hint(AbstractObject $object) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'viewingHint');
+}
+
+/**
+ * Gets if the book has a cover or a first recto.
+ *
+ * @param AbstractObject $object
+ *   The paged content object to fetch the hasCover property from.
+ *
+ * @return string
+ *   'false' if the book starts with a 2 page spread.
+ */
+function islandora_paged_content_get_hascover(AbstractObject $object) {
+  $relationships = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasCover');
+  if (!empty($relationships)) {
+    $hascover = reset($relationships);
+    return $hascover['object']['value'];
+  }
+  else {
+    // Default will be true since most books have covers or at
+    // least a first recto.
+    return 'true';
+  }
+}
+
+/**
+ * Marks a book as coverless.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ * @param string $hascover
+ *   If the book has or not a cover or first recto.
+ */
+function islandora_paged_content_set_hascover(AbstractObject $object, $hascover = 'true') {
+  $existing_relationship = islandora_paged_content_get_hascover($object);
+  if ($existing_relationship != $hascover) {
+    islandora_paged_content_unset_hascover($object);
+    $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'hasCover', $hascover, RELS_TYPE_PLAIN_LITERAL);
+  }
+}
+
+/**
+ * Unsets hasCover property for an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ */
+function islandora_paged_content_unset_hascover(AbstractObject $object) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'hasCover');
 }
