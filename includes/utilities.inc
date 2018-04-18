@@ -451,7 +451,7 @@ function islandora_paged_content_can_combine_pdf() {
 }
 
 /**
- * Appends onto a given PDF file a number of PDF filese
+ * Appends onto a given PDF file a number of PDF files.
  *
  * @param string $file
  *   The absolute path of the PDF file to append onto.
