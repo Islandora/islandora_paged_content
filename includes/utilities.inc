@@ -451,17 +451,17 @@ function islandora_paged_content_can_combine_pdf() {
 }
 
 /**
- * Appends a number of PDF files onto the given PDF file.
+ * Appends onto a given PDF file a number of PDF files.
  *
- * @param array $file
- *   The PDF files to append onto.
+ * @param string $file
+ *   The absolute path of the PDF file to append onto.
  * @param array $files
  *   The PDF files to append.
  *
  * @return bool
  *   TRUE if successful, FALSE otherwise.
  */
-function islandora_paged_content_pdf_append(array $file, array $files) {
+function islandora_paged_content_pdf_append($file, array $files) {
   $temp_file = "$file.temp.pdf";
   copy($file, $temp_file);
   array_unshift($files, $temp_file);
