@@ -28,7 +28,7 @@ Set the path for `gs` (GhostScript), the externally accessible Djatoka URL, and 
 
 There is an option to set the page label to the page's sequence number. On ingest, each page's label will be set to its sequence number. When reordering pages, all of the page labels will be updated with the new sequence numbers.
 
-You can also "Hide Page Objects From Search Results", so that only the parent object is returned.  If you use this option, make sure that you check the "Aggregate OCR?" box when ingesting your books. Otherwise, the book object will not receive an OCR datastream, and will not be returned in search results.
+You can also "Hide Page Objects From Search Results", so that only the parent object is returned.  If you use this option, make sure that you check the "Aggregate OCR?" box when ingesting your paged content object. Otherwise, the parent object will not receive an OCR datastream, and will not be returned in search results.
 
 ## Documentation
 
