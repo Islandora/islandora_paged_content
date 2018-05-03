@@ -234,7 +234,14 @@ function islandora_paged_content_admin_settings_form_gs_ajax_callback(array $for
  */
 function islandora_paged_content_admin_settings_form_djatoka_availible_message($djatoka_url) {
   $file_headers = @get_headers($djatoka_url);
-  $djatoka_availible = strstr($file_headers[0], '200') !== FALSE;
+  $djatoka_availible = FALSE;
+  foreach ($file_headers as $file_header) {
+    if (strstr($file_header, '200') !== FALSE) {
+      $djatoka_availible = TRUE;
+      break;
+    }
+  }
+//  $djatoka_availible = strstr($file_headers[0], '200') !== FALSE;
   if ($djatoka_availible) {
     $image = theme_image(array('path' => 'misc/watchdog-ok.png', 'attributes' => array()));
     $message = t('djatoka url is valid.');
