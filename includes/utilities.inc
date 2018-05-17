@@ -121,6 +121,10 @@ function islandora_paged_content_get_pages_solr(AbstractObject $object) {
     '@pid' => "info:fedora/{$object->id}",
   )
   ));
+  if (variable_get('islandora_paged_content_hide_pages_solr', FALSE)) {
+    $fq_to_remove = array(variable_get('islandora_paged_content_solr_fq', '-RELS_EXT_isPageOf_uri_ms:[* TO *]'));
+    $qp->solrParams['fq'] = array_diff($qp->solrParams['fq'], $fq_to_remove);
+  }
   $label_field = variable_get('islandora_solr_object_label_field', 'fgs_label_s');
   $sequence_field = variable_get('islandora_paged_content_sequence_number_field', 'RELS_EXT_isSequenceNumber_literal_ms');
   $height_field = variable_get('islandora_paged_content_solr_height_field', 'RELS_INT_height_literal_s');
