@@ -176,6 +176,26 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
 }
 
 /**
+ * Gets a message to display if the ocr program provided is accessible or not.
+ * DEPRECATED: This function is a duplicate of
+ * islandora_executable_available_message().
+ *
+ * @param string $path
+ *   The path to an executable to check for availability.
+ * @param string $version
+ *   The version of exectuable.
+ *
+ * @return string
+ *   A message in html detailing if the given executable is accessible.
+ */
+function islandora_paged_content_admin_settings_form_executable_available_message($path, $version = NULL, $required_version = NULL) {
+  $message = islandora_deprecated('7.x-1.13', t('Please use islandora_executable_available_message() instead.'));
+  trigger_error(filter_xss($message), E_USER_DEPRECATED);
+
+  return islandora_executable_available_message($path, $version, $required_version);
+}
+
+/**
  * Ajax callback for the GS textfield.
  *
  * @param array $form
