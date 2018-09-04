@@ -18,7 +18,7 @@
  */
 function islandora_paged_content_admin_settings_form(array $form, array &$form_state) {
   form_load_include($form_state, 'inc', 'islandora_paged_content', 'includes/admin.form');
-  module_load_include('inc', 'islandora', '/includes/utilities');
+  form_load_include($form_state, 'inc', 'islandora', 'includes/utilities');
   $get_default_value = function($name, $default) use(&$form_state) {
     return isset($form_state['values'][$name]) ? $form_state['values'][$name] : variable_get($name, $default);
   };
