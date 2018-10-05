@@ -54,7 +54,7 @@ Having problems or solved a problem? Check out the Islandora google groups for a
 
 Current maintainers:
 
-* [William Panting](https://github.com/willtp87)
+* [Rosie Le Faive](https://github.com/rosiel)
 
 ## Development
 
