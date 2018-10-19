@@ -190,6 +190,7 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
  *   A message in html detailing if the given executable is accessible.
  */
 function islandora_paged_content_admin_settings_form_executable_available_message($path, $version = NULL, $required_version = NULL) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
   $message = islandora_deprecated('7.x-1.13', t('Please use islandora_executable_available_message() instead.'));
   trigger_error(filter_xss($message), E_USER_DEPRECATED);
 
