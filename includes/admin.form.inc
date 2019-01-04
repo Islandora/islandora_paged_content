@@ -225,10 +225,12 @@ function islandora_paged_content_admin_settings_form_gs_ajax_callback(array $for
 function islandora_paged_content_admin_settings_form_djatoka_available_message($djatoka_url) {
   $file_headers = @get_headers($djatoka_url);
   $djatoka_available = FALSE;
-  foreach ($file_headers as $file_header) {
-    if (strpos($file_header, '200') !== FALSE) {
-      $djatoka_available = TRUE;
-      break;
+  if ($file_headers) {
+    foreach ($file_headers as $file_header) {
+      if (strpos($file_header, '200') !== FALSE) {
+        $djatoka_available = TRUE;
+        break;
+      }
     }
   }
   if ($djatoka_available) {
