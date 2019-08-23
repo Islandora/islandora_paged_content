@@ -19,18 +19,30 @@
 function islandora_paged_content_admin_settings_form(array $form, array &$form_state) {
   form_load_include($form_state, 'inc', 'islandora_paged_content', 'includes/admin.form');
   form_load_include($form_state, 'inc', 'islandora', 'includes/utilities');
+  form_load_include($form_state, 'inc', 'islandora', 'includes/imageserver');
   $get_default_value = function($name, $default) use(&$form_state) {
     return isset($form_state['values'][$name]) ? $form_state['values'][$name] : variable_get($name, $default);
   };
   $gs = $get_default_value('islandora_paged_content_gs', '/usr/bin/gs');
   $pdfinfo = $get_default_value('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
   $pdftotext = $get_default_value('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
+  $imageserver_settings = islandora_imageserver_get_settings();
 
-  $djatoka_url = $get_default_value('islandora_paged_content_djatoka_url', 'http://localhost:8080/adore-djatoka/');
-  $djatoka_available_message = islandora_paged_content_admin_settings_form_djatoka_available_message($djatoka_url);
   $solr_enabled = module_exists('islandora_solr');
 
   $form = array(
+    'islandora_paged_content_tilesource' => array(
+      '#type' => 'select',
+      '#title' => t('Image Server'),
+      '#description' => t('The image server to use, configure at Admin -> Islandora -> Image server configuration'),
+      '#default_value' => $imageserver_settings['type'],
+      '#disabled' => TRUE,
+      '#options' => array(
+        'none' => t('No image server configured'),
+        'iiif' => t('IIIF image server'),
+        'djatoka' => t('Adore-Djatoka image server'),
+      ),
+    ),
     'pdf_derivative_settings' => array(
       '#type' => 'fieldset',
       '#title' => t('PDF Derivative Settings'),
@@ -94,20 +106,6 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
         '#title' => t('Allow Extraction of Raw Text'),
         '#description' => t('This will pass the -raw parameter off to pdftotext when extracting text. By default, pdftotext extracts text in natural reading order. In edge case documents, where PDF creation tools have made blocks in errorneous order, text extraction will yield unexpected results. As such, this parameter will pull out text in the order that the PDF creation tool wrote it (layout ignored). This is not a valid default option to have due to that PDF creation tools are not constrained to writing blocks in the order they appear and it is up to the PDF reader to render them correctly.'),
         '#default_value' => variable_get('islandora_paged_content_pdftotext_use_raw', FALSE),
-      ),
-    ),
-    'islandora_paged_content_djatoka_url' => array(
-      '#type' => 'textfield',
-      '#prefix' => '<div id="djatoka-path-wrapper">',
-      '#suffix' => '</div>',
-      '#title' => t('djatoka URL'),
-      '#description' => filter_xss(t('<strong>Externally accessible</strong> URL to the djatoka instance.<br/>!msg', array('!msg' => $djatoka_available_message))),
-      '#default_value' => $djatoka_url,
-      '#ajax' => array(
-        'callback' => 'islandora_paged_content_admin_settings_form_djatoka_ajax_callback',
-        'wrapper' => 'djatoka-path-wrapper',
-        'effect' => 'fade',
-        'event' => 'change',
       ),
     ),
     'islandora_paged_content_sequence_number_field' => array(
@@ -210,53 +208,6 @@ function islandora_paged_content_admin_settings_form_executable_available_messag
  */
 function islandora_paged_content_admin_settings_form_gs_ajax_callback(array $form, array $form_state) {
   return $form['pdf_derivative_settings']['islandora_paged_content_gs'];
-}
-
-/**
- * Gets a message to display if the djatoka is accessible or not.
- *
- * @param string $djatoka_url
- *   The url to an djatoka instance typically
- *   http://localhost:8080/adore-djatoka.
- *
- * @return string
- *   A message in html detailing if the djatoka is accessible.
- */
-function islandora_paged_content_admin_settings_form_djatoka_available_message($djatoka_url) {
-  $file_headers = @get_headers($djatoka_url);
-  $djatoka_available = FALSE;
-  if ($file_headers) {
-    foreach ($file_headers as $file_header) {
-      if (strpos($file_header, '200') !== FALSE) {
-        $djatoka_available = TRUE;
-        break;
-      }
-    }
-  }
-  if ($djatoka_available) {
-    $image = theme_image(array('path' => 'misc/watchdog-ok.png', 'attributes' => array()));
-    $message = t('djatoka url is valid.');
-  }
-  else {
-    $image = theme_image(array('path' => 'misc/watchdog-error.png', 'attributes' => array()));
-    $message = t('Unable to locate djatoka installation at @path', array('@path' => $djatoka_url));
-  }
-  return $image . $message;
-}
-
-/**
- * Ajax callback for the djatoka url textfield.
- *
- * @param array $form
- *   The Drupal form definition.
- * @param array $form_state
- *   The Drupal form state.
- *
- * @return array
- *   The element to render as part the ajax callback.
- */
-function islandora_paged_content_admin_settings_form_djatoka_ajax_callback(array $form, array &$form_state) {
-  return $form['islandora_paged_content_djatoka_url'];
 }
 
 /**
