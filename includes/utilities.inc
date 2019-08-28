@@ -874,25 +874,27 @@ function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
   module_load_include('inc', 'islandora', 'includes/authtokens');
   module_load_include('inc', 'islandora', 'includes/imageserver');
   $settings = islandora_imageserver_get_settings();
-  $datastream_url = url("islandora/object/{$object_id}/datastream/JP2/view", array(
-    'absolute' => TRUE,
-    'query' => array(
-      'token' => islandora_get_object_token($object_id, 'JP2'),
-    ),
-  ));
+  if ($settings['type'] == 'djatoka') {
+    $datastream_url = url("islandora/object/{$object_id}/datastream/JP2/view", array(
+      'absolute' => TRUE,
+      'query' => array(
+        'token' => islandora_get_object_token($object_id, 'JP2'),
+      ),
+    ));
 
-  $djatoka_url = rtrim($settings['url'], '/');
-  $djatoka_url = url($djatoka_url, array(
-    'query' => array(
-      'url_ver' => 'Z39.88-2004',
-      'rft_id' => $datastream_url,
-      'svc_id' => 'info:lanl-repo/svc/getMetadata',
-    ),
-    'external' => TRUE,
-  ));
-  $request = drupal_http_request($djatoka_url);
-  if ($request->code == '200') {
-    return drupal_json_decode($request->data);
+    $djatoka_url = rtrim($settings['url'], '/');
+    $djatoka_url = url($djatoka_url, array(
+      'query' => array(
+        'url_ver' => 'Z39.88-2004',
+        'rft_id' => $datastream_url,
+        'svc_id' => 'info:lanl-repo/svc/getMetadata',
+      ),
+      'external' => TRUE,
+    ));
+    $request = drupal_http_request($djatoka_url);
+    if ($request->code == '200') {
+      return drupal_json_decode($request->data);
+    }
   }
   return FALSE;
 }
