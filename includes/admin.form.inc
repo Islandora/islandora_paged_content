@@ -26,23 +26,11 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
   $gs = $get_default_value('islandora_paged_content_gs', '/usr/bin/gs');
   $pdfinfo = $get_default_value('islandora_paged_content_pdfinfo', '/usr/bin/pdfinfo');
   $pdftotext = $get_default_value('islandora_paged_content_pdftotext', '/usr/bin/pdftotext');
-  $imageserver_settings = islandora_imageserver_get_settings();
 
   $solr_enabled = module_exists('islandora_solr');
 
   $form = array(
-    'islandora_paged_content_tilesource' => array(
-      '#type' => 'select',
-      '#title' => t('Image Server'),
-      '#description' => t('The image server to use, configure at Admin -> Islandora -> Image server configuration'),
-      '#default_value' => $imageserver_settings['type'],
-      '#disabled' => TRUE,
-      '#options' => array(
-        'none' => t('No image server configured'),
-        'iiif' => t('IIIF image server'),
-        'djatoka' => t('Adore-Djatoka image server'),
-      ),
-    ),
+    'islandora_paged_content_tilesource' => islandora_imageserver_get_type_selectbox(),
     'pdf_derivative_settings' => array(
       '#type' => 'fieldset',
       '#title' => t('PDF Derivative Settings'),
