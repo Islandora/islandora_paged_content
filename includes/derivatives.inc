@@ -122,7 +122,7 @@ function islandora_paged_content_aggregate_pdf_derivative(AbstractObject $object
       )
     );
 
-    $batch['operations'][] = array('islandora_book_batch_remove_pdf_flag', array($object));
+    $batch['operations'][] = array('islandora_paged_content_remove_pdf_flag', array($object));
     batch_set($batch);
   }
 }
