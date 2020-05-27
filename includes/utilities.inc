@@ -1187,6 +1187,7 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
   }
   $gs = variable_get('islandora_paged_content_gs', '/usr/bin/gs');
   $output_file = drupal_tempnam('temporary://', "page{$offset}.tif");
+  $cropbox = (variable_get('islandora_paged_content_usecropbox', FALSE)) ? '-dUseCropBox' : '';
   // Need to link the file because of UTF-8 encoding.
   $copy = islandora_paged_content_create_clean_link($uri, 'pdfforgs');
   // For all arguments see https://ghostscript.com/doc/current/Devices.htm#TIFF.
@@ -1195,10 +1196,10 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
     // GhostScript versions 9.10 through 9.18 seem affected by a Bug
     // making this devices fail always.
     // @see http://git.ghostscript.com/?p=ghostpdl.git;a=commitdiff;h=f8e77523.
-    $base_command = '!gs_path -q -dNOPAUSE -dBATCH -sDEVICE=!device -sCompression=none -sOutputFile=!output_file -r!resolution -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+    $base_command = '!gs_path -q -dNOPAUSE !cropbox -dBATCH -sDEVICE=!device -sCompression=none -sOutputFile=!output_file -r!resolution -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   }
   else {
-    $base_command = '!gs_path -q -dNOPAUSE -dBATCH -sDEVICE=!device -sCompression=lzw -sOutputFile=!output_file -r!resolution -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
+    $base_command = '!gs_path -q -dNOPAUSE !cropbox -dBATCH -sDEVICE=!device -sCompression=lzw -sOutputFile=!output_file -r!resolution -dFirstPage=!offset -dLastPage=!offset !pdf_uri';
   }
   $command = format_string($base_command, array(
     '!gs_path' => escapeshellarg($gs),
@@ -1207,6 +1208,7 @@ function islandora_paged_content_extract_tiff_from_pdf($uri, $offset, $device, $
     '!output_file' => drupal_realpath($output_file),
     '!resolution' => (int) $resolution,
     '!pdf_uri' => escapeshellarg(drupal_realpath($copy)),
+    '!cropbox' => $cropbox,
   ));
   $output = array();
   $ret = 0;
