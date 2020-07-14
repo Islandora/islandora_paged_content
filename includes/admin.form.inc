@@ -49,6 +49,12 @@ function islandora_paged_content_admin_settings_form(array $form, array &$form_s
           'event' => 'change',
         ),
       ),
+      'islandora_paged_content_usecropbox' => array(
+        '#type' => 'checkbox',
+        '#title' => t('Use Cropbox'),
+        '#description' => t('Ghostscript will use the CropBox dataset of the uploaded PDF. Sets the page size to the CropBox rather than the MediaBox. Often, but not exclusively, used to aid the positioning of content on the PDF.'),
+        '#default_value' => variable_get('islandora_paged_content_usecropbox', FALSE),
+      ),
     ),
     'pdf_paged_content_ingestion_settings' => array(
       '#type' => 'fieldset',
