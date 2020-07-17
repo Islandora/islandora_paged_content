@@ -22,7 +22,7 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 ## Configuration
 
-Set the path for `gs` (GhostScript), the externally accessible Djatoka URL, and the 'Solr page sequence number field' in Administration » Islandora » Solution pack configuration » Paged Content Module (admin/islandora/solution_pack_config/paged_content).
+Set the path for `gs` (GhostScript), and the 'Solr page sequence number field' in Administration » Islandora » Solution pack configuration » Paged Content Module (admin/islandora/solution_pack_config/paged_content).
 
 ![Configuration](https://user-images.githubusercontent.com/2857697/39014759-e2ef9c1e-43e0-11e8-921c-c2a3234d65d2.jpg)
 

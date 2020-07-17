@@ -826,7 +826,7 @@ function islandora_paged_content_get_page_dimensions(AbstractObject $object) {
  * @param AbstractObject $object
  *   The page object.
  *
- * @return array
+ * @return array|bool
  *   An associative array containing the following fields.
  *   - width: The width of the image in pixels.
  *   - height: The width of the image in pixels.
@@ -859,7 +859,7 @@ function islandora_paged_content_get_technical_metadata(AbstractObject $object) 
  * @param string $object_id
  *   The PID of the page to fetch the metadata from.
  *
- * @return array
+ * @return array|bool
  *   An associative array contatining the following string fields:
  *   - identifier: The URL to the resource.
  *   - imagefile: The path to the temp file being served.
@@ -872,26 +872,29 @@ function islandora_paged_content_get_technical_metadata(AbstractObject $object) 
  */
 function islandora_paged_content_get_page_metadata_from_djatoka($object_id) {
   module_load_include('inc', 'islandora', 'includes/authtokens');
-  $datastream_url = url("islandora/object/{$object_id}/datastream/JP2/view", array(
-    'absolute' => TRUE,
-    'query' => array(
-      'token' => islandora_get_object_token($object_id, 'JP2'),
-    ),
-  ));
+  module_load_include('inc', 'islandora', 'includes/imageserver');
+  $settings = islandora_imageserver_get_settings();
+  if ($settings['type'] == 'djatoka') {
+    $datastream_url = url("islandora/object/{$object_id}/datastream/JP2/view", array(
+      'absolute' => TRUE,
+      'query' => array(
+        'token' => islandora_get_object_token($object_id, 'JP2'),
+      ),
+    ));
 
-  $djatoka_url = variable_get('islandora_paged_content_djatoka_url', 'http://localhost:8080/adore-djatoka');
-  $djatoka_url .= (substr($djatoka_url, -1) == '/') ? '' : '/';
-  $djatoka_url = url($djatoka_url . "resolver", array(
-    'query' => array(
-      'url_ver' => 'Z39.88-2004',
-      'rft_id' => $datastream_url,
-      'svc_id' => 'info:lanl-repo/svc/getMetadata',
-    ),
-    'external' => TRUE,
-  ));
-  $request = drupal_http_request($djatoka_url);
-  if ($request->code == '200') {
-    return drupal_json_decode($request->data);
+    $djatoka_url = rtrim($settings['url'], '/');
+    $djatoka_url = url($djatoka_url, array(
+      'query' => array(
+        'url_ver' => 'Z39.88-2004',
+        'rft_id' => $datastream_url,
+        'svc_id' => 'info:lanl-repo/svc/getMetadata',
+      ),
+      'external' => TRUE,
+    ));
+    $request = drupal_http_request($djatoka_url);
+    if ($request->code == '200') {
+      return drupal_json_decode($request->data);
+    }
   }
   return FALSE;
 }
