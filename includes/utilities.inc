@@ -538,11 +538,13 @@ function islandora_paged_content_ocr_combine(array $files, $out) {
   $success = TRUE;
   foreach ($files as $file) {
     $ocr = file_get_contents($file);
-    if ($ocr == FALSE) {
+    if ($ocr === FALSE) {
       $success = FALSE;
     }
     else {
-      $success = file_put_contents($out, $ocr, FILE_APPEND) == FALSE ? FALSE : $success;
+      if ($ocr) {
+        $success = file_put_contents($out, $ocr, FILE_APPEND) == FALSE ? FALSE : $success;
+      }
     }
   }
   return $success;
